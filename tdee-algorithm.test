@@ -1,0 +1,501 @@
+// =============================================================================
+// NUTRIA — Tests del Algoritmo TDEE
+// Ejecutar: deno test algorithm.test.ts
+// =============================================================================
+
+// Para ejecutar: deno test algorithm.test.ts
+// Si hay problemas de SSL con deno.land, usar las assertions inline de abajo
+import {
+  assertEquals,
+  assert,
+} from "https://deno.land/std@0.224.0/assert/mod.ts";
+
+// Alternativa inline (descomentar si el import falla):
+// function assertEquals<T>(actual: T, expected: T, msg?: string): void {
+//   if (actual !== expected) throw new Error(msg || `Expected ${expected}, got ${actual}`);
+// }
+// function assert(condition: boolean, msg?: string): void {
+//   if (!condition) throw new Error(msg || "Assertion failed");
+// }
+
+import {
+  calculateBmr,
+  calculateAge,
+  calculateInitialTdee,
+  calculateWeeklyAdjustment,
+  getCalorieGoal,
+  getConfidenceLabel,
+  clampTdee,
+  CONSTANTS,
+  type TdeeState,
+  type WeeklyData,
+  type UserProfile,
+} from "./algorithm.ts";
+
+// =============================================================================
+// Helpers para tests
+// =============================================================================
+
+function makeTdeeState(overrides: Partial<TdeeState> = {}): TdeeState {
+  return {
+    current_tdee_kcal: 2000,
+    current_bmr_kcal: 1600,
+    initial_tdee_kcal: 2000,
+    confidence_level: 0.5,
+    weeks_of_data: 4,
+    last_adjusted_at: "2026-03-14T00:00:00Z",
+    ...overrides,
+  };
+}
+
+function makeWeeklyData(overrides: Partial<WeeklyData> = {}): WeeklyData {
+  return {
+    complete_days: 6,
+    avg_calories_day: 1800,
+    avg_weight_kg: 75,
+    weight_start: 75.2,
+    weight_end: 74.9,
+    ...overrides,
+  };
+}
+
+// =============================================================================
+// TEST 1: Mifflin-St Jeor — BMR correcto
+// =============================================================================
+
+Deno.test("BMR: hombre 80kg, 175cm, 30 años", () => {
+  // (10 × 80) + (6.25 × 175) – (5 × 30) + 5
+  // = 800 + 1093.75 - 150 + 5 = 1748.75 → 1749
+  const bmr = calculateBmr(80, 175, 30, "male");
+  assertEquals(bmr, 1749);
+});
+
+Deno.test("BMR: mujer 65kg, 163cm, 28 años", () => {
+  // (10 × 65) + (6.25 × 163) – (5 × 28) – 161
+  // = 650 + 1018.75 - 140 - 161 = 1367.75 → 1368
+  const bmr = calculateBmr(65, 163, 28, "female");
+  assertEquals(bmr, 1368);
+});
+
+Deno.test("TDEE inicial: hombre moderadamente activo", () => {
+  const profile: UserProfile = {
+    biological_sex: "male",
+    date_of_birth: "1996-03-21", // 30 años en 2026-03-21
+    height_cm: 175,
+    activity_level: "moderately_active",
+    goal: "lose_weight",
+  };
+  const result = calculateInitialTdee(profile, 80);
+  // BMR = 1749, × 1.55 = 2710.95 → 2711
+  assertEquals(result.bmr, 1749);
+  assertEquals(result.tdee, 2711);
+  // Objetivo = 2711 - 500 = 2211
+  assertEquals(result.calorie_goal.goal_kcal, 2211);
+  assertEquals(result.calorie_goal.confidence_label, "Estimación en progreso");
+});
+
+Deno.test("TDEE inicial: mujer sedentaria con objetivo mantener", () => {
+  const profile: UserProfile = {
+    biological_sex: "female",
+    date_of_birth: "1998-06-15", // ~27 años
+    height_cm: 163,
+    activity_level: "sedentary",
+    goal: "maintain",
+  };
+  const result = calculateInitialTdee(profile, 58);
+  // BMR = (10×58) + (6.25×163) - (5×27) - 161 = 580 + 1018.75 - 135 - 161 = 1302.75 → 1303
+  // TDEE = 1303 × 1.2 = 1563.6 → 1564
+  assertEquals(result.bmr, 1303);
+  assertEquals(result.tdee, 1564);
+  // Mantener → objetivo = TDEE = 1564
+  assertEquals(result.calorie_goal.goal_kcal, 1564);
+});
+
+// =============================================================================
+// TEST 2: Usuario pierde 0.3 kg comiendo 1800 kcal/día → TDEE correcto
+// =============================================================================
+
+Deno.test("Ajuste semanal: pierde 0.3 kg con 1800 kcal → TDEE sube", () => {
+  const state = makeTdeeState({ current_tdee_kcal: 2000, weeks_of_data: 4 });
+  const data = makeWeeklyData({
+    avg_calories_day: 1800,
+    weight_start: 75.3,
+    weight_end: 75.0, // perdió 0.3 kg
+    complete_days: 6,
+  });
+
+  const result = calculateWeeklyAdjustment(state, data, "male", "2026-03-09", "2026-03-15");
+
+  assert(result.was_adjusted, "Debería haberse ajustado");
+
+  // TDEE observado = 1800 - (-0.3 × 7700 / 7) = 1800 + 330 = 2130
+  // alpha = min(0.30 + 5*0.05, 0.70) = min(0.55, 0.70) = 0.55
+  // suavizado = 0.55 × 2130 + 0.45 × 2000 = 1171.5 + 900 = 2071.5 → 2072
+  assertEquals(result.new_tdee, 2072);
+  assert(result.new_tdee > state.current_tdee_kcal, "TDEE debe subir si pierde peso");
+});
+
+// =============================================================================
+// TEST 3: Usuario gana 0.5 kg comiendo 2500 kcal/día → TDEE baja
+// =============================================================================
+
+Deno.test("Ajuste semanal: gana 0.5 kg con 2500 kcal → TDEE baja", () => {
+  const state = makeTdeeState({ current_tdee_kcal: 2200, weeks_of_data: 6 });
+  const data = makeWeeklyData({
+    avg_calories_day: 2500,
+    weight_start: 80.0,
+    weight_end: 80.5, // ganó 0.5 kg
+    complete_days: 7,
+  });
+
+  const result = calculateWeeklyAdjustment(state, data, "male", "2026-03-09", "2026-03-15");
+
+  assert(result.was_adjusted);
+
+  // TDEE observado = 2500 - (0.5 × 7700 / 7) = 2500 - 550 = 1950
+  // alpha = min(0.30 + 7*0.05, 0.70) = min(0.65, 0.70) = 0.65
+  // suavizado = 0.65 × 1950 + 0.35 × 2200 = 1267.5 + 770 = 2037.5 → 2038
+  assertEquals(result.new_tdee, 2038);
+  assert(result.new_tdee < state.current_tdee_kcal, "TDEE debe bajar si gana peso");
+});
+
+// =============================================================================
+// TEST 4: Delta > 2 kg → anomalía detectada, NO ajustar
+// =============================================================================
+
+Deno.test("Anomalía: delta de peso > 2 kg no ajusta", () => {
+  const state = makeTdeeState({ current_tdee_kcal: 2000, confidence_level: 0.6 });
+  const data = makeWeeklyData({
+    weight_start: 75.0,
+    weight_end: 77.5, // +2.5 kg → anomalía
+    complete_days: 7,
+    avg_calories_day: 2000,
+  });
+
+  const result = calculateWeeklyAdjustment(state, data, "male", "2026-03-09", "2026-03-15");
+
+  assert(!result.was_adjusted, "No debe ajustar con delta > 2 kg");
+  assertEquals(result.new_tdee, 2000); // mantiene el mismo TDEE
+  assert(result.reason.includes("anomaly_weight"));
+  // Confianza NO debe bajar por anomalía de peso (no es culpa del usuario)
+  assertEquals(result.new_confidence, 0.6);
+});
+
+// =============================================================================
+// TEST 5: Solo 3 días completos → insufficient_data, NO ajustar
+// =============================================================================
+
+Deno.test("Datos insuficientes: 3 días completos no ajusta", () => {
+  const state = makeTdeeState({ current_tdee_kcal: 2000, confidence_level: 0.5 });
+  const data = makeWeeklyData({
+    complete_days: 3, // < 4 mínimo
+  });
+
+  const result = calculateWeeklyAdjustment(state, data, "female", "2026-03-09", "2026-03-15");
+
+  assert(!result.was_adjusted);
+  assertEquals(result.new_tdee, 2000);
+  assert(result.reason.includes("insufficient_data"));
+  // Confianza SÍ baja ligeramente (penalización por no logear)
+  assertEquals(result.new_confidence, 0.45);
+});
+
+// =============================================================================
+// TEST 6: Cambio calculado > 300 kcal → limitado
+// =============================================================================
+
+Deno.test("Clamping: cambio > 300 kcal se limita", () => {
+  const state = makeTdeeState({
+    current_tdee_kcal: 2000,
+    weeks_of_data: 8, // alpha alto = 0.70
+  });
+  const data = makeWeeklyData({
+    avg_calories_day: 2000,
+    weight_start: 80.0,
+    weight_end: 79.0, // -1.0 kg → cambio grande
+    complete_days: 7,
+  });
+
+  const result = calculateWeeklyAdjustment(state, data, "male", "2026-03-09", "2026-03-15");
+
+  // TDEE observado = 2000 - (-1.0 × 7700 / 7) = 2000 + 1100 = 3100
+  // alpha = min(0.30 + 9*0.05, 0.70) = 0.70
+  // suavizado = 0.70 × 3100 + 0.30 × 2000 = 2170 + 600 = 2770
+  // cambio = 2770 - 2000 = 770 > 300 → clamped a 300
+  // TDEE final = 2000 + 300 = 2300
+  assert(result.was_adjusted);
+  assertEquals(result.new_tdee, 2300);
+  assertEquals(result.adjustment_kcal, 300);
+});
+
+// =============================================================================
+// TEST 7: Sin peso registrado → no ajusta
+// =============================================================================
+
+Deno.test("Sin pesadas: weight_start null no ajusta", () => {
+  const state = makeTdeeState();
+  const data = makeWeeklyData({
+    weight_start: null,
+    weight_end: null,
+    complete_days: 7,
+  });
+
+  const result = calculateWeeklyAdjustment(state, data, "male", "2026-03-09", "2026-03-15");
+
+  assert(!result.was_adjusted);
+  assert(result.reason.includes("insufficient_data"));
+  assert(result.reason.includes("pesadas"));
+});
+
+// =============================================================================
+// TEST 8: Calorías anormalmente bajas → anomalía
+// =============================================================================
+
+Deno.test("Anomalía: calorías promedio < 800 no ajusta", () => {
+  const state = makeTdeeState();
+  const data = makeWeeklyData({
+    avg_calories_day: 500,
+    complete_days: 5,
+    weight_start: 70,
+    weight_end: 69.5,
+  });
+
+  const result = calculateWeeklyAdjustment(state, data, "female", "2026-03-09", "2026-03-15");
+
+  assert(!result.was_adjusted);
+  assert(result.reason.includes("anomaly_calories"));
+});
+
+// =============================================================================
+// TEST 9: Calorías anormalmente altas → anomalía
+// =============================================================================
+
+Deno.test("Anomalía: calorías promedio > 5000 no ajusta", () => {
+  const state = makeTdeeState();
+  const data = makeWeeklyData({
+    avg_calories_day: 6000,
+    complete_days: 5,
+    weight_start: 80,
+    weight_end: 80.8,
+  });
+
+  const result = calculateWeeklyAdjustment(state, data, "male", "2026-03-09", "2026-03-15");
+
+  assert(!result.was_adjusted);
+  assert(result.reason.includes("anomaly_calories"));
+});
+
+// =============================================================================
+// TEST 10: Límites de seguridad — TDEE no baja del mínimo
+// =============================================================================
+
+Deno.test("Seguridad: TDEE mujer no baja de 1200", () => {
+  assertEquals(clampTdee(1000, "female"), 1200);
+  assertEquals(clampTdee(1200, "female"), 1200);
+  assertEquals(clampTdee(1500, "female"), 1500);
+});
+
+Deno.test("Seguridad: TDEE hombre no baja de 1500", () => {
+  assertEquals(clampTdee(1200, "male"), 1500);
+  assertEquals(clampTdee(1500, "male"), 1500);
+  assertEquals(clampTdee(1800, "male"), 1800);
+});
+
+Deno.test("Seguridad: TDEE no sube de 5000", () => {
+  assertEquals(clampTdee(5500, "male"), 5000);
+  assertEquals(clampTdee(5500, "female"), 5000);
+});
+
+// =============================================================================
+// TEST 11: Objetivo calórico respeta mínimos
+// =============================================================================
+
+Deno.test("CalorieGoal: mujer con TDEE 1400, lose_weight no baja de 1200", () => {
+  const goal = getCalorieGoal(1400, "lose_weight", "female", 0.5);
+  // 1400 - 500 = 900 → clamped a 1200
+  assertEquals(goal.goal_kcal, 1200);
+});
+
+Deno.test("CalorieGoal: hombre con TDEE 1800, lose_weight = 1500 (mínimo)", () => {
+  const goal = getCalorieGoal(1800, "lose_weight", "male", 0.5);
+  // 1800 - 500 = 1300 → clamped a 1500
+  assertEquals(goal.goal_kcal, 1500);
+});
+
+Deno.test("CalorieGoal: gain_muscle añade 250", () => {
+  const goal = getCalorieGoal(2200, "gain_muscle", "male", 0.7);
+  assertEquals(goal.goal_kcal, 2450);
+});
+
+// =============================================================================
+// TEST 12: Macros calculados correctamente
+// =============================================================================
+
+Deno.test("Macros: lose_weight 2000 kcal → 30/40/30 split", () => {
+  const goal = getCalorieGoal(2500, "lose_weight", "male", 0.5);
+  // goal_kcal = 2500 - 500 = 2000
+  assertEquals(goal.goal_kcal, 2000);
+  // Proteína: 2000 × 0.30 / 4 = 150g
+  assertEquals(goal.protein_g, 150);
+  // Carbs: 2000 × 0.40 / 4 = 200g
+  assertEquals(goal.carbs_g, 200);
+  // Grasa: 2000 × 0.30 / 9 = 66.7 → 67g
+  assertEquals(goal.fat_g, 67);
+});
+
+Deno.test("Macros: gain_muscle 2500 kcal → 35/45/20 split", () => {
+  const goal = getCalorieGoal(2250, "gain_muscle", "male", 0.5);
+  // goal_kcal = 2250 + 250 = 2500
+  assertEquals(goal.goal_kcal, 2500);
+  // Proteína: 2500 × 0.35 / 4 = 218.75 → 219g
+  assertEquals(goal.protein_g, 219);
+  // Carbs: 2500 × 0.45 / 4 = 281.25 → 281g
+  assertEquals(goal.carbs_g, 281);
+  // Grasa: 2500 × 0.20 / 9 = 55.6 → 56g
+  assertEquals(goal.fat_g, 56);
+});
+
+// =============================================================================
+// TEST 13: Confianza sube con semanas y baja sin datos
+// =============================================================================
+
+Deno.test("Confianza: sube +0.08 con datos completos", () => {
+  const state = makeTdeeState({ confidence_level: 0.5, weeks_of_data: 4 });
+  const data = makeWeeklyData({
+    complete_days: 6,
+    weight_start: 75.0,
+    weight_end: 74.8,
+    avg_calories_day: 1900,
+  });
+
+  const result = calculateWeeklyAdjustment(state, data, "male", "2026-03-09", "2026-03-15");
+  assertEquals(result.new_confidence, 0.58);
+});
+
+Deno.test("Confianza: baja -0.05 sin datos suficientes", () => {
+  const state = makeTdeeState({ confidence_level: 0.5 });
+  const data = makeWeeklyData({ complete_days: 2 }); // insuficiente
+
+  const result = calculateWeeklyAdjustment(state, data, "male", "2026-03-09", "2026-03-15");
+  assertEquals(result.new_confidence, 0.45);
+});
+
+Deno.test("Confianza: no baja de 0", () => {
+  const state = makeTdeeState({ confidence_level: 0.02 });
+  const data = makeWeeklyData({ complete_days: 1 });
+
+  const result = calculateWeeklyAdjustment(state, data, "male", "2026-03-09", "2026-03-15");
+  assertEquals(result.new_confidence, 0);
+});
+
+Deno.test("Confianza: tope en 0.95", () => {
+  const state = makeTdeeState({ confidence_level: 0.93, weeks_of_data: 20 });
+  const data = makeWeeklyData({
+    weight_start: 75.0,
+    weight_end: 75.0, // sin cambio
+    avg_calories_day: 2000,
+  });
+
+  const result = calculateWeeklyAdjustment(state, data, "male", "2026-03-09", "2026-03-15");
+  assertEquals(result.new_confidence, 0.95);
+});
+
+// =============================================================================
+// TEST 14: Etiquetas de confianza
+// =============================================================================
+
+Deno.test("Confidence labels", () => {
+  assertEquals(getConfidenceLabel(0.1), "Estimación inicial, aún aprendiendo");
+  assertEquals(getConfidenceLabel(0.29), "Estimación inicial, aún aprendiendo");
+  assertEquals(getConfidenceLabel(0.3), "Estimación en progreso");
+  assertEquals(getConfidenceLabel(0.59), "Estimación en progreso");
+  assertEquals(getConfidenceLabel(0.6), "Estimación bastante precisa");
+  assertEquals(getConfidenceLabel(0.79), "Estimación bastante precisa");
+  assertEquals(getConfidenceLabel(0.8), "Estimación muy precisa");
+  assertEquals(getConfidenceLabel(0.95), "Estimación muy precisa");
+});
+
+// =============================================================================
+// TEST 15: Cálculo de edad
+// =============================================================================
+
+Deno.test("Edad: calcula correctamente", () => {
+  assertEquals(calculateAge("1996-03-21", "2026-03-21"), 30);
+  assertEquals(calculateAge("1996-03-22", "2026-03-21"), 29); // cumple mañana
+  assertEquals(calculateAge("1996-01-01", "2026-03-21"), 30);
+  assertEquals(calculateAge("2000-12-31", "2026-03-21"), 25);
+});
+
+// =============================================================================
+// TEST 16: Alpha (suavizado) crece con las semanas
+// =============================================================================
+
+Deno.test("Alpha: crece de 0.35 (semana 1) a 0.70 (semana 8+)", () => {
+  // Verificar indirectamente: con 0 semanas previas → semana 1 → alpha = 0.35
+  // TDEE observado = 2500 con TDEE actual = 2000
+  // suavizado = 0.35 × 2500 + 0.65 × 2000 = 875 + 1300 = 2175
+
+  const stateWeek1 = makeTdeeState({ weeks_of_data: 0 });
+  const data = makeWeeklyData({
+    avg_calories_day: 2000,
+    weight_start: 80.0,
+    weight_end: 79.4, // -0.6 kg
+    complete_days: 7,
+  });
+
+  const result1 = calculateWeeklyAdjustment(stateWeek1, data, "male", "2026-03-09", "2026-03-15");
+  // TDEE obs = 2000 + (0.6 × 7700/7) = 2000 + 660 = 2660
+  // alpha semana 1 = min(0.30 + 1×0.05, 0.70) = 0.35
+  // suavizado = 0.35 × 2660 + 0.65 × 2000 = 931 + 1300 = 2231
+  assertEquals(result1.new_tdee, 2231);
+
+  // Con 8+ semanas → alpha = 0.70, mismo cálculo da resultado diferente
+  const stateWeek9 = makeTdeeState({ weeks_of_data: 8 });
+  const result9 = calculateWeeklyAdjustment(stateWeek9, data, "male", "2026-03-09", "2026-03-15");
+  // alpha semana 9 = min(0.30 + 9×0.05, 0.70) = min(0.75, 0.70) = 0.70
+  // suavizado = 0.70 × 2660 + 0.30 × 2000 = 1862 + 600 = 2462
+  // Cambio = 462 > 300 → clamped a 300
+  // TDEE final = 2000 + 300 = 2300
+  assertEquals(result9.new_tdee, 2300);
+});
+
+// =============================================================================
+// TEST 17: Peso estable + calorías = TDEE → sin cambio significativo
+// =============================================================================
+
+Deno.test("Estabilidad: peso estable con calorías = TDEE actual → cambio mínimo", () => {
+  const state = makeTdeeState({ current_tdee_kcal: 2000, weeks_of_data: 6 });
+  const data = makeWeeklyData({
+    avg_calories_day: 2000,
+    weight_start: 75.0,
+    weight_end: 75.0, // sin cambio
+    complete_days: 7,
+  });
+
+  const result = calculateWeeklyAdjustment(state, data, "male", "2026-03-09", "2026-03-15");
+
+  // TDEE observado = 2000 - (0 × 7700 / 7) = 2000
+  // suavizado = alpha × 2000 + (1-alpha) × 2000 = 2000
+  assert(result.was_adjusted);
+  assertEquals(result.new_tdee, 2000);
+  assertEquals(result.adjustment_kcal, 0);
+});
+
+// =============================================================================
+// TEST 18: Snapshot siempre se genera (incluso sin ajuste)
+// =============================================================================
+
+Deno.test("Snapshot: se genera con datos insuficientes", () => {
+  const state = makeTdeeState();
+  const data = makeWeeklyData({ complete_days: 2 });
+
+  const result = calculateWeeklyAdjustment(state, data, "male", "2026-03-09", "2026-03-15");
+
+  assertEquals(result.snapshot.week_start, "2026-03-09");
+  assertEquals(result.snapshot.week_end, "2026-03-15");
+  assertEquals(result.snapshot.complete_days, 2);
+  assertEquals(result.snapshot.adjustment_kcal, 0);
+  assert(result.snapshot.adjustment_reason.includes("insufficient_data"));
+});
+
+console.log("✅ Todos los tests del algoritmo TDEE definidos");
