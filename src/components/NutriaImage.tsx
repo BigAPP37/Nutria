@@ -22,10 +22,10 @@ export function NutriaImage({
 }: NutriaImageProps) {
   const img = (
     <img
-      src={`/images/mascot/nutria-${pose}.png`}
+      src={`/nutria-${pose}.png`}
       alt="Nuti"
       onError={(e) => {
-        e.currentTarget.src = `/images/mascot/nutria-${pose}.jpg`;
+        e.currentTarget.src = `/nutria-${pose}.jpg`;
       }}
       style={{
         width: '100%',
