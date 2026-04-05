@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Search, X, ChevronRight, PenLine } from 'lucide-react'
+import { ArrowLeft, Search, X, ChevronRight, PenLine, Plus, Minus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Food, FoodServing, MealType } from '@/types/database'
 
 // ─── Config ────────────────────────────────────────────────────────────────
 
-const mealConfig: Record<MealType, { label: string; emoji: string; color: string }> = {
-  breakfast: { label: 'Desayuno',  emoji: '☕', color: 'text-orange-500' },
-  lunch:     { label: 'Almuerzo',  emoji: '🍽', color: 'text-orange-500' },
-  dinner:    { label: 'Cena',      emoji: '🌙', color: 'text-blue-400'   },
-  snack:     { label: 'Snack',     emoji: '🍎', color: 'text-emerald-500' },
+const mealConfig: Record<MealType, { label: string; emoji: string; color: string; accentBg: string }> = {
+  breakfast: { label: 'Desayuno',  emoji: '☕', color: '#F97316', accentBg: '#FFF7ED' },
+  lunch:     { label: 'Almuerzo',  emoji: '🍽', color: '#F97316', accentBg: '#FFF7ED' },
+  dinner:    { label: 'Cena',      emoji: '🌙', color: '#6366F1', accentBg: '#EEF2FF' },
+  snack:     { label: 'Snack',     emoji: '🍎', color: '#10B981', accentBg: '#ECFDF5' },
 }
 
 function isMealType(v: string | null): v is MealType {
@@ -178,22 +178,71 @@ function AddFoodContent() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+    <div style={{ minHeight: '100vh', background: '#FAFAF9', display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10 bg-white border-b border-stone-100 shadow-sm">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+      <header style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        background: 'white',
+        borderBottom: '1px solid #E7E5E4',
+        boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
+      }}>
+        <div style={{
+          maxWidth: 448,
+          margin: '0 auto',
+          padding: '12px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+        }}>
           <button
             type="button"
             onClick={() => view === 'search' ? router.push('/dashboard') : setView('search')}
-            className="w-9 h-9 rounded-xl bg-stone-100 flex items-center justify-center text-stone-500 hover:bg-stone-200 transition-colors flex-shrink-0"
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              background: '#F5F4F3',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: '#78716C',
+              flexShrink: 0,
+              transition: 'background 0.15s ease',
+            }}
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft style={{ width: 18, height: 18 }} />
           </button>
-          <div className="flex items-center gap-2">
-            <span className="text-lg">{meal.emoji}</span>
-            <div>
-              <h1 className="text-sm font-bold text-stone-900 leading-tight">
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+            {/* Meal icon */}
+            <div style={{
+              width: 36,
+              height: 36,
+              borderRadius: 11,
+              background: meal.accentBg,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 18,
+              flexShrink: 0,
+            }}>
+              {meal.emoji}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <h1 style={{
+                fontSize: 15,
+                fontWeight: 800,
+                color: '#1C1917',
+                lineHeight: 1.2,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}>
                 {view === 'portion' && selectedFood
                   ? 'Ajustar porción'
                   : view === 'manual'
@@ -201,7 +250,15 @@ function AddFoodContent() {
                   : `Añadir a ${meal.label}`}
               </h1>
               {view === 'portion' && selectedFood && (
-                <p className="text-xs text-stone-400 truncate max-w-[200px]">{selectedFood.name}</p>
+                <p style={{
+                  fontSize: 12,
+                  color: '#A8A29E',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}>
+                  {selectedFood.name}
+                </p>
               )}
             </div>
           </div>
@@ -212,11 +269,29 @@ function AddFoodContent() {
           VIEW: SEARCH
       ══════════════════════════════════════════════════ */}
       {view === 'search' && (
-        <div className="flex flex-col flex-1 max-w-md mx-auto w-full px-4 pt-4 pb-6">
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          maxWidth: 448,
+          margin: '0 auto',
+          width: '100%',
+          padding: '16px 16px 32px',
+          gap: 12,
+        }}>
 
           {/* Search bar */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+          <div style={{ position: 'relative' }}>
+            <Search style={{
+              position: 'absolute',
+              left: 14,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 16,
+              height: 16,
+              color: '#A8A29E',
+              pointerEvents: 'none',
+            }} />
             <input
               ref={inputRef}
               autoFocus
@@ -224,71 +299,172 @@ function AddFoodContent() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar alimento…"
-              className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-stone-200 bg-white text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+              style={{
+                width: '100%',
+                paddingLeft: 44,
+                paddingRight: query.length > 0 ? 40 : 16,
+                paddingTop: 12,
+                paddingBottom: 12,
+                borderRadius: 16,
+                border: '1.5px solid #E7E5E4',
+                background: 'white',
+                fontSize: 14,
+                color: '#1C1917',
+                outline: 'none',
+                transition: 'border-color 0.2s',
+                boxSizing: 'border-box',
+                fontFamily: 'inherit',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = '#F97316' }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = '#E7E5E4' }}
             />
             {query.length > 0 && (
               <button
                 type="button"
                 onClick={() => { setQuery(''); setResults([]); inputRef.current?.focus() }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                style={{
+                  position: 'absolute',
+                  right: 12,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  background: '#E7E5E4',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#78716C',
+                }}
               >
-                <X className="w-4 h-4" />
+                <X style={{ width: 12, height: 12 }} />
               </button>
             )}
           </div>
 
-          {/* Results */}
+          {/* Searching spinner */}
           {isSearching && (
-            <div className="flex justify-center py-8">
-              <div className="w-6 h-6 border-2 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '24px 0' }}>
+              <div style={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                border: '3px solid #FED7AA',
+                borderTopColor: '#F97316',
+                animation: 'spin 0.8s linear infinite',
+              }} />
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
           )}
 
+          {/* Results list */}
           {!isSearching && results.length > 0 && (
-            <div className="bg-white rounded-2xl border border-stone-100 overflow-hidden mb-4">
+            <div style={{
+              background: 'white',
+              borderRadius: 18,
+              border: '1px solid #E7E5E4',
+              overflow: 'hidden',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+            }}>
               {results.map((food, i) => (
                 <button
                   key={food.id}
                   type="button"
                   onClick={() => { setSelectedFood(food); setGrams('100'); setView('portion') }}
-                  className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-stone-50 active:bg-stone-100 transition-colors ${
-                    i < results.length - 1 ? 'border-b border-stone-50' : ''
-                  }`}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '13px 16px',
+                    textAlign: 'left',
+                    border: 'none',
+                    borderBottom: i < results.length - 1 ? '1px solid #F9F8F8' : 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#FFF7ED' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-800 truncate">{food.name}</p>
-                    <p className="text-[11px] text-stone-400 mt-0.5">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: '#1C1917',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      lineHeight: 1.3,
+                    }}>
+                      {food.name}
+                    </p>
+                    <p style={{ fontSize: 11, color: '#A8A29E', marginTop: 2 }}>
                       {food.brand ? `${food.brand} · ` : ''}
-                      {food.calories_kcal} kcal
+                      <span style={{ fontWeight: 700, color: '#F97316' }}>{food.calories_kcal}</span> kcal/100g
                       {food.category ? ` · ${food.category}` : ''}
                     </p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-stone-300 flex-shrink-0 ml-2" />
+                  <ChevronRight style={{ width: 16, height: 16, color: '#C4B9B3', flexShrink: 0, marginLeft: 8 }} />
                 </button>
               ))}
             </div>
           )}
 
+          {/* No results */}
           {!isSearching && query.trim().length >= 2 && results.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-sm text-stone-400">Sin resultados para «{query.trim()}»</p>
+            <div style={{ textAlign: 'center', padding: '32px 0' }}>
+              <p style={{ fontSize: 14, color: '#78716C', fontWeight: 600, marginBottom: 4 }}>
+                Sin resultados para «{query.trim()}»
+              </p>
+              <p style={{ fontSize: 12, color: '#A8A29E' }}>
+                Prueba otro término o añade manualmente
+              </p>
             </div>
           )}
 
+          {/* Prompt */}
           {query.trim().length < 2 && (
-            <div className="text-center py-8">
-              <p className="text-xs text-stone-400">Escribe al menos 2 caracteres para buscar</p>
+            <div style={{ textAlign: 'center', padding: '24px 0' }}>
+              <p style={{ fontSize: 13, color: '#A8A29E' }}>
+                Escribe al menos 2 caracteres para buscar
+              </p>
             </div>
           )}
 
           {/* Manual entry CTA */}
-          <div className="mt-auto pt-4">
+          <div style={{ marginTop: 'auto', paddingTop: 8 }}>
             <button
               type="button"
               onClick={() => setView('manual')}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-stone-200 bg-white text-stone-600 text-sm font-medium hover:bg-stone-50 active:bg-stone-100 transition-colors"
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '13px',
+                borderRadius: 16,
+                border: '1.5px solid #E7E5E4',
+                background: 'white',
+                color: '#78716C',
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#F97316'
+                e.currentTarget.style.color = '#F97316'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#E7E5E4'
+                e.currentTarget.style.color = '#78716C'
+              }}
             >
-              <PenLine className="w-4 h-4" />
+              <PenLine style={{ width: 16, height: 16 }} />
               Añadir manualmente
             </button>
           </div>
@@ -299,58 +475,166 @@ function AddFoodContent() {
           VIEW: PORTION
       ══════════════════════════════════════════════════ */}
       {view === 'portion' && selectedFood && calc && (
-        <div className="flex flex-col flex-1 max-w-md mx-auto w-full px-4 pt-4 pb-6 space-y-4">
+        <div style={{
+          flex: 1,
+          maxWidth: 448,
+          margin: '0 auto',
+          width: '100%',
+          padding: '16px 16px 32px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+        }}>
 
-          {/* Food card */}
-          <div className="bg-white rounded-2xl border border-stone-100 p-4">
-            <p className="text-base font-semibold text-stone-900">{selectedFood.name}</p>
-            {selectedFood.brand && (
-              <p className="text-xs text-stone-400 mt-0.5">{selectedFood.brand}</p>
-            )}
-            <p className="text-xs text-stone-400 mt-1">
-              Valores por 100 g — {selectedFood.calories_kcal} kcal ·
-              P {selectedFood.protein_g}g · C {selectedFood.carbs_g}g · G {selectedFood.fat_g}g
+          {/* Food info card */}
+          <div style={{
+            background: 'white',
+            borderRadius: 18,
+            border: '1px solid #E7E5E4',
+            padding: '16px',
+          }}>
+            <p style={{ fontSize: 16, fontWeight: 800, color: '#1C1917', lineHeight: 1.3, marginBottom: 4 }}>
+              {selectedFood.name}
             </p>
+            {selectedFood.brand && (
+              <p style={{ fontSize: 12, color: '#A8A29E', marginBottom: 6 }}>{selectedFood.brand}</p>
+            )}
+            <div style={{
+              display: 'flex',
+              gap: 8,
+              padding: '8px 10px',
+              background: '#F9F8F8',
+              borderRadius: 10,
+            }}>
+              <span style={{ fontSize: 11, color: '#A8A29E' }}>
+                Por 100g:
+              </span>
+              <span style={{ fontSize: 11, color: '#F97316', fontWeight: 700 }}>
+                {selectedFood.calories_kcal} kcal
+              </span>
+              <span style={{ fontSize: 11, color: '#78716C' }}>
+                P {selectedFood.protein_g}g
+              </span>
+              <span style={{ fontSize: 11, color: '#78716C' }}>
+                C {selectedFood.carbs_g}g
+              </span>
+              <span style={{ fontSize: 11, color: '#78716C' }}>
+                G {selectedFood.fat_g}g
+              </span>
+            </div>
           </div>
 
           {/* Quantity selector */}
-          <div className="bg-white rounded-2xl border border-stone-100 p-4">
-            <label className="block text-sm font-semibold text-stone-700 mb-3">Cantidad</label>
-            <div className="flex items-center gap-3">
+          <div style={{
+            background: 'white',
+            borderRadius: 18,
+            border: '1px solid #E7E5E4',
+            padding: '16px',
+          }}>
+            <p style={{
+              fontSize: 11,
+              fontWeight: 500,
+              color: '#A8A29E',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              textAlign: 'center',
+              marginBottom: 14,
+            }}>
+              Cantidad
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button
                 type="button"
                 onClick={() => setGrams(String(Math.max(5, (parseFloat(grams) || 100) - 10)))}
-                className="w-10 h-10 rounded-xl bg-stone-100 text-stone-600 text-lg font-medium flex items-center justify-center hover:bg-stone-200 transition-colors flex-shrink-0"
-              >−</button>
-              <div className="relative flex-1">
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  border: '1.5px solid #E7E5E4',
+                  background: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#44403C',
+                  flexShrink: 0,
+                }}
+              >
+                <Minus style={{ width: 18, height: 18 }} />
+              </button>
+              <div style={{ flex: 1, position: 'relative' }}>
                 <input
                   type="number"
                   min="1"
                   value={grams}
                   onChange={(e) => setGrams(e.target.value)}
-                  className="w-full text-center rounded-xl border border-stone-200 py-2.5 text-sm font-semibold text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                  style={{
+                    width: '100%',
+                    textAlign: 'center',
+                    borderRadius: 12,
+                    border: '1.5px solid #E7E5E4',
+                    padding: '10px 32px 10px 16px',
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: '#1C1917',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    fontFamily: 'inherit',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#F97316' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = '#E7E5E4' }}
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone-400">g</span>
+                <span style={{
+                  position: 'absolute',
+                  right: 12,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  fontSize: 12,
+                  color: '#A8A29E',
+                  fontWeight: 500,
+                }}>g</span>
               </div>
               <button
                 type="button"
                 onClick={() => setGrams(String((parseFloat(grams) || 100) + 10))}
-                className="w-10 h-10 rounded-xl bg-stone-100 text-stone-600 text-lg font-medium flex items-center justify-center hover:bg-stone-200 transition-colors flex-shrink-0"
-              >+</button>
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  border: '1.5px solid #E7E5E4',
+                  background: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#44403C',
+                  flexShrink: 0,
+                }}
+              >
+                <Plus style={{ width: 18, height: 18 }} />
+              </button>
             </div>
 
             {/* Quick presets */}
-            <div className="flex gap-2 mt-3">
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
               {[50, 100, 150, 200].map((preset) => (
                 <button
                   key={preset}
                   type="button"
                   onClick={() => setGrams(String(preset))}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    grams === String(preset)
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                  }`}
+                  style={{
+                    flex: 1,
+                    padding: '7px 4px',
+                    borderRadius: 10,
+                    border: grams === String(preset) ? '1.5px solid #F97316' : '1.5px solid #E7E5E4',
+                    background: grams === String(preset) ? '#FFF7ED' : 'white',
+                    color: grams === String(preset) ? '#F97316' : '#78716C',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
                 >
                   {preset}g
                 </button>
@@ -359,19 +643,27 @@ function AddFoodContent() {
 
             {/* Porciones predefinidas del alimento */}
             {servings.length > 0 && (
-              <div className="mt-3">
-                <p className="text-xs text-stone-400 mb-2">Porciones habituales</p>
-                <div className="flex flex-wrap gap-2">
+              <div style={{ marginTop: 12 }}>
+                <p style={{ fontSize: 11, color: '#A8A29E', marginBottom: 8, fontWeight: 500 }}>
+                  Porciones habituales
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {servings.map((s) => (
                     <button
                       key={s.id}
                       type="button"
                       onClick={() => setGrams(String(s.grams))}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        grams === String(s.grams)
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-orange-50 text-orange-600 hover:bg-orange-100'
-                      }`}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 99,
+                        border: grams === String(s.grams) ? '1px solid #F97316' : '1px solid #FED7AA',
+                        background: grams === String(s.grams) ? '#F97316' : '#FFF7ED',
+                        color: grams === String(s.grams) ? 'white' : '#F97316',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
                     >
                       {s.label} · {s.grams}g
                     </button>
@@ -381,32 +673,52 @@ function AddFoodContent() {
             )}
           </div>
 
-          {/* Calculated macros */}
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-4 text-white">
-            <div className="flex items-end justify-between mb-3">
-              <div>
-                <p className="text-[11px] text-white/70">Calorías totales</p>
-                <p className="text-3xl font-bold leading-none">{calc.kcal}</p>
-                <p className="text-[11px] text-white/70 mt-0.5">kcal · {g}g</p>
+          {/* Macros preview */}
+          <div style={{
+            background: 'linear-gradient(135deg, #F97316 0%, #C2410C 100%)',
+            borderRadius: 20,
+            padding: '18px 20px',
+            color: 'white',
+            boxShadow: '0 6px 24px rgba(249,115,22,0.4)',
+          }}>
+            <div style={{ marginBottom: 14 }}>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>Calorías totales</p>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
+                <span style={{ fontSize: 44, fontWeight: 900, lineHeight: 1, letterSpacing: '-2px' }}>
+                  {calc.kcal}
+                </span>
+                <span style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', marginBottom: 6 }}>kcal</span>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>· {g}g</span>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/20">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 8,
+              paddingTop: 14,
+              borderTop: '1px solid rgba(255,255,255,0.2)',
+            }}>
               {[
-                { label: 'Proteína', value: calc.protein, unit: 'g' },
-                { label: 'Carbos',   value: calc.carbs,   unit: 'g' },
-                { label: 'Grasa',    value: calc.fat,     unit: 'g' },
+                { label: 'Proteína', value: calc.protein },
+                { label: 'Carbos',   value: calc.carbs },
+                { label: 'Grasa',    value: calc.fat },
               ].map((m) => (
-                <div key={m.label} className="text-center">
-                  <p className="text-sm font-semibold">{m.value}{m.unit}</p>
-                  <p className="text-[10px] text-white/70">{m.label}</p>
+                <div key={m.label} style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: 17, fontWeight: 800, lineHeight: 1 }}>{m.value}g</p>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 3 }}>{m.label}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {saveError && (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-              <p className="text-sm text-amber-700">{saveError}</p>
+            <div style={{
+              padding: '12px 16px',
+              background: '#FFFBEB',
+              border: '1px solid #FDE68A',
+              borderRadius: 12,
+            }}>
+              <p style={{ fontSize: 13, color: '#92400E' }}>{saveError}</p>
             </div>
           )}
 
@@ -414,7 +726,21 @@ function AddFoodContent() {
             type="button"
             onClick={handleAddFromDatabase}
             disabled={isSaving || g <= 0}
-            className="w-full py-3.5 rounded-2xl bg-orange-500 text-white font-semibold text-sm hover:bg-orange-600 active:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            style={{
+              width: '100%',
+              padding: '15px',
+              borderRadius: 16,
+              border: 'none',
+              background: isSaving || g <= 0
+                ? '#E7E5E4'
+                : 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+              color: isSaving || g <= 0 ? '#A8A29E' : 'white',
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: isSaving || g <= 0 ? 'not-allowed' : 'pointer',
+              boxShadow: isSaving || g <= 0 ? 'none' : '0 4px 16px rgba(249,115,22,0.35)',
+              transition: 'all 0.2s ease',
+            }}
           >
             {isSaving ? 'Guardando…' : `Añadir ${calc.kcal} kcal a ${meal.label}`}
           </button>
@@ -427,13 +753,31 @@ function AddFoodContent() {
       {view === 'manual' && (
         <form
           onSubmit={handleAddManual}
-          className="flex flex-col flex-1 max-w-md mx-auto w-full px-4 pt-4 pb-6 space-y-4"
+          style={{
+            flex: 1,
+            maxWidth: 448,
+            margin: '0 auto',
+            width: '100%',
+            padding: '16px 16px 32px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+          }}
         >
-          {/* Name */}
-          <div className="bg-white rounded-2xl border border-stone-100 p-4 space-y-3">
-            <p className="text-sm font-semibold text-stone-700">Alimento</p>
+          {/* Nombre */}
+          <div style={{
+            background: 'white',
+            borderRadius: 18,
+            border: '1px solid #E7E5E4',
+            padding: '16px',
+          }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#78716C', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Alimento
+            </p>
             <div>
-              <label className="block text-xs text-stone-500 mb-1">Nombre *</label>
+              <label style={{ display: 'block', fontSize: 12, color: '#A8A29E', marginBottom: 6 }}>
+                Nombre *
+              </label>
               <input
                 autoFocus
                 type="text"
@@ -441,17 +785,43 @@ function AddFoodContent() {
                 onChange={(e) => setManualName(e.target.value)}
                 placeholder="Ej: Tostada con aceite"
                 required
-                className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                style={{
+                  width: '100%',
+                  borderRadius: 12,
+                  border: '1.5px solid #E7E5E4',
+                  padding: '11px 14px',
+                  fontSize: 14,
+                  color: '#1C1917',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                  boxSizing: 'border-box',
+                  fontFamily: 'inherit',
+                }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = '#F97316' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = '#E7E5E4' }}
               />
             </div>
           </div>
 
-          {/* Nutrition */}
-          <div className="bg-white rounded-2xl border border-stone-100 p-4 space-y-3">
-            <p className="text-sm font-semibold text-stone-700">Información nutricional (por porción)</p>
+          {/* Nutrición */}
+          <div style={{
+            background: 'white',
+            borderRadius: 18,
+            border: '1px solid #E7E5E4',
+            padding: '16px',
+          }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#78716C', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Información nutricional
+            </p>
+            <p style={{ fontSize: 11, color: '#A8A29E', marginBottom: 14 }}>
+              Por porción completa
+            </p>
 
-            <div>
-              <label className="block text-xs text-stone-500 mb-1">Calorías (kcal) *</label>
+            {/* Calorías */}
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 12, color: '#A8A29E', marginBottom: 6 }}>
+                Calorías (kcal) *
+              </label>
               <input
                 type="number"
                 min="0"
@@ -459,25 +829,54 @@ function AddFoodContent() {
                 onChange={(e) => setManualKcal(e.target.value)}
                 placeholder="0"
                 required
-                className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                style={{
+                  width: '100%',
+                  borderRadius: 12,
+                  border: '1.5px solid #E7E5E4',
+                  padding: '11px 14px',
+                  fontSize: 14,
+                  color: '#1C1917',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                  boxSizing: 'border-box',
+                  fontFamily: 'inherit',
+                }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = '#F97316' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = '#E7E5E4' }}
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            {/* Macros en grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
               {[
-                { label: 'Proteína (g)',  value: manualProtein, onChange: setManualProtein },
-                { label: 'Carbos (g)',    value: manualCarbs,   onChange: setManualCarbs   },
-                { label: 'Grasa (g)',     value: manualFat,     onChange: setManualFat     },
+                { label: 'Proteína (g)',  value: manualProtein, onChange: setManualProtein, emoji: '🥩' },
+                { label: 'Carbos (g)',    value: manualCarbs,   onChange: setManualCarbs,   emoji: '🍞' },
+                { label: 'Grasa (g)',     value: manualFat,     onChange: setManualFat,     emoji: '🥑' },
               ].map((f) => (
                 <div key={f.label}>
-                  <label className="block text-xs text-stone-500 mb-1">{f.label}</label>
+                  <label style={{ display: 'block', fontSize: 11, color: '#A8A29E', marginBottom: 5 }}>
+                    {f.emoji} {f.label}
+                  </label>
                   <input
                     type="number"
                     min="0"
                     value={f.value}
                     onChange={(e) => f.onChange(e.target.value)}
                     placeholder="0"
-                    className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                    style={{
+                      width: '100%',
+                      borderRadius: 10,
+                      border: '1.5px solid #E7E5E4',
+                      padding: '9px 10px',
+                      fontSize: 14,
+                      color: '#1C1917',
+                      outline: 'none',
+                      transition: 'border-color 0.2s',
+                      boxSizing: 'border-box',
+                      fontFamily: 'inherit',
+                    }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = '#F97316' }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = '#E7E5E4' }}
                   />
                 </div>
               ))}
@@ -485,15 +884,34 @@ function AddFoodContent() {
           </div>
 
           {saveError && (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-              <p className="text-sm text-amber-700">{saveError}</p>
+            <div style={{
+              padding: '12px 16px',
+              background: '#FFFBEB',
+              border: '1px solid #FDE68A',
+              borderRadius: 12,
+            }}>
+              <p style={{ fontSize: 13, color: '#92400E' }}>{saveError}</p>
             </div>
           )}
 
           <button
             type="submit"
             disabled={isSaving || !manualName.trim()}
-            className="w-full py-3.5 rounded-2xl bg-orange-500 text-white font-semibold text-sm hover:bg-orange-600 active:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            style={{
+              width: '100%',
+              padding: '15px',
+              borderRadius: 16,
+              border: 'none',
+              background: isSaving || !manualName.trim()
+                ? '#E7E5E4'
+                : 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+              color: isSaving || !manualName.trim() ? '#A8A29E' : 'white',
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: isSaving || !manualName.trim() ? 'not-allowed' : 'pointer',
+              boxShadow: isSaving || !manualName.trim() ? 'none' : '0 4px 16px rgba(249,115,22,0.35)',
+              transition: 'all 0.2s ease',
+            }}
           >
             {isSaving ? 'Guardando…' : 'Guardar alimento'}
           </button>

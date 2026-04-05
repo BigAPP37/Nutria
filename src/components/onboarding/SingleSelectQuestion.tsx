@@ -24,12 +24,12 @@ export function SingleSelectQuestion({
 }: SingleSelectQuestionProps) {
   return (
     <div className="space-y-7">
-      <div>
-        <h2 className="font-bold leading-tight" style={{ color: '#FFFFFF', fontSize: 22 }}>
+      <div className="text-center">
+        <h2 className="font-bold leading-tight" style={{ color: '#1C1917', fontSize: 26, fontWeight: 800, lineHeight: 1.15 }}>
           {question}
         </h2>
         {subtitle && (
-          <p className="mt-1.5" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
+          <p className="mt-1.5" style={{ color: '#78716C', fontSize: 13 }}>
             {subtitle}
           </p>
         )}
@@ -46,22 +46,21 @@ export function SingleSelectQuestion({
                 onClick={() => onChange(option.value)}
                 className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl text-center transition-all duration-200 active:scale-95 min-h-[100px]"
                 style={isSelected ? {
-                  background: 'rgba(249,115,22,0.12)',
-                  border: '1.5px solid rgba(249,115,22,0.5)',
-                  boxShadow: '0 0 20px rgba(249,115,22,0.15)',
+                  background: '#FFF7ED',
+                  border: '1.5px solid rgba(249,115,22,0.4)',
                 } : {
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: '#FFFFFF',
+                  border: '1px solid #E7E5E4',
                 }}
               >
                 <span
                   className="text-sm font-medium leading-tight"
-                  style={{ color: isSelected ? '#F97316' : 'rgba(255,255,255,0.9)' }}
+                  style={{ color: isSelected ? '#F97316' : '#1C1917' }}
                 >
                   {option.label}
                 </span>
                 {option.description && (
-                  <span className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  <span className="text-xs leading-snug" style={{ color: '#A8A29E' }}>
                     {option.description}
                   </span>
                 )}
@@ -82,19 +81,19 @@ export function SingleSelectQuestion({
                 style={{
                   padding: '14px 16px',
                   borderRadius: 14,
-                  background: isSelected ? 'rgba(249,115,22,0.1)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${isSelected ? 'rgba(249,115,22,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                  background: isSelected ? '#FFF7ED' : '#FFFFFF',
+                  border: `1px solid ${isSelected ? 'rgba(249,115,22,0.4)' : '#E7E5E4'}`,
                 }}
               >
                 <div className="flex-1 min-w-0">
                   <span
                     className="text-sm font-medium"
-                    style={{ color: isSelected ? '#F97316' : 'rgba(255,255,255,0.85)' }}
+                    style={{ color: isSelected ? '#F97316' : '#1C1917' }}
                   >
                     {option.label}
                   </span>
                   {option.description && (
-                    <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    <p className="text-xs mt-0.5" style={{ color: '#A8A29E' }}>
                       {option.description}
                     </p>
                   )}
@@ -103,7 +102,7 @@ export function SingleSelectQuestion({
                   className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center transition-all"
                   style={{
                     background: isSelected ? '#F97316' : 'transparent',
-                    border: `2px solid ${isSelected ? '#F97316' : 'rgba(255,255,255,0.2)'}`,
+                    border: `2px solid ${isSelected ? '#F97316' : '#D6D3D1'}`,
                   }}
                 >
                   {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}

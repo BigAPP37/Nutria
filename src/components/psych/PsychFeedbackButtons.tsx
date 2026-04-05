@@ -20,23 +20,63 @@ export function PsychFeedbackButtons({ flagId, userId, onComplete }: PsychFeedba
   }
 
   return (
-    <div className="flex items-center mt-3">
-      <span className="text-xs text-stone-400 mr-2">¿Te fue útil?</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ fontSize: 12, color: '#78716C', fontWeight: 500 }}>
+        ¿Te fue útil?
+      </span>
       <button
         type="button"
         aria-label="Me fue útil"
         onClick={() => handleFeedback(true)}
-        className="bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs px-2.5 py-1 rounded-lg transition-colors"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 5,
+          padding: '6px 12px',
+          borderRadius: 99,
+          border: '1px solid #D1FAE5',
+          background: '#ECFDF5',
+          color: '#065F46',
+          fontSize: 12,
+          fontWeight: 600,
+          cursor: 'pointer',
+          transition: 'all 0.15s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = '#D1FAE5'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = '#ECFDF5'
+        }}
       >
-        👍
+        👍 Sí
       </button>
       <button
         type="button"
         aria-label="No me fue útil"
         onClick={() => handleFeedback(false)}
-        className="bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs px-2.5 py-1 rounded-lg transition-colors ml-1"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 5,
+          padding: '6px 12px',
+          borderRadius: 99,
+          border: '1px solid #E7E5E4',
+          background: '#F5F4F3',
+          color: '#78716C',
+          fontSize: 12,
+          fontWeight: 600,
+          cursor: 'pointer',
+          transition: 'all 0.15s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = '#E7E5E4'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = '#F5F4F3'
+        }}
       >
-        👎
+        👎 No
       </button>
     </div>
   )

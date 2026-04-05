@@ -7,6 +7,7 @@ import type { NutiPose } from '@/constants/nuti-messages'
 interface EducationalScreenProps {
   title: string
   text: string
+  eyebrow?: string
   buttonText?: string
   onNext: () => void
   pose?: NutiPose
@@ -16,6 +17,7 @@ interface EducationalScreenProps {
 export function EducationalScreen({
   title,
   text,
+  eyebrow,
   buttonText = 'Continuar',
   onNext,
   pose = 'reading',
@@ -33,10 +35,15 @@ export function EducationalScreen({
         </div>
 
         <div className="space-y-2 max-w-sm px-4">
-          <h2 className="text-2xl font-bold leading-tight" style={{ color: '#FFFFFF' }}>
+          {eyebrow && (
+            <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#F97316' }}>
+              {eyebrow}
+            </p>
+          )}
+          <h2 className="font-bold leading-tight" style={{ color: '#1C1917', fontSize: 28, fontWeight: 800, lineHeight: 1.15 }}>
             {title}
           </h2>
-          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <p className="text-sm leading-relaxed" style={{ color: '#78716C' }}>
             {text}
           </p>
         </div>

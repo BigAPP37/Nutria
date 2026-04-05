@@ -9,6 +9,7 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useLogSessionStore } from '@/stores/logSessionStore'
 import { useAiLog } from '@/hooks/useAiLog'
+import { useProfile } from '@/hooks/useProfile'
 import { MealTypeSelector } from '@/components/logging/MealTypeSelector'
 import { LogMethodTabs } from '@/components/logging/LogMethodTabs'
 import { PhotoCapture } from '@/components/logging/PhotoCapture'
@@ -31,6 +32,7 @@ function getTodayIso(): string {
 export default function LogPage() {
   const router = useRouter()
   const store = useLogSessionStore()
+  const { data: profile } = useProfile()
 
   const [userId, setUserId] = useState<string | null>(null)
   const [isDiscarding, setIsDiscarding] = useState(false)
@@ -89,6 +91,7 @@ export default function LogPage() {
         mealType: store.mealType,
         logDate: today,
         photoFile: file,
+        countryCode: profile?.country_code ?? 'ES',
       },
       {
         onSuccess: (data) => {
@@ -117,6 +120,7 @@ export default function LogPage() {
         mealType: store.mealType,
         logDate: today,
         textPayload: store.textInput,
+        countryCode: profile?.country_code ?? 'ES',
       },
       {
         onSuccess: (data) => {

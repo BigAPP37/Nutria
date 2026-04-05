@@ -4,7 +4,7 @@
 // Permite ingresar gramos, usar presets o seleccionar porciones predefinidas
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { ChevronLeft, Loader2 } from 'lucide-react'
+import { ChevronLeft, Loader2, Plus, Minus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useManualLog } from '@/hooks/useManualLog'
 import type { FoodSearchResult } from '@/types/logging'
@@ -114,91 +114,151 @@ export function PortionSelector({
   }, [userId, food.food_id, grams, mealType, logDate, macros, mutation, onAdded])
 
   return (
-    <div className="flex flex-col gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Cabecera con botón de volver */}
-      <div className="flex items-center gap-3">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <button
           onClick={onBack}
-          className="
-            p-2 rounded-xl text-stone-500
-            hover:bg-stone-100 transition-colors
-            min-h-[44px] min-w-[44px] flex items-center justify-center
-          "
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 12,
+            border: '1.5px solid #E7E5E4',
+            background: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: '#78716C',
+            flexShrink: 0,
+          }}
           aria-label="Volver a la búsqueda"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft style={{ width: 18, height: 18 }} />
         </button>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-stone-800 text-sm truncate">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h3 style={{
+            fontWeight: 700,
+            color: '#1C1917',
+            fontSize: 15,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
             {food.food_name}
           </h3>
           {food.brand && (
-            <p className="text-xs text-stone-400 truncate">{food.brand}</p>
+            <p style={{ fontSize: 12, color: '#A8A29E', marginTop: 2 }}>{food.brand}</p>
           )}
         </div>
       </div>
 
       {/* Selector de cantidad en gramos */}
-      <div className="flex items-center gap-3 bg-stone-50 rounded-2xl p-4">
-        <button
-          onClick={handleDecrement}
-          disabled={grams <= 5}
-          className="
-            w-11 h-11 rounded-xl border-2 border-stone-300
-            text-stone-600 text-xl font-semibold
-            hover:bg-stone-100 transition-colors
-            disabled:opacity-40 flex items-center justify-center
-          "
-          aria-label="Disminuir cantidad"
-        >
-          −
-        </button>
+      <div style={{
+        background: 'white',
+        borderRadius: 18,
+        padding: '18px 16px',
+        border: '1px solid #E7E5E4',
+      }}>
+        <p style={{
+          fontSize: 11,
+          fontWeight: 500,
+          color: '#A8A29E',
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          marginBottom: 14,
+          textAlign: 'center',
+        }}>
+          Cantidad
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            onClick={handleDecrement}
+            disabled={grams <= 5}
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 14,
+              border: '1.5px solid #E7E5E4',
+              background: 'white',
+              color: '#44403C',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: grams <= 5 ? 'not-allowed' : 'pointer',
+              opacity: grams <= 5 ? 0.4 : 1,
+              transition: 'all 0.15s ease',
+            }}
+            aria-label="Disminuir cantidad"
+          >
+            <Minus style={{ width: 18, height: 18 }} />
+          </button>
 
-        <div className="flex-1 flex flex-col items-center gap-0.5">
-          <input
-            type="number"
-            value={grams}
-            onChange={handleGramsInput}
-            min={5}
-            className="
-              w-24 text-center text-2xl font-bold text-stone-800
-              border-b-2 border-orange-400 bg-transparent
-              focus:outline-none
-            "
-            aria-label="Cantidad en gramos"
-          />
-          <span className="text-xs text-stone-400">gramos</span>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <input
+              type="number"
+              value={grams}
+              onChange={handleGramsInput}
+              min={5}
+              style={{
+                width: 90,
+                textAlign: 'center',
+                fontSize: 32,
+                fontWeight: 900,
+                color: '#F97316',
+                border: 'none',
+                borderBottom: '2px solid #FDBA74',
+                background: 'transparent',
+                outline: 'none',
+                letterSpacing: '-1px',
+                fontFamily: 'inherit',
+              }}
+              aria-label="Cantidad en gramos"
+            />
+            <span style={{ fontSize: 12, color: '#A8A29E', fontWeight: 500 }}>gramos</span>
+          </div>
+
+          <button
+            onClick={handleIncrement}
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 14,
+              border: '1.5px solid #E7E5E4',
+              background: 'white',
+              color: '#44403C',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            aria-label="Aumentar cantidad"
+          >
+            <Plus style={{ width: 18, height: 18 }} />
+          </button>
         </div>
-
-        <button
-          onClick={handleIncrement}
-          className="
-            w-11 h-11 rounded-xl border-2 border-stone-300
-            text-stone-600 text-xl font-semibold
-            hover:bg-stone-100 transition-colors
-            flex items-center justify-center
-          "
-          aria-label="Aumentar cantidad"
-        >
-          +
-        </button>
       </div>
 
       {/* Presets de gramos rápidos */}
-      <div className="flex gap-2">
+      <div style={{ display: 'flex', gap: 8 }}>
         {GRAM_PRESETS.map((preset) => (
           <button
             key={preset}
             onClick={() => setGrams(preset)}
-            className={`
-              flex-1 py-2 rounded-xl text-xs font-medium transition-colors
-              min-h-[36px]
-              ${
-                grams === preset
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-              }
-            `}
+            style={{
+              flex: 1,
+              padding: '8px 4px',
+              borderRadius: 12,
+              border: grams === preset ? '1.5px solid #F97316' : '1.5px solid #E7E5E4',
+              background: grams === preset ? '#FFF7ED' : 'white',
+              color: grams === preset ? '#F97316' : '#78716C',
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+              minHeight: 36,
+              transition: 'all 0.15s ease',
+            }}
           >
             {preset}g
           </button>
@@ -207,56 +267,91 @@ export function PortionSelector({
 
       {/* Porciones predefinidas del alimento si existen */}
       {servings.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <p className="text-xs text-stone-500 font-medium">Porciones habituales:</p>
-          <div className="flex flex-wrap gap-2">
+        <div>
+          <p style={{
+            fontSize: 11,
+            fontWeight: 500,
+            color: '#A8A29E',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            marginBottom: 10,
+          }}>
+            Porciones habituales
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {servings.map((serving) => (
               <button
                 key={serving.id}
                 onClick={() => setGrams(Math.round(serving.grams))}
-                className={`
-                  px-3 py-1.5 rounded-full text-xs font-medium border transition-colors
-                  min-h-[32px]
-                  ${
-                    grams === Math.round(serving.grams)
-                      ? 'bg-orange-500 text-white border-orange-500'
-                      : 'bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100'
-                  }
-                `}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: 99,
+                  border: grams === Math.round(serving.grams)
+                    ? '1px solid #F97316'
+                    : '1px solid #FED7AA',
+                  background: grams === Math.round(serving.grams) ? '#F97316' : '#FFF7ED',
+                  color: grams === Math.round(serving.grams) ? 'white' : '#F97316',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  minHeight: 32,
+                  transition: 'all 0.15s ease',
+                }}
               >
-                {serving.label} ({Math.round(serving.grams)}g)
+                {serving.label} · {Math.round(serving.grams)}g
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Tarjeta de previsualización de macros con gradiente naranja */}
-      <div className="rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 p-4 text-white">
-        <div className="text-center mb-3">
-          <span className="text-3xl font-bold">{macros.kcal}</span>
-          <span className="text-sm opacity-80 ml-1">kcal</span>
+      {/* Tarjeta de previsualización de macros */}
+      <div style={{
+        borderRadius: 20,
+        background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+        padding: '18px 20px',
+        color: 'white',
+        boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: 14 }}>
+          <div className="flex items-end justify-center gap-1.5">
+            <span style={{ fontSize: 44, fontWeight: 900, lineHeight: 1, letterSpacing: '-2px' }}>
+              {macros.kcal}
+            </span>
+            <span style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', marginBottom: 6 }}>kcal</span>
+          </div>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 2 }}>
+            para {grams}g de {food.food_name}
+          </p>
         </div>
-        <div className="flex justify-around text-center">
-          <div>
-            <p className="text-base font-semibold">{macros.protein}g</p>
-            <p className="text-xs opacity-70">Proteína</p>
-          </div>
-          <div>
-            <p className="text-base font-semibold">{macros.carbs}g</p>
-            <p className="text-xs opacity-70">Carbos</p>
-          </div>
-          <div>
-            <p className="text-base font-semibold">{macros.fat}g</p>
-            <p className="text-xs opacity-70">Grasa</p>
-          </div>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          paddingTop: 14,
+          borderTop: '1px solid rgba(255,255,255,0.2)',
+        }}>
+          {[
+            { label: 'Proteína', value: macros.protein },
+            { label: 'Carbos', value: macros.carbs },
+            { label: 'Grasa', value: macros.fat },
+          ].map((m) => (
+            <div key={m.label} style={{ textAlign: 'center' }}>
+              <p style={{ fontSize: 17, fontWeight: 800, lineHeight: 1 }}>{m.value}g</p>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 3 }}>{m.label}</p>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Mensaje de error de la mutación */}
       {mutation.isError && (
-        <div className="px-4 py-3 rounded-xl bg-amber-50 border border-amber-200">
-          <p className="text-sm text-amber-700">
+        <div style={{
+          padding: '12px 16px',
+          borderRadius: 12,
+          background: '#FFFBEB',
+          border: '1px solid #FDE68A',
+        }}>
+          <p style={{ fontSize: 13, color: '#92400E' }}>
             {mutation.error?.message ?? 'Error al añadir el alimento'}
           </p>
         </div>
@@ -266,23 +361,36 @@ export function PortionSelector({
       <button
         onClick={handleAdd}
         disabled={mutation.isPending}
-        className="
-          w-full py-3.5 rounded-2xl bg-orange-500 text-white
-          text-sm font-semibold
-          hover:bg-orange-600 transition-colors
-          min-h-[44px] disabled:opacity-70
-          flex items-center justify-center gap-2
-        "
+        style={{
+          width: '100%',
+          padding: '15px',
+          borderRadius: 16,
+          border: 'none',
+          background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+          color: 'white',
+          fontSize: 15,
+          fontWeight: 700,
+          cursor: mutation.isPending ? 'not-allowed' : 'pointer',
+          minHeight: 52,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          boxShadow: '0 4px 16px rgba(249,115,22,0.35)',
+          opacity: mutation.isPending ? 0.7 : 1,
+          transition: 'opacity 0.2s ease',
+        }}
       >
         {mutation.isPending ? (
           <>
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} />
             Añadiendo...
           </>
         ) : (
-          'Añadir'
+          `Añadir ${macros.kcal} kcal`
         )}
       </button>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }

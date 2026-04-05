@@ -3,7 +3,7 @@
 // Hoja de confirmación del resultado de la IA
 // Muestra los alimentos detectados, macros y botones de confirmar/descartar
 
-import { AlertTriangle, Loader2 } from 'lucide-react'
+import { AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react'
 import type { AiLogResponse } from '@/types/logging'
 
 interface AiConfirmSheetProps {
@@ -17,18 +17,21 @@ interface AiConfirmSheetProps {
 function confidenceBadge(confianza: number) {
   if (confianza >= 0.8) {
     return {
-      className: 'bg-emerald-100 text-emerald-700',
+      bg: '#D1FAE5',
+      color: '#065F46',
       label: `${Math.round(confianza * 100)}%`,
     }
   }
   if (confianza >= 0.5) {
     return {
-      className: 'bg-amber-100 text-amber-700',
+      bg: '#FEF3C7',
+      color: '#92400E',
       label: `${Math.round(confianza * 100)}%`,
     }
   }
   return {
-    className: 'bg-stone-100 text-stone-500',
+    bg: '#F5F4F3',
+    color: '#78716C',
     label: `${Math.round(confianza * 100)}%`,
   }
 }
@@ -42,132 +45,212 @@ export function AiConfirmSheet({
   const { plato_descripcion, origen_cultural, totales, alimentos, ambiguedades } = result
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Tarjeta de cabecera con gradiente naranja */}
-      <div className="rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 p-5 text-white">
-        <h2 className="text-lg font-bold leading-snug mb-1">{plato_descripcion}</h2>
-        {origen_cultural && (
-          <p className="text-sm opacity-80 mb-3">{origen_cultural}</p>
-        )}
-        <div className="flex items-end gap-1">
-          <span className="text-3xl font-bold">
-            {Math.round(totales.calorias)}
-          </span>
-          <span className="text-sm opacity-80 mb-0.5">kcal totales</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+      {/* Tarjeta de cabecera */}
+      <div style={{
+        borderRadius: 20,
+        background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+        padding: '20px 22px',
+        color: 'white',
+        boxShadow: '0 8px 32px rgba(249,115,22,0.35)',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Decorative circles */}
+        <div style={{
+          position: 'absolute',
+          top: -20,
+          right: -20,
+          width: 100,
+          height: 100,
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.1)',
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: -10,
+          right: 40,
+          width: 60,
+          height: 60,
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.07)',
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>
+            Plato detectado
+          </p>
+          <h2 style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.3, marginBottom: 4 }}>
+            {plato_descripcion}
+          </h2>
+          {origen_cultural && (
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', marginBottom: 16 }}>
+              {origen_cultural}
+            </p>
+          )}
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'space-between',
+            paddingTop: 14,
+            borderTop: '1px solid rgba(255,255,255,0.2)',
+          }}>
+            <div>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginBottom: 2 }}>Total calorías</p>
+              <div className="flex items-end gap-1.5">
+                <span style={{ fontSize: 38, fontWeight: 900, lineHeight: 1, letterSpacing: '-1.5px' }}>
+                  {Math.round(totales.calorias)}
+                </span>
+                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginBottom: 4 }}>kcal</span>
+              </div>
+            </div>
+            {/* Macros en mini-pills */}
+            <div style={{ display: 'flex', gap: 6 }}>
+              {[
+                { label: 'P', value: totales.proteina_g },
+                { label: 'C', value: totales.carbohidratos_g },
+                { label: 'G', value: totales.grasa_g },
+              ].map((m) => (
+                <div key={m.label} style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  borderRadius: 10,
+                  padding: '5px 8px',
+                  textAlign: 'center',
+                  backdropFilter: 'blur(4px)',
+                }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, lineHeight: 1 }}>{m.value.toFixed(0)}g</p>
+                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{m.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Banner de ambigüedades si las hay */}
+      {/* Banner de ambigüedades */}
       {ambiguedades && ambiguedades.length > 0 && (
-        <div className="flex gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200">
-          <AlertTriangle
-            className="w-4 h-4 text-amber-500 shrink-0 mt-0.5"
-            strokeWidth={2}
-          />
-          <p className="text-sm text-amber-700 leading-snug">
+        <div style={{
+          display: 'flex',
+          gap: 12,
+          padding: '12px 14px',
+          borderRadius: 14,
+          background: '#FFFBEB',
+          border: '1px solid #FDE68A',
+        }}>
+          <AlertTriangle style={{ width: 16, height: 16, color: '#F59E0B', flexShrink: 0, marginTop: 2 }} strokeWidth={2} />
+          <p style={{ fontSize: 13, color: '#92400E', lineHeight: 1.5 }}>
             {ambiguedades.join(' · ')}
           </p>
         </div>
       )}
 
       {/* Lista de alimentos detectados */}
-      <div className="flex flex-col gap-2">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p style={{
+          fontSize: 11,
+          fontWeight: 500,
+          color: '#A8A29E',
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          paddingLeft: 2,
+        }}>
+          Ingredientes detectados
+        </p>
         {alimentos.map((alimento, idx) => {
           const badge = confidenceBadge(alimento.confianza)
           return (
             <div
               key={idx}
-              className="bg-white border border-stone-200 rounded-2xl p-4 flex flex-col gap-2"
+              style={{
+                background: 'white',
+                border: '1px solid #E7E5E4',
+                borderRadius: 16,
+                padding: '14px 16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+              }}
             >
-              {/* Nombre, cantidad y badge de confianza */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-stone-800 leading-snug">
+              {/* Nombre, cantidad y badge */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#1C1917', lineHeight: 1.3 }}>
                     {alimento.nombre}
                   </p>
-                  <p className="text-xs text-stone-400">
+                  <p style={{ fontSize: 12, color: '#A8A29E', marginTop: 2 }}>
                     {alimento.cantidad_gramos}g
                   </p>
                 </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span className="text-sm font-bold text-stone-800">
-                    {Math.round(alimento.calorias_estimadas)} kcal
-                  </span>
-                  <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${badge.className}`}
-                  >
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
+                  <div className="flex items-baseline gap-1">
+                    <span style={{ fontSize: 16, fontWeight: 800, color: '#F97316' }}>
+                      {Math.round(alimento.calorias_estimadas)}
+                    </span>
+                    <span style={{ fontSize: 11, color: '#A8A29E' }}>kcal</span>
+                  </div>
+                  <span style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    borderRadius: 99,
+                    background: badge.bg,
+                    color: badge.color,
+                  }}>
                     {badge.label}
                   </span>
                 </div>
               </div>
 
-              {/* Macros del alimento en una fila */}
-              <div className="flex gap-3 pt-1 border-t border-stone-100">
-                <span className="text-xs text-stone-500">
-                  P: <strong>{alimento.proteina_g.toFixed(1)}g</strong>
-                </span>
-                <span className="text-xs text-stone-500">
-                  C: <strong>{alimento.carbohidratos_g.toFixed(1)}g</strong>
-                </span>
-                <span className="text-xs text-stone-500">
-                  G: <strong>{alimento.grasa_g.toFixed(1)}g</strong>
-                </span>
+              {/* Macros del alimento */}
+              <div style={{
+                display: 'flex',
+                gap: 12,
+                paddingTop: 10,
+                borderTop: '1px solid #F5F4F3',
+              }}>
+                {[
+                  { label: 'Proteína', value: alimento.proteina_g },
+                  { label: 'Carbos', value: alimento.carbohidratos_g },
+                  { label: 'Grasa', value: alimento.grasa_g },
+                ].map((m) => (
+                  <div key={m.label} className="flex items-center gap-1">
+                    <span style={{ fontSize: 12, color: '#78716C' }}>{m.label}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#44403C' }}>{m.value.toFixed(1)}g</span>
+                  </div>
+                ))}
               </div>
             </div>
           )
         })}
       </div>
 
-      {/* Fila de totales */}
-      <div className="bg-stone-100 rounded-2xl p-4">
-        <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">
-          Totales
-        </p>
-        <div className="flex justify-between">
-          <div className="text-center">
-            <p className="text-base font-bold text-stone-800">
-              {Math.round(totales.calorias)}
-            </p>
-            <p className="text-xs text-stone-400">kcal</p>
-          </div>
-          <div className="text-center">
-            <p className="text-base font-bold text-stone-800">
-              {totales.proteina_g.toFixed(1)}g
-            </p>
-            <p className="text-xs text-stone-400">Prot.</p>
-          </div>
-          <div className="text-center">
-            <p className="text-base font-bold text-stone-800">
-              {totales.carbohidratos_g.toFixed(1)}g
-            </p>
-            <p className="text-xs text-stone-400">Carbs</p>
-          </div>
-          <div className="text-center">
-            <p className="text-base font-bold text-stone-800">
-              {totales.grasa_g.toFixed(1)}g
-            </p>
-            <p className="text-xs text-stone-400">Grasa</p>
-          </div>
-        </div>
-      </div>
-
       {/* Botones de acción */}
-      <div className="flex gap-3 pb-2">
-        {/* Botón de descartar */}
+      <div style={{ display: 'flex', gap: 10, paddingBottom: 4 }}>
         <button
           onClick={onDiscard}
           disabled={isDiscarding}
-          className="
-            flex-1 py-3.5 rounded-2xl border-2 border-stone-300
-            text-stone-600 text-sm font-semibold
-            hover:bg-stone-50 transition-colors
-            min-h-[44px] disabled:opacity-60
-            flex items-center justify-center gap-2
-          "
+          style={{
+            flex: 1,
+            padding: '14px',
+            borderRadius: 16,
+            border: '1.5px solid #E7E5E4',
+            background: 'white',
+            color: '#78716C',
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: 'pointer',
+            minHeight: 52,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            opacity: isDiscarding ? 0.6 : 1,
+          }}
         >
           {isDiscarding ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />
               Descartando...
             </>
           ) : (
@@ -175,20 +258,33 @@ export function AiConfirmSheet({
           )}
         </button>
 
-        {/* Botón de confirmar */}
         <button
           onClick={onConfirm}
           disabled={isDiscarding}
-          className="
-            flex-[2] py-3.5 rounded-2xl bg-orange-500 text-white
-            text-sm font-semibold
-            hover:bg-orange-600 transition-colors
-            min-h-[44px] disabled:opacity-70
-          "
+          style={{
+            flex: 2,
+            padding: '14px',
+            borderRadius: 16,
+            border: 'none',
+            background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+            color: 'white',
+            fontSize: 15,
+            fontWeight: 700,
+            cursor: 'pointer',
+            minHeight: 52,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            boxShadow: '0 4px 16px rgba(249,115,22,0.35)',
+            opacity: isDiscarding ? 0.7 : 1,
+          }}
         >
+          <CheckCircle2 style={{ width: 18, height: 18 }} />
           Confirmar y guardar
         </button>
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }

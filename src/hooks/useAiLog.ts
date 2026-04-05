@@ -7,6 +7,7 @@ import { useMutation } from '@tanstack/react-query'
 import type { MealType } from '@/types/database'
 import type { AiLogResponse } from '@/types/logging'
 import { uploadPhoto } from '@/hooks/usePhotoUpload'
+import { createClient } from '@/lib/supabase/client'
 
 interface AiLogParams {
   method: 'photo' | 'text'
@@ -15,6 +16,7 @@ interface AiLogParams {
   logDate: string
   textPayload?: string
   photoFile?: File
+  countryCode?: string
 }
 
 // Convierte un Blob a string base64
@@ -41,6 +43,7 @@ async function callAiLog(params: AiLogParams): Promise<AiLogResponse> {
     logDate,
     textPayload,
     photoFile,
+    countryCode = 'ES',
   } = params
 
   let payload = ''
@@ -65,6 +68,11 @@ async function callAiLog(params: AiLogParams): Promise<AiLogResponse> {
     payload = textPayload.trim()
   }
 
+  // Obtener el JWT del usuario autenticado (no el anon key)
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('No autenticado. Por favor inicia sesión.')
+
   // Configura el timeout de 25 segundos
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 25_000)
@@ -75,15 +83,14 @@ async function callAiLog(params: AiLogParams): Promise<AiLogResponse> {
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           method,
           payload,
-          user_id: userId,
           meal_type: mealType,
-          country_code: 'ES',
+          country_code: countryCode,
           photo_storage_path: photoStoragePath,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           log_date: logDate,

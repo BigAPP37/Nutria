@@ -336,44 +336,49 @@ serve(async (req: Request) => {
     auth: { persistSession: false },
   })
 
-  // Verificar autenticación: JWT de usuario O service role (cron)
+  // Verificar autenticación — se requiere siempre un Authorization header válido
   const authHeader = req.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({ error: 'No autorizado' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    })
+  }
+
+  const token = authHeader.slice(7)
   let requestUserId: string | null = null
+  let isCronRequest = false
 
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.replace('Bearer ', '')
-
-    // Intentar verificar como JWT de usuario
+  if (token === SUPABASE_SERVICE_ROLE_KEY) {
+    // Service role key → modo cron autorizado
+    isCronRequest = true
+  } else {
+    // Verificar como JWT de usuario autenticado
     const { data: userData } = await supabase.auth.getUser(token)
-    if (userData?.user) {
-      requestUserId = userData.user.id
+    if (!userData?.user) {
+      return new Response(JSON.stringify({ error: 'Token inválido o expirado' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      })
     }
-    // Si el token es el service role key, requestUserId queda null → modo cron
+    requestUserId = userData.user.id
   }
 
-  // Parsear body para obtener user_id específico
-  let bodyUserId: string | null = null
-  try {
-    const body = await req.json()
-    bodyUserId = body?.user_id || null
-  } catch {
-    // Body vacío o inválido — modo cron
-  }
-
-  // Determinar modo de operación
-  const targetUserId = requestUserId || bodyUserId
+  // En modo usuario, el user_id objetivo es el del JWT (ignorar body)
+  // En modo cron, procesar todos los usuarios activos
+  const targetUserId = requestUserId
 
   let processed = 0
   let totalFlagsCreated = 0
   let totalSkipped = 0
 
   if (targetUserId) {
-    // Modo usuario específico
+    // Modo usuario: procesar solo el usuario autenticado
     const { flagsCreated, skipped } = await detectFlagsForUser(supabase, targetUserId)
     processed = 1
     totalFlagsCreated = flagsCreated
     totalSkipped = skipped
-  } else {
+  } else if (isCronRequest) {
     // Modo cron: procesar todos los usuarios activos en los últimos 30 días
     const cutoff30 = getNDaysAgoISO(30)
 

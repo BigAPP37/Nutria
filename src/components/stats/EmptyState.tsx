@@ -12,13 +12,55 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, message, actionLabel, onAction }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-8">
-      {icon ?? <BarChart2 className="w-10 h-10 text-stone-300" />}
-      <p className="text-sm text-stone-400 text-center max-w-[200px]">{message}</p>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+      padding: '32px 16px',
+    }}>
+      {/* Icono en contenedor redondeado */}
+      <div style={{
+        width: 64,
+        height: 64,
+        borderRadius: 20,
+        background: '#F5F4F3',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        {icon ?? <BarChart2 style={{ width: 28, height: 28, color: '#C4B9B3' }} />}
+      </div>
+
+      <p style={{
+        fontSize: 14,
+        color: '#78716C',
+        textAlign: 'center',
+        maxWidth: 220,
+        lineHeight: 1.5,
+        fontWeight: 500,
+      }}>
+        {message}
+      </p>
+
       {actionLabel && onAction && (
         <button
           onClick={onAction}
-          className="bg-orange-500 text-white rounded-xl px-4 py-2 text-sm font-medium active:opacity-80 transition-opacity"
+          style={{
+            padding: '10px 24px',
+            borderRadius: 12,
+            border: 'none',
+            background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+            color: 'white',
+            fontSize: 14,
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(249,115,22,0.3)',
+            transition: 'opacity 0.15s ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
         >
           {actionLabel}
         </button>

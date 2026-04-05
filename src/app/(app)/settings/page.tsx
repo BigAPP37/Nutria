@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, LogOut, Scale, User, Target, ChevronRight, ExternalLink } from 'lucide-react'
+import { ArrowLeft, LogOut, Scale, Target, ChevronRight, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
+import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useProfile } from '@/hooks/useProfile'
+import { useTdeeState } from '@/hooks/useTdeeState'
 import type { UserProfile } from '@/types/database'
 
 // Monetización Premium
@@ -71,6 +73,7 @@ function Row({
 
 export default function SettingsPage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const { data: profile, refetch } = useProfile()
 
   const [userId, setUserId] = useState<string | null>(null)
@@ -99,6 +102,17 @@ export default function SettingsPage() {
     })
   }, [router])
 
+  const { data: tdeeState } = useTdeeState(userId)
+
+  // Pre-poblar inputs de objetivos cuando carguen los datos del usuario
+  useEffect(() => {
+    if (!tdeeState) return
+    setCalorieGoal(String(tdeeState.goal_kcal))
+    setProteinGoal(String(tdeeState.macro_targets.protein_g))
+    setCarbsGoal(String(tdeeState.macro_targets.carbs_g))
+    setFatGoal(String(tdeeState.macro_targets.fat_g))
+  }, [tdeeState])
+
   // Estado Premium del usuario — sincroniza el store global al cargar
   const { data: premiumData } = usePremiumStatus(userId)
   const { isPremium } = usePremiumStore()
@@ -111,12 +125,23 @@ export default function SettingsPage() {
   }
 
   async function handleSaveWeight() {
-    const kg = parseFloat(weightInput)
-    if (!kg || kg < 20 || kg > 300) {
-      setWeightError('Introduce un peso válido (20–300 kg)')
-      return
+    const useLb = profile?.unit_weight === 'lb'
+    const value = parseFloat(weightInput)
+
+    if (useLb) {
+      if (!value || value < 44 || value > 660) {
+        setWeightError('Introduce un peso válido (44–660 lb)')
+        return
+      }
+    } else {
+      if (!value || value < 20 || value > 300) {
+        setWeightError('Introduce un peso válido (20–300 kg)')
+        return
+      }
     }
     if (!userId) return
+
+    const weight_kg = useLb ? value * 0.453592 : value
 
     setWeightError(null)
     setIsSavingWeight(true)
@@ -124,7 +149,7 @@ export default function SettingsPage() {
       const supabase = createClient()
       const { error } = await supabase.from('weight_entries').insert({
         user_id:     userId,
-        weight_kg:   kg,
+        weight_kg:   Math.round(weight_kg * 100) / 100,
         recorded_at: new Date().toISOString(),
         notes:       null,
       })
@@ -136,13 +161,26 @@ export default function SettingsPage() {
     }
   }
 
-  // Goals are stored locally for now (no goals table yet)
-  function handleSaveGoals() {
+  async function handleSaveGoals() {
+    if (!userId) return
     setIsSavingGoals(true)
-    setTimeout(() => {
-      setIsSavingGoals(false)
+    try {
+      const supabase = createClient()
+      await supabase.from('user_tdee_state').upsert(
+        {
+          user_id: userId,
+          goal_kcal: parseInt(calorieGoal, 10),
+          macro_protein_g: parseInt(proteinGoal, 10),
+          macro_carbs_g: parseInt(carbsGoal, 10),
+          macro_fat_g: parseInt(fatGoal, 10),
+        },
+        { onConflict: 'user_id' }
+      )
+      await queryClient.invalidateQueries({ queryKey: ['tdeeState', userId] })
       setShowGoalsModal(false)
-    }, 300)
+    } finally {
+      setIsSavingGoals(false)
+    }
   }
 
   return (
@@ -256,15 +294,17 @@ export default function SettingsPage() {
               <input
                 autoFocus
                 type="number"
-                min="20"
-                max="300"
+                min={profile?.unit_weight === 'lb' ? '44' : '20'}
+                max={profile?.unit_weight === 'lb' ? '660' : '300'}
                 step="0.1"
                 value={weightInput}
                 onChange={(e) => setWeightInput(e.target.value)}
-                placeholder="70.5"
+                placeholder={profile?.unit_weight === 'lb' ? '155' : '70.5'}
                 className="w-full rounded-xl border border-stone-200 px-4 py-3 text-2xl font-bold text-stone-900 text-center placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 text-sm">kg</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 text-sm">
+                {profile?.unit_weight === 'lb' ? 'lb' : 'kg'}
+              </span>
             </div>
 
             {weightError && (

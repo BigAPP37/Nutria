@@ -9,6 +9,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { getQueryClient } from '@/lib/queryClient'
 import { createClient } from '@/lib/supabase/client'
 import { useAuthStore } from '@/stores/authStore'
+import { BottomNav } from '@/components/ui/BottomNav'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -48,8 +49,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-[#FAFAF9]">
+      <div className="min-h-screen bg-[#FAFAF9] pb-[72px]">
         {children}
+        <BottomNav />
       </div>
     </QueryClientProvider>
   )

@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Scale, Ruler, User, Heart, ChevronDown, Eye, EyeOff } from 'lucide-react'
+import { Scale, Ruler, User, Heart, ChevronDown, Eye, EyeOff, Camera, BarChart2, Sparkles } from 'lucide-react'
 
 import { OnboardingLayout } from '@/components/onboarding/OnboardingLayout'
 import { SingleSelectQuestion } from '@/components/onboarding/SingleSelectQuestion'
@@ -26,10 +26,21 @@ export default function OnboardingPage() {
   const {
     currentScreen,
     data,
-    nextScreen,
-    prevScreen,
+    nextScreen: _nextScreen,
+    prevScreen: _prevScreen,
     updateData,
   } = useOnboardingStore()
+
+  const [isTransitioning, setIsTransitioning] = useState(false)
+
+  function nextScreen() {
+    setIsTransitioning(true)
+    setTimeout(() => { _nextScreen(); setIsTransitioning(false) }, 220)
+  }
+  function prevScreen() {
+    setIsTransitioning(true)
+    setTimeout(() => { _prevScreen(); setIsTransitioning(false) }, 220)
+  }
 
   // Estado local para errores de validación del formulario de perfil físico
   const [profileErrors, setProfileErrors] = useState<Record<string, string>>({})
@@ -42,17 +53,48 @@ export default function OnboardingPage() {
   // Estado local para el mensaje de soporte TCA
   const [showTcaSupportMessage, setShowTcaSupportMessage] = useState(false)
 
+  // Estado para la animación de progreso de la pantalla "ready"
+  const [planProgress, setPlanProgress] = useState(0)
+  const [planPhase, setPlanPhase] = useState<'loading' | 'celebration' | 'ready'>('loading')
+  const [ringBurst, setRingBurst] = useState(false)
+
   // Estado local para la pantalla de registro
   const [registerEmail, setRegisterEmail] = useState('')
   const [registerPassword, setRegisterPassword] = useState('')
   const [registerShowPassword, setRegisterShowPassword] = useState(false)
   const [registerError, setRegisterError] = useState<string | null>(null)
   const [isRegistering, setIsRegistering] = useState(false)
+  const [registerCountdown, setRegisterCountdown] = useState(600) // 10 min
   // Ref para evitar doble submit (handleEmailRegister + onAuthStateChange simultáneos)
   const isSubmittingRef = useRef(false)
   // Estado de carga OAuth — true mientras Supabase completa el code exchange tras redirect
   const [isOAuthLoading, setIsOAuthLoading] = useState(false)
   const [oauthError, setOauthError] = useState<string | null>(null)
+
+  // Redirigir al dashboard si el usuario ya completó el onboarding
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase
+        .from('user_profiles')
+        .select('onboarding_completed')
+        .eq('id', user.id)
+        .maybeSingle()
+        .then(({ data: profile }) => {
+          if (profile?.onboarding_completed) router.replace('/dashboard')
+        })
+    })
+  }, [router]) // eslint-disable-line
+
+  // Auto-detectar país desde navigator.language al montar (una sola vez)
+  useEffect(() => {
+    if (data.country) return
+    const lang = navigator.language ?? ''
+    const parts = lang.split('-')
+    const code = parts.length > 1 ? parts[parts.length - 1].toUpperCase() : ''
+    if (code.length === 2) updateData({ country: code })
+  }, []) // eslint-disable-line
 
   // Calcular la secuencia dinámica y la posición actual
   const sequence = getScreenSequence(data)
@@ -300,6 +342,46 @@ export default function OnboardingPage() {
     }
   }, [currentScreen]) // eslint-disable-line
 
+  // ─── Animación de progreso — pantalla "ready" ─────────────────────────
+  useEffect(() => {
+    if (currentScreen !== 'ready') return
+    setPlanProgress(0)
+    setPlanPhase('loading')
+    setRingBurst(false)
+    let rafId: number
+    let start: number | null = null
+    const duration = 4000
+    function animate(ts: number) {
+      if (!start) start = ts
+      const t = Math.min(1, (ts - start) / duration)
+      // ease-out cubic: desacelera al llegar al 100%
+      const easedT = 1 - Math.pow(1 - t, 3)
+      const progress = Math.min(100, Math.round(easedT * 100))
+      setPlanProgress(progress)
+      if (t < 1) {
+        rafId = requestAnimationFrame(animate)
+      } else {
+        setRingBurst(true)
+        setTimeout(() => {
+          setPlanPhase('celebration')
+          setTimeout(() => setPlanPhase('ready'), 2200)
+        }, 600)
+      }
+    }
+    rafId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(rafId)
+  }, [currentScreen])
+
+  // ─── Countdown en pantalla de registro ───────────────────────────────────
+  useEffect(() => {
+    if (currentScreen !== 'register') return
+    setRegisterCountdown(600)
+    const interval = setInterval(() => {
+      setRegisterCountdown((prev) => (prev > 0 ? prev - 1 : 0))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [currentScreen])
+
   // ─── Validación: pantalla 5b — fecha + sexo ──────────────────────────────
 
   function handleBodyAboutNext() {
@@ -371,7 +453,26 @@ export default function OnboardingPage() {
     let height_cm = data.height_cm
     if (data.weight_unit === 'lb' && data.weight_lb) weight_kg = lbsToKg(data.weight_lb)
     if (data.height_unit === 'ft') height_cm = ftInToCm(data.height_ft ?? 0, data.height_in ?? 0)
-    updateData({ weight_kg, height_cm })
+
+    // Convertir peso objetivo de lb a kg si corresponde
+    let target_weight_kg = data.target_weight_kg
+    if (data.weight_unit === 'lb' && data.target_weight_kg) {
+      target_weight_kg = lbsToKg(data.target_weight_kg)
+    }
+
+    // Validar coherencia entre peso actual y peso objetivo
+    if (target_weight_kg && weight_kg) {
+      if (data.goal === 'lose_weight' && target_weight_kg >= weight_kg) {
+        setProfileErrors({ target_weight: 'Tu peso objetivo debe ser menor que tu peso actual para perder peso.' })
+        return
+      }
+      if (data.goal === 'gain_muscle' && target_weight_kg <= weight_kg) {
+        setProfileErrors({ target_weight: 'Tu peso objetivo debe ser mayor que tu peso actual para ganar músculo.' })
+        return
+      }
+    }
+
+    updateData({ weight_kg, height_cm, target_weight_kg })
     nextScreen()
   }
 
@@ -397,19 +498,77 @@ export default function OnboardingPage() {
       // ── 1. Bienvenida ─────────────────────────────────────────────────────
       case 'welcome':
         return (
-          <EducationalScreen
-            title="Bienvenido a Nutria"
-            text={nutiMessages.onboarding.welcome[0].text}
-            buttonText="¡Empezamos!"
-            onNext={nextScreen}
-            pose="wave"
-          />
+          <div className="flex-1 flex flex-col justify-between py-2">
+            {/* Hero */}
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-2">
+              {/* Nuti + eyebrow */}
+              <div className="flex flex-col items-center gap-1">
+                <NutriaImage pose="wave" size={120} maxWidth="120px" priority withGlow />
+                <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#F97316' }}>
+                  Tu asistente de nutrición
+                </p>
+              </div>
+
+              {/* Headline principal */}
+              <div className="space-y-1.5">
+                <h1
+                  className="font-black leading-none"
+                  style={{ color: '#1C1917', fontSize: 34, fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.5px' }}
+                >
+                  Come mejor.<br />
+                  <span style={{ color: '#F97316' }}>Sin obsesiones.</span>
+                </h1>
+                <p className="text-sm leading-relaxed max-w-xs mx-auto" style={{ color: '#78716C' }}>
+                  Tu plan personalizado, adaptado a tu estilo de vida real.
+                </p>
+              </div>
+
+              {/* Features */}
+              <div className="flex flex-col gap-2 w-full">
+                {[
+                  { icon: Camera,    label: 'Escanea tu plato con IA',        sub: 'Instantáneo y preciso' },
+                  { icon: BarChart2, label: 'Seguimiento sin complicaciones',  sub: 'Fácil de mantener' },
+                  { icon: Sparkles,  label: 'Sin restricciones extremas',      sub: 'Cambios que duran' },
+                ].map(({ icon: Icon, label, sub }) => (
+                  <div
+                    key={label}
+                    className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-left"
+                    style={{ background: '#F5F5F4', border: '1px solid #E7E5E4' }}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: '#FFF7ED' }}
+                    >
+                      <Icon className="w-4 h-4" style={{ color: '#F97316' }} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: '#1C1917' }}>{label}</p>
+                      <p className="text-xs" style={{ color: '#A8A29E' }}>{sub}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* CTA */}
+            <button
+              type="button"
+              onClick={nextScreen}
+              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 mt-3"
+              style={{
+                background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
+                boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
+              }}
+            >
+              ¡Empezamos!
+            </button>
+          </div>
         )
 
       // ── 2. Objetivo principal ─────────────────────────────────────────────
       case 'goal':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <SingleSelectQuestion
                 question="¿Cuál es tu objetivo principal?"
@@ -454,7 +613,7 @@ export default function OnboardingPage() {
       // ── 3. Experiencia con la pérdida de peso (solo si goal=lose_weight) ──
       case 'weight-experience':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <SingleSelectQuestion
                 question="¿Tienes experiencia con la pérdida de peso?"
@@ -487,7 +646,7 @@ export default function OnboardingPage() {
       // ── 4. Historial de dietas (condicional) ──────────────────────────────
       case 'past-diets':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <MultiSelectQuestion
                 question="¿Has seguido alguna de estas dietas?"
@@ -523,20 +682,20 @@ export default function OnboardingPage() {
       // ── 5a. Nombre ────────────────────────────────────────────────────────
       case 'body-name':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               {/* Nuti saludando — Tamaño aumentado */}
               <div className="flex justify-center">
                 <NutriaImage pose="wave" size="100%" maxWidth="400px" priority />
               </div>
 
-              <div>
-                <h2 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>¿Cómo te llamamos?</h2>
-                <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>Te llamaremos así dentro de la app</p>
+              <div className="text-center">
+                <h2 className="font-bold leading-tight" style={{ color: '#1C1917', fontSize: 26, fontWeight: 800, lineHeight: 1.15 }}>¿Cómo te llamamos?</h2>
+                <p className="text-sm mt-1" style={{ color: '#78716C' }}>Te llamaremos así dentro de la app</p>
               </div>
 
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#A8A29E' }}>
                   <User className="w-4 h-4" />
                 </span>
                 <input
@@ -545,10 +704,10 @@ export default function OnboardingPage() {
                   value={data.name}
                   onChange={(e) => updateData({ name: e.target.value })}
                   autoComplete="given-name"
-                  className="w-full pl-10 pr-4 py-3.5 rounded-xl text-white placeholder:text-white/25 outline-none transition-all"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-                  onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)'; e.currentTarget.style.background='rgba(255,255,255,0.08)' }}
-                  onBlur={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'; e.currentTarget.style.background='rgba(255,255,255,0.06)' }}
+                  className="w-full pl-10 pr-4 py-3.5 rounded-xl text-stone-900 placeholder:text-stone-400 outline-none transition-all"
+                  style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
+                  onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)' }}
+                  onBlur={e => { e.currentTarget.style.borderColor='#E7E5E4' }}
                 />
               </div>
 
@@ -577,16 +736,17 @@ export default function OnboardingPage() {
       // ── 5b. Fecha de nacimiento + sexo ────────────────────────────────────
       case 'body-about':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
-            <div className="space-y-5">
-            <div>
-              <h2 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>Cuéntanos sobre ti</h2>
-              <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>Calculamos tu metabolismo con estos datos</p>
+          <div className="flex-1 flex flex-col justify-between py-3">
+            <div className="space-y-4">
+            <div className="text-center">
+              <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#F97316' }}>Tu perfil</p>
+              <h2 className="font-bold leading-tight mt-0.5" style={{ color: '#1C1917', fontSize: 26, fontWeight: 800, lineHeight: 1.15 }}>Cuéntanos sobre ti</h2>
+              <p className="text-sm mt-1" style={{ color: '#78716C' }}>Calculamos tu metabolismo con estos datos</p>
             </div>
 
             {/* Fecha de nacimiento — 3 selects estilizados */}
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <label className="block text-sm font-medium mb-2" style={{ color: '#78716C' }}>
                 Fecha de nacimiento
               </label>
               <div className="flex gap-2">
@@ -595,8 +755,8 @@ export default function OnboardingPage() {
                   <select
                     value={birthDay}
                     onChange={(e) => setBirthDay(e.target.value)}
-                    className="flex-1 px-3 py-3 rounded-xl text-white outline-none transition-all appearance-none text-center w-full"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    className="flex-1 px-3 py-2 rounded-xl text-stone-900 outline-none transition-all appearance-none text-center w-full text-sm"
+                    style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
                   >
                     <option value="">Día</option>
                     {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
@@ -605,7 +765,7 @@ export default function OnboardingPage() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(255,255,255,0.3)' }} />
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: '#A8A29E' }} />
                 </div>
 
                 {/* Mes */}
@@ -613,8 +773,8 @@ export default function OnboardingPage() {
                   <select
                     value={birthMonth}
                     onChange={(e) => setBirthMonth(e.target.value)}
-                    className="flex-1 px-3 py-3 rounded-xl text-white outline-none transition-all appearance-none text-center w-full"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    className="flex-1 px-3 py-2 rounded-xl text-stone-900 outline-none transition-all appearance-none text-center w-full text-sm"
+                    style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
                   >
                     <option value="">Mes</option>
                     {[
@@ -624,7 +784,7 @@ export default function OnboardingPage() {
                       <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(255,255,255,0.3)' }} />
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: '#A8A29E' }} />
                 </div>
 
                 {/* Año */}
@@ -632,8 +792,8 @@ export default function OnboardingPage() {
                   <select
                     value={birthYear}
                     onChange={(e) => setBirthYear(e.target.value)}
-                    className="flex-1 px-3 py-3 rounded-xl text-white outline-none transition-all appearance-none text-center w-full"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    className="flex-1 px-3 py-2 rounded-xl text-stone-900 outline-none transition-all appearance-none text-center w-full text-sm"
+                    style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
                   >
                     <option value="">Año</option>
                     {Array.from(
@@ -643,7 +803,7 @@ export default function OnboardingPage() {
                       <option key={y} value={String(y)}>{y}</option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(255,255,255,0.3)' }} />
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: '#A8A29E' }} />
                 </div>
               </div>
 
@@ -654,38 +814,38 @@ export default function OnboardingPage() {
 
             {/* Sexo biológico */}
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'rgba(255,255,255,0.45)' }}>Sexo biológico</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: '#78716C' }}>Sexo biológico</label>
               <div className="grid grid-cols-2 gap-3 w-full">
                 {/* Hombre */}
                 <button
                   type="button"
                   onClick={() => updateData({ biological_sex: 'male' })}
-                  className="flex flex-col items-center justify-center gap-3 p-5 rounded-2xl transition-all duration-200 active:scale-95 min-h-[110px]"
+                  className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl transition-all duration-200 active:scale-95 min-h-[76px]"
                   style={data.biological_sex === 'male' ? {
-                    background: 'rgba(249,115,22,0.12)',
+                    background: '#FFF7ED',
                     border: '1.5px solid rgba(249,115,22,0.5)',
                     boxShadow: '0 0 20px rgba(249,115,22,0.15)',
                   } : {
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: '#FFFFFF',
+                    border: '1px solid #E7E5E4',
                   }}
                 >
-                  <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                  <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
                     <circle cx="15" cy="21" r="9"
-                            stroke={data.biological_sex === 'male' ? '#F97316' : 'rgba(255,255,255,0.5)'}
+                            stroke={data.biological_sex === 'male' ? '#F97316' : '#C8C5C1'}
                             strokeWidth="2.5" fill="none"/>
                     <line x1="21.5" y1="14.5" x2="29" y2="7"
-                          stroke={data.biological_sex === 'male' ? '#F97316' : 'rgba(255,255,255,0.5)'}
+                          stroke={data.biological_sex === 'male' ? '#F97316' : '#C8C5C1'}
                           strokeWidth="2.5" strokeLinecap="round"/>
                     <line x1="23" y1="7" x2="29" y2="7"
-                          stroke={data.biological_sex === 'male' ? '#F97316' : 'rgba(255,255,255,0.5)'}
+                          stroke={data.biological_sex === 'male' ? '#F97316' : '#C8C5C1'}
                           strokeWidth="2.5" strokeLinecap="round"/>
                     <line x1="29" y1="7" x2="29" y2="13"
-                          stroke={data.biological_sex === 'male' ? '#F97316' : 'rgba(255,255,255,0.5)'}
+                          stroke={data.biological_sex === 'male' ? '#F97316' : '#C8C5C1'}
                           strokeWidth="2.5" strokeLinecap="round"/>
                   </svg>
                   <span className="text-sm font-medium"
-                        style={{ color: data.biological_sex === 'male' ? '#F97316' : 'rgba(255,255,255,0.7)' }}>
+                        style={{ color: data.biological_sex === 'male' ? '#F97316' : '#44403C' }}>
                     Hombre
                   </span>
                 </button>
@@ -694,34 +854,34 @@ export default function OnboardingPage() {
                 <button
                   type="button"
                   onClick={() => updateData({ biological_sex: 'female' })}
-                  className="flex flex-col items-center justify-center gap-3 p-5 rounded-2xl transition-all duration-200 active:scale-95 min-h-[110px]"
+                  className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl transition-all duration-200 active:scale-95 min-h-[76px]"
                   style={data.biological_sex === 'female' ? {
-                    background: 'rgba(249,115,22,0.12)',
+                    background: '#FFF7ED',
                     border: '1.5px solid rgba(249,115,22,0.5)',
                     boxShadow: '0 0 20px rgba(249,115,22,0.15)',
                   } : {
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: '#FFFFFF',
+                    border: '1px solid #E7E5E4',
                   }}
                 >
-                  <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                  <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
                     <circle cx="18" cy="14" r="9"
-                            stroke={data.biological_sex === 'female' ? '#F97316' : 'rgba(255,255,255,0.5)'}
+                            stroke={data.biological_sex === 'female' ? '#F97316' : '#C8C5C1'}
                             strokeWidth="2.5" fill="none"/>
                     <line x1="18" y1="23" x2="18" y2="31"
-                          stroke={data.biological_sex === 'female' ? '#F97316' : 'rgba(255,255,255,0.5)'}
+                          stroke={data.biological_sex === 'female' ? '#F97316' : '#C8C5C1'}
                           strokeWidth="2.5" strokeLinecap="round"/>
                     <line x1="13" y1="27" x2="23" y2="27"
-                          stroke={data.biological_sex === 'female' ? '#F97316' : 'rgba(255,255,255,0.5)'}
+                          stroke={data.biological_sex === 'female' ? '#F97316' : '#C8C5C1'}
                           strokeWidth="2.5" strokeLinecap="round"/>
                   </svg>
                   <span className="text-sm font-medium"
-                        style={{ color: data.biological_sex === 'female' ? '#F97316' : 'rgba(255,255,255,0.7)' }}>
+                        style={{ color: data.biological_sex === 'female' ? '#F97316' : '#44403C' }}>
                     Mujer
                   </span>
                 </button>
               </div>
-              <p className="mt-2 text-xs text-center" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              <p className="mt-2 text-xs text-center" style={{ color: '#A8A29E' }}>
                 Solo para calcular tu metabolismo basal
               </p>
               {profileErrors.biological_sex && (
@@ -747,20 +907,21 @@ export default function OnboardingPage() {
       // ── 5c. Peso, altura y peso objetivo ──────────────────────────────────
       case 'body-measurements':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
-            <div className="space-y-5">
-            <div>
-              <h2 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>Tu cuerpo ahora</h2>
-              <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>Solo para calcular tu objetivo calórico</p>
+          <div className="flex-1 flex flex-col justify-between py-3">
+            <div className="space-y-4">
+            <div className="text-center">
+              <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#F97316' }}>Tus medidas</p>
+              <h2 className="font-bold leading-tight mt-0.5" style={{ color: '#1C1917', fontSize: 26, fontWeight: 800, lineHeight: 1.15 }}>Tu cuerpo ahora</h2>
+              <p className="text-sm mt-1" style={{ color: '#78716C' }}>Solo para calcular tu objetivo calórico</p>
             </div>
 
             {/* Peso actual */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <label className="text-sm font-medium flex items-center gap-1.5" style={{ color: '#78716C' }}>
                   <Scale className="w-4 h-4" /> Peso actual
                 </label>
-                <div className="flex rounded-lg overflow-hidden text-xs" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="flex rounded-lg overflow-hidden text-xs" style={{ border: '1px solid #E7E5E4' }}>
                   {(['kg', 'lb'] as const).map((unit) => (
                     <button
                       key={unit}
@@ -768,9 +929,9 @@ export default function OnboardingPage() {
                       onClick={() => updateData({ weight_unit: unit })}
                       className="px-3 py-1 transition-colors font-medium"
                       style={{
-                        background: data.weight_unit === unit ? '#F97316' : 'rgba(255,255,255,0.06)',
-                        color: data.weight_unit === unit ? '#FFFFFF' : 'rgba(255,255,255,0.45)',
-                        border: `1px solid ${data.weight_unit === unit ? '#F97316' : 'rgba(255,255,255,0.08)'}`,
+                        background: data.weight_unit === unit ? '#F97316' : '#F5F5F4',
+                        color: data.weight_unit === unit ? '#FFFFFF' : '#44403C',
+                        border: `1px solid ${data.weight_unit === unit ? '#F97316' : '#E7E5E4'}`,
                       }}
                     >
                       {unit}
@@ -785,12 +946,12 @@ export default function OnboardingPage() {
                     placeholder="70"
                     value={data.weight_kg ?? ''}
                     onChange={(e) => updateData({ weight_kg: parseFloat(e.target.value) || null })}
-                    className="w-full px-4 py-3.5 rounded-xl text-white placeholder:text-white/25 outline-none transition-all pr-12"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-                    onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)'; e.currentTarget.style.background='rgba(255,255,255,0.08)' }}
-                    onBlur={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'; e.currentTarget.style.background='rgba(255,255,255,0.06)' }}
+                    className="w-full px-4 py-3.5 rounded-xl text-stone-900 placeholder:text-stone-400 outline-none transition-all pr-12"
+                    style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
+                    onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)' }}
+                    onBlur={e => { e.currentTarget.style.borderColor='#E7E5E4' }}
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: 'rgba(255,255,255,0.35)' }}>kg</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: '#A8A29E' }}>kg</span>
                 </div>
               ) : (
                 <div className="relative">
@@ -799,12 +960,12 @@ export default function OnboardingPage() {
                     placeholder="154"
                     value={data.weight_lb ?? ''}
                     onChange={(e) => updateData({ weight_lb: parseFloat(e.target.value) || null })}
-                    className="w-full px-4 py-3.5 rounded-xl text-white placeholder:text-white/25 outline-none transition-all pr-12"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-                    onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)'; e.currentTarget.style.background='rgba(255,255,255,0.08)' }}
-                    onBlur={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'; e.currentTarget.style.background='rgba(255,255,255,0.06)' }}
+                    className="w-full px-4 py-3.5 rounded-xl text-stone-900 placeholder:text-stone-400 outline-none transition-all pr-12"
+                    style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
+                    onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)' }}
+                    onBlur={e => { e.currentTarget.style.borderColor='#E7E5E4' }}
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: 'rgba(255,255,255,0.35)' }}>lb</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: '#A8A29E' }}>lb</span>
                 </div>
               )}
               {profileErrors.weight && (
@@ -815,10 +976,10 @@ export default function OnboardingPage() {
             {/* Altura */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <label className="text-sm font-medium flex items-center gap-1.5" style={{ color: '#78716C' }}>
                   <Ruler className="w-4 h-4" /> Altura
                 </label>
-                <div className="flex rounded-lg overflow-hidden text-xs" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="flex rounded-lg overflow-hidden text-xs" style={{ border: '1px solid #E7E5E4' }}>
                   {(['cm', 'ft'] as const).map((unit) => (
                     <button
                       key={unit}
@@ -826,9 +987,9 @@ export default function OnboardingPage() {
                       onClick={() => updateData({ height_unit: unit })}
                       className="px-3 py-1 transition-colors font-medium"
                       style={{
-                        background: data.height_unit === unit ? '#F97316' : 'rgba(255,255,255,0.06)',
-                        color: data.height_unit === unit ? '#FFFFFF' : 'rgba(255,255,255,0.45)',
-                        border: `1px solid ${data.height_unit === unit ? '#F97316' : 'rgba(255,255,255,0.08)'}`,
+                        background: data.height_unit === unit ? '#F97316' : '#F5F5F4',
+                        color: data.height_unit === unit ? '#FFFFFF' : '#44403C',
+                        border: `1px solid ${data.height_unit === unit ? '#F97316' : '#E7E5E4'}`,
                       }}
                     >
                       {unit}
@@ -843,12 +1004,12 @@ export default function OnboardingPage() {
                     placeholder="170"
                     value={data.height_cm ?? ''}
                     onChange={(e) => updateData({ height_cm: parseFloat(e.target.value) || null })}
-                    className="w-full px-4 py-3.5 rounded-xl text-white placeholder:text-white/25 outline-none transition-all pr-12"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-                    onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)'; e.currentTarget.style.background='rgba(255,255,255,0.08)' }}
-                    onBlur={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'; e.currentTarget.style.background='rgba(255,255,255,0.06)' }}
+                    className="w-full px-4 py-3.5 rounded-xl text-stone-900 placeholder:text-stone-400 outline-none transition-all pr-12"
+                    style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
+                    onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)' }}
+                    onBlur={e => { e.currentTarget.style.borderColor='#E7E5E4' }}
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: 'rgba(255,255,255,0.35)' }}>cm</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: '#A8A29E' }}>cm</span>
                 </div>
               ) : (
                 <div className="flex gap-2">
@@ -858,12 +1019,12 @@ export default function OnboardingPage() {
                       placeholder="5"
                       value={data.height_ft ?? ''}
                       onChange={(e) => updateData({ height_ft: parseInt(e.target.value) || null })}
-                      className="w-full px-4 py-3.5 rounded-xl text-white placeholder:text-white/25 outline-none transition-all pr-12"
-                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-                      onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)'; e.currentTarget.style.background='rgba(255,255,255,0.08)' }}
-                      onBlur={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'; e.currentTarget.style.background='rgba(255,255,255,0.06)' }}
+                      className="w-full px-4 py-3.5 rounded-xl text-stone-900 placeholder:text-stone-400 outline-none transition-all pr-12"
+                      style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
+                      onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)' }}
+                      onBlur={e => { e.currentTarget.style.borderColor='#E7E5E4' }}
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: 'rgba(255,255,255,0.35)' }}>ft</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: '#A8A29E' }}>ft</span>
                   </div>
                   <div className="relative flex-1">
                     <input
@@ -871,12 +1032,12 @@ export default function OnboardingPage() {
                       placeholder="7"
                       value={data.height_in ?? ''}
                       onChange={(e) => updateData({ height_in: parseInt(e.target.value) || null })}
-                      className="w-full px-4 py-3.5 rounded-xl text-white placeholder:text-white/25 outline-none transition-all pr-12"
-                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-                      onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)'; e.currentTarget.style.background='rgba(255,255,255,0.08)' }}
-                      onBlur={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'; e.currentTarget.style.background='rgba(255,255,255,0.06)' }}
+                      className="w-full px-4 py-3.5 rounded-xl text-stone-900 placeholder:text-stone-400 outline-none transition-all pr-12"
+                      style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
+                      onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)' }}
+                      onBlur={e => { e.currentTarget.style.borderColor='#E7E5E4' }}
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: 'rgba(255,255,255,0.35)' }}>in</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: '#A8A29E' }}>in</span>
                   </div>
                 </div>
               )}
@@ -888,26 +1049,35 @@ export default function OnboardingPage() {
             {/* Peso objetivo (solo si goal es lose_weight o gain_muscle) */}
             {(data.goal === 'lose_weight' || data.goal === 'gain_muscle') && (
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: '#78716C' }}>
                   Peso objetivo (opcional)
                 </label>
                 <div className="relative">
                   <input
                     type="number"
-                    placeholder={data.goal === 'lose_weight' ? '65' : '80'}
+                    placeholder={data.weight_unit === 'lb'
+                      ? (data.goal === 'lose_weight' ? '143' : '176')
+                      : (data.goal === 'lose_weight' ? '65' : '80')
+                    }
                     value={data.target_weight_kg ?? ''}
                     onChange={(e) => updateData({ target_weight_kg: parseFloat(e.target.value) || null })}
-                    className="w-full px-4 py-3.5 rounded-xl text-white placeholder:text-white/25 outline-none transition-all pr-12"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-                    onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)'; e.currentTarget.style.background='rgba(255,255,255,0.08)' }}
-                    onBlur={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'; e.currentTarget.style.background='rgba(255,255,255,0.06)' }}
+                    className="w-full px-4 py-3.5 rounded-xl text-stone-900 placeholder:text-stone-400 outline-none transition-all pr-12"
+                    style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
+                    onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)' }}
+                    onBlur={e => { e.currentTarget.style.borderColor='#E7E5E4' }}
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: 'rgba(255,255,255,0.35)' }}>kg</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: '#A8A29E' }}>
+                    {data.weight_unit === 'lb' ? 'lb' : 'kg'}
+                  </span>
                 </div>
-                <p className="text-xs mt-1.5 px-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                  Usaremos esto para calcular tu ritmo de{' '}
-                  {data.goal === 'lose_weight' ? 'pérdida' : 'ganancia'} estimado
-                </p>
+                {profileErrors.target_weight ? (
+                  <p className="mt-1.5 text-xs" style={{ color: '#FBBF24' }}>⚠ {profileErrors.target_weight}</p>
+                ) : (
+                  <p className="text-xs mt-1.5 px-1" style={{ color: '#A8A29E' }}>
+                    Usaremos esto para calcular tu ritmo de{' '}
+                    {data.goal === 'lose_weight' ? 'pérdida' : 'ganancia'} estimado
+                  </p>
+                )}
               </div>
             )}
 
@@ -929,7 +1099,7 @@ export default function OnboardingPage() {
       // ── 6. Nivel de actividad ─────────────────────────────────────────────
       case 'activity-level':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <SingleSelectQuestion
                 question="¿Cuál es tu nivel de actividad diaria?"
@@ -963,6 +1133,7 @@ export default function OnboardingPage() {
       case 'education-restrictive-diets':
         return (
           <EducationalScreen
+            eyebrow="Lo que dice la ciencia"
             title="Las dietas restrictivas no son la solución"
             text="Los estudios muestran que el 80% de las personas que hacen dietas muy restrictivas recuperan el peso perdido en menos de 2 años. En Nutria creemos en cambios sostenibles, no en restricciones extremas."
             onNext={nextScreen}
@@ -973,7 +1144,7 @@ export default function OnboardingPage() {
       // ── 8. Relación con la comida ─────────────────────────────────────────
       case 'food-relationship':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <SingleSelectQuestion
                 question="¿Cómo describirías tu relación con la comida?"
@@ -1006,7 +1177,7 @@ export default function OnboardingPage() {
       // ── 9. Desencadenantes de la alimentación ─────────────────────────────
       case 'eating-triggers':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <MultiSelectQuestion
                 question="¿Qué suele hacerte comer aunque no tengas hambre?"
@@ -1043,7 +1214,7 @@ export default function OnboardingPage() {
       // ── 10. Frecuencia de alimentación emocional ──────────────────────────
       case 'emotional-eating':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <SingleSelectQuestion
                 question="¿Con qué frecuencia comes por motivos emocionales?"
@@ -1076,7 +1247,7 @@ export default function OnboardingPage() {
       // ── 11. Principales retos ─────────────────────────────────────────────
       case 'biggest-challenges':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <MultiSelectQuestion
                 question="¿Qué te resulta más difícil?"
@@ -1115,6 +1286,7 @@ export default function OnboardingPage() {
       case 'education-normal':
         return (
           <EducationalScreen
+            eyebrow="Sin culpa, sin presión"
             title="¡Es completamente normal!"
             text="Todos tenemos días complicados con la comida. No pasa absolutamente nada — somos humanos. La clave no es la perfección, sino el equilibrio y la consistencia a largo plazo."
             onNext={nextScreen}
@@ -1125,39 +1297,58 @@ export default function OnboardingPage() {
       // ── 13. Demo IA scanner ───────────────────────────────────────────────
       case 'education-ai-scanner':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-4">
             <div className="space-y-4">
-              <div>
-                <h2 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>Así funciona el análisis IA</h2>
-                <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  Haz una foto a tu plato y Nuti identifica los ingredientes y calcula los nutrientes al instante.
+              {/* Cabecera impactante */}
+              <div className="space-y-1 text-center">
+                <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#F97316' }}>
+                  Tecnología IA
+                </p>
+                <h2 style={{ color: '#1C1917', fontSize: 26, fontWeight: 800, lineHeight: 1.15 }}>
+                  Fotografía tu plato.<br />
+                  <span style={{ color: '#F97316' }}>Nuti hace el resto.</span>
+                </h2>
+                <p className="text-sm" style={{ color: '#78716C' }}>
+                  Sin buscar. Sin escribir. Sin adivinar.
                 </p>
               </div>
+
               <AiFoodScanner
-                imageSrc="/images/food/food-salad-ai.jpg"
-                foodName="Ensalada mediterránea"
-                macros={{ kcal: 380, prot: 22, carbs: 28, fat: 18 }}
+                imageSrc="/images/food/food-chicken-ai.jpg"
+                foodName="Pollo a la plancha con verduras"
+                macros={{ kcal: 380, prot: 42, carbs: 12, fat: 14 }}
                 confidence={97}
                 detectionDots={[
-                  { x: 38, y: 42, label: 'Pollo' },
-                  { x: 63, y: 27, label: 'Tomate' },
-                  { x: 24, y: 65, label: 'Lechuga' },
+                  { x: 58, y: 55, label: 'Pollo' },
+                  { x: 72, y: 32, label: 'Brócoli' },
+                  { x: 28, y: 45, label: 'Pimiento' },
                 ]}
               />
-              <p className="text-xs text-center" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                Sin escribir nada. Solo una foto.
-              </p>
+
+              {/* Pills de beneficios */}
+              <div className="flex gap-2 flex-wrap justify-center">
+                {['30+ nutrientes', 'Instantáneo', '97% precisión'].map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-3 py-1 rounded-full text-xs font-semibold"
+                    style={{ background: '#FFF7ED', color: '#F97316' }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
+
             <button
               type="button"
               onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
               }}
             >
-              Continuar
+              Quiero probarlo
             </button>
           </div>
         )
@@ -1165,67 +1356,113 @@ export default function OnboardingPage() {
       // ── 14. Rutina de comidas ─────────────────────────────────────────────
       case 'meals-routine':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
-            <div className="space-y-5">
-              <CompactFormQuestion
-                question="Cuéntanos sobre tu rutina de comidas"
-                fields={[
-                  {
-                    id: 'meals_per_day',
-                    label: '¿Cuántas comidas haces al día?',
-                    type: 'number',
-                    min: 1,
-                    max: 6,
-                    value: data.meals_per_day,
-                    onChange: (v: number | null) => updateData({ meals_per_day: v }),
-                    suffix: 'comidas',
-                  },
-                  {
-                    id: 'snacking_frequency',
-                    label: '¿Con qué frecuencia picoteas entre horas?',
-                    options: [
-                      { value: 'never',     label: 'Nunca' },
-                      { value: 'rarely',    label: 'Rara vez' },
-                      { value: 'sometimes', label: 'A veces' },
-                      { value: 'often',     label: 'A menudo' },
-                      { value: 'always',    label: 'Siempre' },
-                    ],
-                    value: data.snacking_frequency,
-                    onChange: (v: string) => updateData({ snacking_frequency: v as typeof data.snacking_frequency }),
-                  },
-                  {
-                    id: 'cooking_frequency',
-                    label: '¿Con qué frecuencia cocinas en casa?',
-                    options: [
-                      { value: 'never',     label: 'Nunca' },
-                      { value: 'rarely',    label: 'Rara vez' },
-                      { value: 'sometimes', label: 'A veces' },
-                      { value: 'often',     label: 'A menudo' },
-                      { value: 'daily',     label: 'Cada día' },
-                    ],
-                    value: data.cooking_frequency,
-                    onChange: (v: string) => updateData({ cooking_frequency: v as typeof data.cooking_frequency }),
-                  },
-                  {
-                    id: 'eats_out_frequency',
-                    label: '¿Con qué frecuencia comes fuera?',
-                    options: [
-                      { value: 'never',          label: 'Nunca' },
-                      { value: 'rarely',         label: 'Rara vez' },
-                      { value: 'weekly',         label: 'Cada semana' },
-                      { value: 'several_weekly', label: 'Varias veces/sem' },
-                      { value: 'daily',          label: 'Cada día' },
-                    ],
-                    value: data.eats_out_frequency,
-                    onChange: (v: string) => updateData({ eats_out_frequency: v as typeof data.eats_out_frequency }),
-                  },
-                ]}
-              />
+          <div className="flex-1 flex flex-col justify-between py-3">
+            <div className="space-y-4">
+              {/* Header */}
+              <div className="text-center">
+                <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#F97316' }}>Tu rutina</p>
+                <h2 className="font-bold leading-tight mt-0.5" style={{ color: '#1C1917', fontSize: 26, fontWeight: 800, lineHeight: 1.15 }}>
+                  ¿Cómo es tu día<br />con la comida?
+                </h2>
+              </div>
+
+              {/* Comidas al día — stepper */}
+              <div className="rounded-2xl p-4" style={{ background: '#FFF7ED', border: '1px solid rgba(249,115,22,0.2)' }}>
+                <p className="text-xs font-semibold tracking-wider uppercase mb-3" style={{ color: '#F97316' }}>Comidas al día</p>
+                <div className="flex items-center justify-between gap-4">
+                  <button
+                    type="button"
+                    onClick={() => updateData({ meals_per_day: Math.max(1, (data.meals_per_day ?? 3) - 1) })}
+                    className="w-11 h-11 rounded-xl flex items-center justify-center text-xl font-bold transition-all active:scale-90"
+                    style={{ background: '#FFFFFF', border: '1px solid #E7E5E4', color: '#F97316' }}
+                  >−</button>
+                  <div className="text-center">
+                    <span className="font-black" style={{ fontSize: 40, color: '#1C1917', lineHeight: 1 }}>
+                      {data.meals_per_day ?? 3}
+                    </span>
+                    <p className="text-xs mt-0.5" style={{ color: '#A8A29E' }}>comidas</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateData({ meals_per_day: Math.min(6, (data.meals_per_day ?? 3) + 1) })}
+                    className="w-11 h-11 rounded-xl flex items-center justify-center text-xl font-bold transition-all active:scale-90"
+                    style={{ background: '#F97316', border: '1px solid #F97316', color: '#FFFFFF' }}
+                  >+</button>
+                </div>
+              </div>
+
+              {/* Chips — 3 preguntas en filas compactas */}
+              {([
+                {
+                  id: 'snacking_frequency',
+                  label: 'Picoteo entre horas',
+                  value: data.snacking_frequency,
+                  onChange: (v: string) => updateData({ snacking_frequency: v as typeof data.snacking_frequency }),
+                  options: [
+                    { value: 'never', label: 'Nunca' },
+                    { value: 'rarely', label: 'Rara vez' },
+                    { value: 'sometimes', label: 'A veces' },
+                    { value: 'often', label: 'A menudo' },
+                    { value: 'always', label: 'Siempre' },
+                  ],
+                },
+                {
+                  id: 'cooking_frequency',
+                  label: 'Cocino en casa',
+                  value: data.cooking_frequency,
+                  onChange: (v: string) => updateData({ cooking_frequency: v as typeof data.cooking_frequency }),
+                  options: [
+                    { value: 'never', label: 'Nunca' },
+                    { value: 'rarely', label: 'Rara vez' },
+                    { value: 'sometimes', label: 'A veces' },
+                    { value: 'often', label: 'A menudo' },
+                    { value: 'daily', label: 'Cada día' },
+                  ],
+                },
+                {
+                  id: 'eats_out_frequency',
+                  label: 'Como fuera de casa',
+                  value: data.eats_out_frequency,
+                  onChange: (v: string) => updateData({ eats_out_frequency: v as typeof data.eats_out_frequency }),
+                  options: [
+                    { value: 'never', label: 'Nunca' },
+                    { value: 'rarely', label: 'Rara vez' },
+                    { value: 'weekly', label: 'Semanal' },
+                    { value: 'several_weekly', label: 'Varias/sem' },
+                    { value: 'daily', label: 'Diario' },
+                  ],
+                },
+              ] as const).map((field) => (
+                <div key={field.id}>
+                  <p className="text-xs font-semibold tracking-wider uppercase mb-2" style={{ color: '#F97316' }}>{field.label}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {field.options.map((opt) => {
+                      const isSelected = field.value === opt.value
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => field.onChange(opt.value)}
+                          className="px-3 py-1.5 rounded-xl text-xs font-medium transition-all active:scale-95"
+                          style={{
+                            background: isSelected ? '#F97316' : '#FFFFFF',
+                            color: isSelected ? '#FFFFFF' : '#44403C',
+                            border: `1px solid ${isSelected ? '#F97316' : '#E7E5E4'}`,
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
+
             <button
               type="button"
               onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 mt-4"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1239,56 +1476,86 @@ export default function OnboardingPage() {
       // ── 14. Estilo de vida ────────────────────────────────────────────────
       case 'lifestyle':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
-            <div className="space-y-5">
-              <CompactFormQuestion
-                question="¿Cómo están estos aspectos de tu vida?"
-                subtitle="Influyen directamente en tu nutrición y energía"
-                fields={[
-                  {
-                    id: 'water_intake',
-                    label: 'Hidratación diaria',
-                    options: [
-                      { value: 'very_low',  label: 'Muy baja' },
-                      { value: 'low',       label: 'Baja' },
-                      { value: 'moderate',  label: 'Normal' },
-                      { value: 'good',      label: 'Buena' },
-                      { value: 'excellent', label: 'Excelente' },
-                    ],
-                    value: data.water_intake,
-                    onChange: (v: string) => updateData({ water_intake: v as typeof data.water_intake }),
-                  },
-                  {
-                    id: 'sleep_quality',
-                    label: 'Calidad del sueño',
-                    options: [
-                      { value: 'poor',      label: 'Mala' },
-                      { value: 'fair',      label: 'Regular' },
-                      { value: 'good',      label: 'Buena' },
-                      { value: 'excellent', label: 'Excelente' },
-                    ],
-                    value: data.sleep_quality,
-                    onChange: (v: string) => updateData({ sleep_quality: v as typeof data.sleep_quality }),
-                  },
-                  {
-                    id: 'stress_level',
-                    label: 'Nivel de estrés habitual',
-                    options: [
-                      { value: 'low',       label: 'Bajo' },
-                      { value: 'moderate',  label: 'Moderado' },
-                      { value: 'high',      label: 'Alto' },
-                      { value: 'very_high', label: 'Muy alto' },
-                    ],
-                    value: data.stress_level,
-                    onChange: (v: string) => updateData({ stress_level: v as typeof data.stress_level }),
-                  },
-                ]}
-              />
+          <div className="flex-1 flex flex-col justify-between py-3">
+            <div className="space-y-4">
+              {/* Header */}
+              <div className="text-center">
+                <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#F97316' }}>Tu estilo de vida</p>
+                <h2 className="font-bold leading-tight mt-0.5" style={{ color: '#1C1917', fontSize: 26, fontWeight: 800, lineHeight: 1.15 }}>
+                  ¿Cómo están estos<br />aspectos de tu vida?
+                </h2>
+                <p className="text-sm mt-1" style={{ color: '#78716C' }}>Influyen directamente en tu energía</p>
+              </div>
+
+              {([
+                {
+                  id: 'water_intake',
+                  label: 'Hidratación diaria',
+                  value: data.water_intake,
+                  onChange: (v: string) => updateData({ water_intake: v as typeof data.water_intake }),
+                  options: [
+                    { value: 'very_low',  label: 'Muy baja' },
+                    { value: 'low',       label: 'Baja' },
+                    { value: 'moderate',  label: 'Normal' },
+                    { value: 'good',      label: 'Buena' },
+                    { value: 'excellent', label: 'Excelente' },
+                  ],
+                },
+                {
+                  id: 'sleep_quality',
+                  label: 'Calidad del sueño',
+                  value: data.sleep_quality,
+                  onChange: (v: string) => updateData({ sleep_quality: v as typeof data.sleep_quality }),
+                  options: [
+                    { value: 'poor',      label: 'Mala' },
+                    { value: 'fair',      label: 'Regular' },
+                    { value: 'good',      label: 'Buena' },
+                    { value: 'excellent', label: 'Excelente' },
+                  ],
+                },
+                {
+                  id: 'stress_level',
+                  label: 'Nivel de estrés',
+                  value: data.stress_level,
+                  onChange: (v: string) => updateData({ stress_level: v as typeof data.stress_level }),
+                  options: [
+                    { value: 'low',       label: 'Bajo' },
+                    { value: 'moderate',  label: 'Moderado' },
+                    { value: 'high',      label: 'Alto' },
+                    { value: 'very_high', label: 'Muy alto' },
+                  ],
+                },
+              ] as const).map((field) => (
+                <div key={field.id}>
+                  <p className="text-xs font-semibold tracking-wider uppercase mb-2" style={{ color: '#F97316' }}>{field.label}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {field.options.map((opt) => {
+                      const isSelected = field.value === opt.value
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => field.onChange(opt.value)}
+                          className="px-3 py-1.5 rounded-xl text-xs font-medium transition-all active:scale-95"
+                          style={{
+                            background: isSelected ? '#F97316' : '#FFFFFF',
+                            color: isSelected ? '#FFFFFF' : '#44403C',
+                            border: `1px solid ${isSelected ? '#F97316' : '#E7E5E4'}`,
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
+
             <button
               type="button"
               onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 mt-4"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1302,7 +1569,7 @@ export default function OnboardingPage() {
       // ── 15. Restricciones alimentarias ────────────────────────────────────
       case 'diet-restrictions':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <MultiSelectQuestion
                 question="¿Sigues alguna restricción alimentaria?"
@@ -1320,7 +1587,7 @@ export default function OnboardingPage() {
               />
               {/* Campo de alergias */}
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: '#78716C' }}>
                   ¿Tienes alguna alergia alimentaria? (opcional)
                 </label>
                 <input
@@ -1331,10 +1598,10 @@ export default function OnboardingPage() {
                     const vals = e.target.value.split(',').map((s) => s.trim()).filter(Boolean)
                     updateData({ allergies: vals })
                   }}
-                  className="w-full px-4 py-3 rounded-xl text-white placeholder:text-white/25 outline-none transition-all text-sm"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-                  onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)'; e.currentTarget.style.background='rgba(255,255,255,0.08)' }}
-                  onBlur={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'; e.currentTarget.style.background='rgba(255,255,255,0.06)' }}
+                  className="w-full px-4 py-3 rounded-xl text-stone-900 placeholder:text-stone-400 outline-none transition-all text-sm"
+                  style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
+                  onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)' }}
+                  onBlur={e => { e.currentTarget.style.borderColor='#E7E5E4' }}
                 />
               </div>
             </div>
@@ -1355,7 +1622,7 @@ export default function OnboardingPage() {
       // ── 16. Objetivos secundarios ─────────────────────────────────────────
       case 'secondary-goals':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <MultiSelectQuestion
                 question="¿Qué cambiaría en tu vida si comieras mejor?"
@@ -1390,7 +1657,7 @@ export default function OnboardingPage() {
       // ── 17. Compromiso de tiempo ──────────────────────────────────────────
       case 'commitment':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <SingleSelectQuestion
                 question="¿Cómo describirías tu ritmo de vida?"
@@ -1424,7 +1691,7 @@ export default function OnboardingPage() {
       // ── 18. Cómo medir el progreso ────────────────────────────────────────
       case 'progress-tracking':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <MultiSelectQuestion
                 question="¿Cómo sabrás que Nutria te está funcionando?"
@@ -1459,7 +1726,7 @@ export default function OnboardingPage() {
       // ── 19. Situación de convivencia ──────────────────────────────────────
       case 'living-situation':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <SingleSelectQuestion
                 question="¿Con quién vives?"
@@ -1493,7 +1760,7 @@ export default function OnboardingPage() {
       // ── 20. Apoyo del entorno (solo si no vive solo) ──────────────────────
       case 'household-support':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <SingleSelectQuestion
                 question="¿Tu entorno te apoya en tus objetivos de salud?"
@@ -1527,6 +1794,7 @@ export default function OnboardingPage() {
       case 'education-environment':
         return (
           <EducationalScreen
+            eyebrow="Tu contexto real"
             title="Tu entorno importa más de lo que crees"
             text="Dónde, cómo y con quién vives puede afectar enormemente a tus hábitos alimentarios. Nuti tendrá esto en cuenta para darte consejos adaptados a tu situación real — no a una situación ideal."
             onNext={nextScreen}
@@ -1537,7 +1805,7 @@ export default function OnboardingPage() {
       // ── 22. Preferencias de tono de la IA ────────────────────────────────
       case 'ai-preferences':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <SingleSelectQuestion
                 question="¿Cómo prefieres que te hable Nuti?"
@@ -1571,28 +1839,28 @@ export default function OnboardingPage() {
       // ── 23. Screening TCA ─────────────────────────────────────────────────
       case 'tca-screening':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
-            <div className="space-y-5">
+          <div className="flex-1 flex flex-col justify-between py-3">
+            <div className="space-y-3 [&>*:nth-child(2)]:!mt-0">
               <div className="text-center mb-2">
                 <div
                   className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
-                  style={{ background: 'rgba(249,115,22,0.1)' }}
+                  style={{ background: '#FFF7ED' }}
                 >
                   <Heart className="w-6 h-6 text-orange-400" />
                 </div>
-                <h2 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>Una pregunta importante</h2>
-                <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>Queremos apoyarte de la mejor manera posible</p>
+                <h2 className="text-xl font-bold" style={{ color: '#1C1917' }}>Una pregunta importante</h2>
+                <p className="text-sm mt-1" style={{ color: '#78716C' }}>Queremos apoyarte de la mejor manera posible</p>
               </div>
 
               <div
                 className="rounded-2xl p-4"
                 style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.2)' }}
               >
-                <p className="text-sm leading-relaxed text-center" style={{ color: '#FFFFFF' }}>
+                <p className="text-sm leading-relaxed text-center" style={{ color: '#1C1917' }}>
                   ¿Has tenido o tienes alguna relación difícil con la comida o con tu cuerpo?
                   Ya sea preocupación excesiva por comer, restricciones extremas o sentirte mal después de comer.
                 </p>
-                <p className="text-xs text-center mt-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                <p className="text-xs text-center mt-2" style={{ color: '#A8A29E' }}>
                   Esta información nos ayuda a personalizar tu experiencia. Es completamente opcional.
                 </p>
               </div>
@@ -1613,16 +1881,16 @@ export default function OnboardingPage() {
                     }}
                     className="w-full flex items-center gap-3 p-3.5 rounded-xl transition-all text-left"
                     style={{
-                      background: data.tca_answer === answer.value ? 'rgba(249,115,22,0.1)' : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${data.tca_answer === answer.value ? 'rgba(249,115,22,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                      background: data.tca_answer === answer.value ? '#FFF7ED' : '#FFFFFF',
+                      border: `1px solid ${data.tca_answer === answer.value ? 'rgba(249,115,22,0.4)' : '#E7E5E4'}`,
                     }}
                   >
                     <span className="text-xl flex-shrink-0">{answer.emoji}</span>
-                    <span className="text-sm font-medium flex-1" style={{ color: '#FFFFFF' }}>{answer.label}</span>
+                    <span className="text-sm font-medium flex-1" style={{ color: '#1C1917' }}>{answer.label}</span>
                     <div
                       className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center"
                       style={{
-                        border: `2px solid ${data.tca_answer === answer.value ? '#F97316' : 'rgba(255,255,255,0.2)'}`,
+                        border: `2px solid ${data.tca_answer === answer.value ? '#F97316' : '#D6D3D1'}`,
                         background: data.tca_answer === answer.value ? '#F97316' : 'transparent',
                       }}
                     >
@@ -1640,13 +1908,13 @@ export default function OnboardingPage() {
                   <div className="flex items-start gap-3">
                     <span className="text-xl flex-shrink-0">💛</span>
                     <div>
-                      <p className="text-sm font-semibold mb-1" style={{ color: '#FFFFFF' }}>Gracias por compartir eso con nosotros</p>
-                      <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                      <p className="text-sm font-semibold mb-1" style={{ color: '#1C1917' }}>Gracias por compartir eso con nosotros</p>
+                      <p className="text-xs leading-relaxed" style={{ color: '#57534E' }}>
                         Nuti está aquí para ayudarte a construir una relación más sana con la comida,
                         sin presiones ni juicios. Configuraremos tu experiencia con un enfoque en el
                         bienestar, no en números perfectos.
                       </p>
-                      <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                      <p className="text-xs mt-2" style={{ color: '#A8A29E' }}>
                         Si crees que necesitas apoyo profesional, te recomendamos hablar con un
                         profesional de salud mental o nutricionista especializado en conducta alimentaria.
                       </p>
@@ -1670,102 +1938,196 @@ export default function OnboardingPage() {
         )
 
       // ── 24. Pantalla final: plan listo ────────────────────────────────────
-      case 'ready':
+      case 'ready': {
+        const circumference = 2 * Math.PI * 72
+        const offset = circumference - (planProgress / 100) * circumference
+        const loadingMessage =
+          planProgress < 30 ? 'Analizando tu perfil…' :
+          planProgress < 60 ? 'Calculando tu metabolismo…' :
+          planProgress < 90 ? 'Personalizando tu plan…' :
+          '¡Casi listo!'
+
         return (
           <div className="flex-1 flex flex-col">
-            <div className="flex-1 overflow-y-auto py-6 space-y-5">
-              {/* Nuti trophy centered */}
-              <div className="flex justify-center pt-2">
-                <NutriaImage pose="trophy" size={200} withGlow priority />
-              </div>
 
-              <div className="text-center">
-                <h2 className="text-2xl font-bold" style={{ color: '#FFFFFF' }}>¡Tu plan está listo!</h2>
-                <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  {nutiMessages.onboarding.complete[0].text}
-                </p>
-              </div>
-
-              {nutritionGoals ? (
-                <>
-                  {/* Card de objetivo calórico */}
-                  <div
-                    className="rounded-[20px] p-5 text-center"
-                    style={{
-                      background: 'rgba(249,115,22,0.07)',
-                      border: '1px solid rgba(249,115,22,0.2)',
-                    }}
-                  >
-                    <p className="text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                      Tu objetivo diario
-                    </p>
-                    <p className="font-extrabold leading-none" style={{ color: '#F97316', fontSize: 48 }}>
-                      {nutritionGoals.calorie_goal.toLocaleString()}
-                    </p>
-                    <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                      kcal · adaptado a ti
-                    </p>
-
-                    {/* Separador */}
-                    <div className="my-4" style={{ height: 1, background: 'rgba(255,255,255,0.06)' }} />
-
-                    {/* Macros */}
-                    <div className="grid grid-cols-3 gap-3">
-                      {[
-                        { label: 'Proteína', value: nutritionGoals.protein_g },
-                        { label: 'Carbos',   value: nutritionGoals.carbs_g },
-                        { label: 'Grasa',    value: nutritionGoals.fat_g },
-                      ].map((m) => (
-                        <div key={m.label} className="text-center">
-                          <p className="text-base font-bold" style={{ color: '#FFFFFF' }}>{m.value}g</p>
-                          <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{m.label}</p>
-                        </div>
-                      ))}
-                    </div>
+            {/* ── Fase 1: animación de progreso ── */}
+            {planPhase === 'loading' && (
+              <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center px-6">
+                <div className="relative w-44 h-44">
+                  {/* Glow */}
+                  <div className="absolute inset-0 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.18) 0%, transparent 70%)' }} />
+                  <svg width="176" height="176" viewBox="0 0 176 176" className="rotate-[-90deg]">
+                    {/* Track */}
+                    <circle cx="88" cy="88" r="72" fill="none" stroke="#F0EDE9" strokeWidth="10" />
+                    {/* Progress */}
+                    <circle
+                      cx="88" cy="88" r="72"
+                      fill="none"
+                      stroke="url(#progressGrad)"
+                      strokeWidth="10"
+                      strokeLinecap="round"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={offset}
+                      style={{ transition: 'stroke-dashoffset 0.05s linear' }}
+                    />
+                    <defs>
+                      <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#F97316" />
+                        <stop offset="100%" stopColor="#FBBF24" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  {/* Número central */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="font-black" style={{ fontSize: 42, color: '#F97316', lineHeight: 1 }}>
+                      {planProgress}
+                    </span>
+                    <span className="text-sm font-semibold" style={{ color: '#A8A29E' }}>%</span>
                   </div>
 
-                  {/* Info adicional */}
-                  <div
-                    className="rounded-2xl p-4"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
-                  >
-                    <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                      Basado en tus datos, tu objetivo y tu nivel de actividad. Nuti ajustará estas cifras según tu progreso real.
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <div
-                  className="rounded-2xl p-4 text-center"
-                  style={{ background: 'rgba(255,255,255,0.04)' }}
-                >
-                  <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                    Completa los pasos anteriores para ver tu plan personalizado.
-                  </p>
+                  {/* Burst desde el anillo al llegar a 100% */}
+                  {ringBurst && [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg, i) => {
+                    const rad = (deg * Math.PI) / 180
+                    const r = 72 // radio del anillo en px (en el viewBox de 176)
+                    // posición de origen en el borde del anillo (dentro del div 176x176)
+                    const ox = 88 + r * Math.cos(rad)
+                    const oy = 88 + r * Math.sin(rad)
+                    const dx = 90 * Math.cos(rad)
+                    const dy = 90 * Math.sin(rad)
+                    const colors = ['#F97316','#FBBF24','#34D399','#60A5FA','#F43F5E','#A78BFA']
+                    return (
+                      <div
+                        key={deg}
+                        className="absolute pointer-events-none rounded-full"
+                        style={{
+                          width: 18, height: 18,
+                          left: ox - 9,
+                          top: oy - 9,
+                          background: colors[i % colors.length],
+                          animation: `burstOut 0.6s ${i * 0.03}s ease-out forwards`,
+                          ['--dx' as string]: `${dx}px`,
+                          ['--dy' as string]: `${dy}px`,
+                        }}
+                      />
+                    )
+                  })}
                 </div>
-              )}
-            </div>
 
-            <div className="py-4">
-              <button
-                type="button"
-                onClick={nextScreen}
-                className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95"
-                style={{
-                  background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
-                  boxShadow: '0 6px 24px rgba(249,115,22,0.4)',
-                }}
-              >
-                Guarda tu plan — es gratis
-              </button>
-            </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#F97316' }}>Tu plan personalizado</p>
+                  <p className="font-semibold text-base" style={{ color: '#1C1917' }}>{loadingMessage}</p>
+                </div>
+              </div>
+            )}
+
+            {/* ── Fase 2: celebración con confetti ── */}
+            {planPhase === 'celebration' && (
+              <div className="flex-1 relative overflow-hidden" style={{ animation: 'fadeInUp 0.4s ease both' }}>
+                {/* Confetti cayendo */}
+                {[
+                  { left: '8%',  delay: '0s',    dur: '1.8s', color: '#F97316', size: 14, shape: 'round' },
+                  { left: '18%', delay: '0.15s', dur: '2.1s', color: '#FBBF24', size: 12, shape: 'square' },
+                  { left: '28%', delay: '0.05s', dur: '1.9s', color: '#34D399', size: 11, shape: 'round' },
+                  { left: '38%', delay: '0.3s',  dur: '2.3s', color: '#60A5FA', size: 14, shape: 'square' },
+                  { left: '50%', delay: '0.1s',  dur: '2.0s', color: '#F97316', size: 16, shape: 'round' },
+                  { left: '60%', delay: '0.25s', dur: '1.7s', color: '#FBBF24', size: 13, shape: 'square' },
+                  { left: '70%', delay: '0s',    dur: '2.2s', color: '#F43F5E', size: 14, shape: 'round' },
+                  { left: '80%', delay: '0.2s',  dur: '1.85s',color: '#34D399', size: 12, shape: 'square' },
+                  { left: '90%', delay: '0.35s', dur: '2.05s',color: '#60A5FA', size: 15, shape: 'round' },
+                  { left: '14%', delay: '0.4s',  dur: '2.4s', color: '#F43F5E', size: 13, shape: 'square' },
+                  { left: '44%', delay: '0.45s', dur: '1.95s',color: '#FBBF24', size: 11, shape: 'round' },
+                  { left: '75%', delay: '0.5s',  dur: '2.15s',color: '#F97316', size: 14, shape: 'square' },
+                ].map((p, i) => (
+                  <div
+                    key={i}
+                    className="absolute top-0 pointer-events-none z-10"
+                    style={{
+                      left: p.left,
+                      width: p.size,
+                      height: p.size,
+                      background: p.color,
+                      borderRadius: p.shape === 'round' ? '50%' : '3px',
+                      animation: `confettiFall ${p.dur} ${p.delay} ease-in forwards, confettiSway ${p.dur} ${p.delay} ease-in-out infinite`,
+                    }}
+                  />
+                ))}
+
+                {/* Nuti a pantalla completa */}
+                <div className="absolute inset-0 flex flex-col items-center justify-end pb-8 z-0">
+                  <NutriaImage pose="celebration" size="100%" maxWidth="100%" priority />
+                </div>
+
+                {/* Texto encima */}
+                <div className="absolute top-4 inset-x-0 text-center z-10 space-y-1 px-4">
+                  <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#F97316' }}>¡Enhorabuena!</p>
+                  <h2 className="font-black" style={{ color: '#1C1917', fontSize: 30, fontWeight: 900 }}>Tu plan está listo 🎉</h2>
+                  <p className="text-sm" style={{ color: '#78716C' }}>Ya te conozco un poco mejor. Esto va a ir bien.</p>
+                </div>
+              </div>
+            )}
+
+            {/* ── Fase 3: plan revelado ── */}
+            {planPhase === 'ready' && (
+              <div className="flex-1 flex flex-col" style={{ animation: 'fadeInUp 0.5s ease both' }}>
+                <div className="flex-1 overflow-y-auto py-4 space-y-4">
+                  <div className="text-center">
+                    <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#F97316' }}>Plan personalizado</p>
+                    <h2 className="font-black mt-0.5" style={{ color: '#1C1917', fontSize: 28, fontWeight: 900 }}>¡Tu plan está listo!</h2>
+                    <p className="text-sm mt-1" style={{ color: '#78716C' }}>{nutiMessages.onboarding.complete[0].text}</p>
+                  </div>
+
+                  {nutritionGoals && (
+                    <>
+                      <div className="rounded-[20px] p-5 text-center" style={{ background: 'rgba(249,115,22,0.07)', border: '1px solid rgba(249,115,22,0.2)' }}>
+                        <p className="text-xs font-medium mb-1" style={{ color: '#A8A29E' }}>Tu objetivo diario</p>
+                        <p className="font-extrabold leading-none" style={{ color: '#F97316', fontSize: 52 }}>
+                          {nutritionGoals.calorie_goal.toLocaleString()}
+                        </p>
+                        <p className="text-xs mt-1" style={{ color: '#A8A29E' }}>kcal · adaptado a ti</p>
+                        <div className="my-3" style={{ height: 1, background: 'rgba(249,115,22,0.15)' }} />
+                        <div className="grid grid-cols-3 gap-3">
+                          {[
+                            { label: 'Proteína', value: nutritionGoals.protein_g },
+                            { label: 'Carbos',   value: nutritionGoals.carbs_g },
+                            { label: 'Grasa',    value: nutritionGoals.fat_g },
+                          ].map((m) => (
+                            <div key={m.label} className="text-center">
+                              <p className="text-base font-bold" style={{ color: '#1C1917' }}>{m.value}g</p>
+                              <p className="text-[11px]" style={{ color: '#A8A29E' }}>{m.label}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl p-4" style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}>
+                        <p className="text-sm leading-relaxed" style={{ color: '#78716C' }}>
+                          Basado en tus datos, tu objetivo y tu nivel de actividad. Nuti ajustará estas cifras según tu progreso real.
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="py-3">
+                  <button
+                    type="button"
+                    onClick={nextScreen}
+                    className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95"
+                    style={{ background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)', boxShadow: '0 6px 24px rgba(249,115,22,0.4)' }}
+                  >
+                    Guarda tu plan — es gratis
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )
+      }
 
       // ── 25. Registro ──────────────────────────────────────────────────────
       case 'register':
         return (
-          <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="flex-1 flex flex-col justify-between py-3">
             {/* Spinner overlay — visible mientras se completa el code exchange de OAuth */}
             {isOAuthLoading && (
               <div className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-3xl" style={{ background: 'rgba(13,13,13,0.85)' }}>
@@ -1773,7 +2135,7 @@ export default function OnboardingPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
-                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>Verificando tu cuenta…</p>
+                <p className="text-sm" style={{ color: '#44403C' }}>Verificando tu cuenta…</p>
               </div>
             )}
 
@@ -1785,13 +2147,51 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              {/* Header */}
-              <div className="text-center">
-                <div className="flex justify-center mb-3">
-                  <NutriaImage pose="trophy" size={80} withGlow className="object-contain drop-shadow-lg" />
+              {/* Header — countdown urgencia */}
+              <div className="text-center space-y-3">
+                <p className="text-[11px] font-bold tracking-widest uppercase" style={{ color: '#F97316' }}>
+                  Tu plan expira en
+                </p>
+
+                {/* Countdown grande */}
+                <div className="relative flex items-center justify-center mx-auto" style={{ width: 160, height: 160 }}>
+                  {/* Glow pulsante */}
+                  <div
+                    className="absolute inset-0 rounded-full animate-pulse"
+                    style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.22) 0%, transparent 70%)' }}
+                  />
+                  {/* Anillo */}
+                  <svg width="160" height="160" viewBox="0 0 160 160" className="absolute inset-0">
+                    <circle cx="80" cy="80" r="70" fill="none" stroke="#F0EDE9" strokeWidth="6" />
+                    <circle
+                      cx="80" cy="80" r="70"
+                      fill="none"
+                      stroke="#F97316"
+                      strokeWidth="6"
+                      strokeLinecap="round"
+                      strokeDasharray={2 * Math.PI * 70}
+                      strokeDashoffset={2 * Math.PI * 70 * (1 - registerCountdown / 600)}
+                      style={{ transform: 'rotate(-90deg)', transformOrigin: '80px 80px', transition: 'stroke-dashoffset 1s linear' }}
+                    />
+                  </svg>
+                  {/* Tiempo */}
+                  <div className="relative flex flex-col items-center justify-center">
+                    <span
+                      className="font-black tabular-nums leading-none"
+                      style={{ fontSize: 44, color: registerCountdown < 60 ? '#EA580C' : '#F97316', letterSpacing: '-0.02em' }}
+                    >
+                      {String(Math.floor(registerCountdown / 60)).padStart(2, '0')}:{String(registerCountdown % 60).padStart(2, '0')}
+                    </span>
+                    <span className="text-xs font-medium mt-0.5" style={{ color: '#A8A29E' }}>min · seg</span>
+                  </div>
                 </div>
-                <h2 className="text-2xl font-bold" style={{ color: '#FFFFFF' }}>Guarda tu plan personalizado</h2>
-                <p className="text-sm mt-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>Es gratis. Sin tarjeta de crédito.</p>
+
+                <div>
+                  <h2 className="font-black" style={{ color: '#1C1917', fontSize: 22, fontWeight: 900, lineHeight: 1.2 }}>
+                    Guarda tu plan ahora
+                  </h2>
+                  <p className="text-sm mt-1" style={{ color: '#78716C' }}>Es gratis. Sin tarjeta de crédito.</p>
+                </div>
               </div>
 
               {/* Google */}
@@ -1801,8 +2201,8 @@ export default function OnboardingPage() {
                 disabled={isRegistering}
                 className="w-full h-12 flex items-center justify-center gap-3 rounded-2xl font-medium text-sm transition-all disabled:opacity-50"
                 style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: '#FFFFFF',
+                  border: '1px solid #E7E5E4',
                   color: 'white',
                 }}
               >
@@ -1818,13 +2218,13 @@ export default function OnboardingPage() {
               {/* Separator */}
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.1)' }} />
-                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>o</span>
+                <span className="text-xs" style={{ color: '#A8A29E' }}>o</span>
                 <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.1)' }} />
               </div>
 
               {/* Email */}
               <div className="space-y-1.5">
-                <label className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.45)' }}>Email</label>
+                <label className="text-sm font-medium" style={{ color: '#78716C' }}>Email</label>
                 <input
                   type="email"
                   placeholder="tu@email.com"
@@ -1832,16 +2232,16 @@ export default function OnboardingPage() {
                   onChange={(e) => setRegisterEmail(e.target.value)}
                   autoComplete="email"
                   disabled={isRegistering}
-                  className="w-full px-4 py-3.5 rounded-xl text-white placeholder:text-white/25 outline-none transition-all disabled:opacity-50"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-                  onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)'; e.currentTarget.style.background='rgba(255,255,255,0.08)' }}
-                  onBlur={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'; e.currentTarget.style.background='rgba(255,255,255,0.06)' }}
+                  className="w-full px-4 py-3.5 rounded-xl text-stone-900 placeholder:text-stone-400 outline-none transition-all disabled:opacity-50"
+                  style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
+                  onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)' }}
+                  onBlur={e => { e.currentTarget.style.borderColor='#E7E5E4' }}
                 />
               </div>
 
               {/* Contraseña */}
               <div className="space-y-1.5">
-                <label className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.45)' }}>Contraseña</label>
+                <label className="text-sm font-medium" style={{ color: '#78716C' }}>Contraseña</label>
                 <div className="relative">
                   <input
                     type={registerShowPassword ? 'text' : 'password'}
@@ -1850,17 +2250,17 @@ export default function OnboardingPage() {
                     onChange={(e) => setRegisterPassword(e.target.value)}
                     autoComplete="new-password"
                     disabled={isRegistering}
-                    className="w-full pl-4 pr-11 py-3.5 rounded-xl text-white placeholder:text-white/25 outline-none transition-all disabled:opacity-50"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-                    onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)'; e.currentTarget.style.background='rgba(255,255,255,0.08)' }}
-                    onBlur={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'; e.currentTarget.style.background='rgba(255,255,255,0.06)' }}
+                    className="w-full pl-4 pr-11 py-3.5 rounded-xl text-stone-900 placeholder:text-stone-400 outline-none transition-all disabled:opacity-50"
+                    style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
+                    onFocus={e => { e.currentTarget.style.borderColor='rgba(249,115,22,0.5)' }}
+                    onBlur={e => { e.currentTarget.style.borderColor='#E7E5E4' }}
                   />
                   <button
                     type="button"
                     onClick={() => setRegisterShowPassword(!registerShowPassword)}
                     tabIndex={-1}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors"
-                    style={{ color: 'rgba(255,255,255,0.3)' }}
+                    style={{ color: '#A8A29E' }}
                   >
                     {registerShowPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -1901,13 +2301,13 @@ export default function OnboardingPage() {
                   'Crear cuenta gratis'
                 )}
               </button>
-              <p className="text-[11px] text-center leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <p className="text-[11px] text-center leading-relaxed" style={{ color: '#78716C' }}>
                 Al registrarte aceptas nuestros{' '}
                 <Link href="/terms" className="underline">Términos</Link>
                 {' '}y{' '}
                 <Link href="/privacy" className="underline">Privacidad</Link>.
               </p>
-              <p className="text-xs text-center" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <p className="text-xs text-center" style={{ color: '#78716C' }}>
                 ¿Ya tienes cuenta?{' '}
                 <Link href="/login" className="font-semibold" style={{ color: '#F97316' }}>
                   Iniciar sesión
@@ -1928,7 +2328,16 @@ export default function OnboardingPage() {
       totalScreens={totalScreens}
       onBack={currentScreen !== 'welcome' ? prevScreen : undefined}
     >
-      <div key={currentScreen} className="flex-1 flex flex-col animate-fade-in-up">
+      <div
+        key={currentScreen}
+        className="flex-1 flex flex-col"
+        style={{
+          opacity: isTransitioning ? 0 : 1,
+          transform: isTransitioning ? 'translateY(6px)' : 'translateY(0)',
+          transition: 'opacity 0.2s ease, transform 0.2s ease',
+          animation: 'fadeInUp 0.25s ease both',
+        }}
+      >
         {renderScreen()}
       </div>
     </OnboardingLayout>

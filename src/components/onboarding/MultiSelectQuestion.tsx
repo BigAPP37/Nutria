@@ -36,17 +36,17 @@ export function MultiSelectQuestion({
 
   return (
     <div className="space-y-7">
-      <div>
-        <h2 className="font-bold leading-tight" style={{ color: '#FFFFFF', fontSize: 22 }}>
+      <div className="text-center">
+        <h2 className="font-bold leading-tight" style={{ color: '#1C1917', fontSize: 26, fontWeight: 800, lineHeight: 1.15 }}>
           {question}
         </h2>
         {subtitle && (
-          <p className="mt-1.5" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
+          <p className="mt-1.5" style={{ color: '#78716C', fontSize: 13 }}>
             {subtitle}
           </p>
         )}
         {maxSelections && (
-          <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          <p className="text-xs mt-1" style={{ color: '#A8A29E' }}>
             Elige hasta {maxSelections}
           </p>
         )}
@@ -65,11 +65,11 @@ export function MultiSelectQuestion({
                 style={isSelected ? {
                   background: '#F97316',
                   color: 'white',
-                  boxShadow: '0 0 16px rgba(249,115,22,0.4)',
+                  border: '1px solid #F97316',
                 } : {
-                  background: 'rgba(255,255,255,0.07)',
-                  color: 'rgba(255,255,255,0.7)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: '#FFFFFF',
+                  color: '#44403C',
+                  border: '1px solid #E7E5E4',
                 }}
               >
                 {option.label}
@@ -90,13 +90,13 @@ export function MultiSelectQuestion({
                 style={{
                   padding: '14px 16px',
                   borderRadius: 14,
-                  background: isSelected ? 'rgba(249,115,22,0.1)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${isSelected ? 'rgba(249,115,22,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                  background: isSelected ? '#FFF7ED' : '#FFFFFF',
+                  border: `1px solid ${isSelected ? 'rgba(249,115,22,0.4)' : '#E7E5E4'}`,
                 }}
               >
                 <span
                   className="flex-1 text-sm font-medium"
-                  style={{ color: isSelected ? '#F97316' : 'rgba(255,255,255,0.85)' }}
+                  style={{ color: isSelected ? '#F97316' : '#1C1917' }}
                 >
                   {option.label}
                 </span>
@@ -104,7 +104,7 @@ export function MultiSelectQuestion({
                   className="w-5 h-5 rounded-md flex-shrink-0 flex items-center justify-center transition-all"
                   style={{
                     background: isSelected ? '#F97316' : 'transparent',
-                    border: `2px solid ${isSelected ? '#F97316' : 'rgba(255,255,255,0.2)'}`,
+                    border: `2px solid ${isSelected ? '#F97316' : '#D6D3D1'}`,
                   }}
                 >
                   {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}

@@ -47,11 +47,20 @@ export function ManualSearch({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* Campo de búsqueda */}
-      <div className="relative">
+      <div style={{ position: 'relative' }}>
         <Search
-          className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400"
+          style={{
+            position: 'absolute',
+            left: 14,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 16,
+            height: 16,
+            color: '#A8A29E',
+            pointerEvents: 'none',
+          }}
           strokeWidth={2}
         />
         <input
@@ -59,30 +68,65 @@ export function ManualSearch({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar alimento... (ej: manzana, pollo)"
-          className="
-            w-full pl-10 pr-4 py-3 rounded-2xl
-            border-2 border-stone-200 bg-white
-            text-stone-800 text-sm placeholder:text-stone-400
-            focus:outline-none focus:border-orange-400
-            min-h-[44px] transition-colors
-          "
           autoComplete="off"
+          style={{
+            width: '100%',
+            paddingLeft: 44,
+            paddingRight: 16,
+            paddingTop: 13,
+            paddingBottom: 13,
+            borderRadius: 16,
+            border: '1.5px solid #E7E5E4',
+            background: 'white',
+            color: '#1C1917',
+            fontSize: 14,
+            outline: 'none',
+            minHeight: 50,
+            transition: 'border-color 0.2s',
+            boxSizing: 'border-box',
+            fontFamily: 'inherit',
+          }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = '#F97316' }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = '#E7E5E4' }}
         />
       </div>
 
       {/* Estado de carga */}
       {isLoading && query.length >= 2 && (
-        <div className="text-center py-6">
-          <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-stone-400 mt-2">Buscando...</p>
+        <div style={{ textAlign: 'center', padding: '24px 0' }}>
+          <div style={{
+            width: 28,
+            height: 28,
+            borderRadius: '50%',
+            border: '3px solid #FED7AA',
+            borderTopColor: '#F97316',
+            animation: 'spin 0.8s linear infinite',
+            margin: '0 auto 10px',
+          }} />
+          <p style={{ fontSize: 12, color: '#A8A29E' }}>Buscando...</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
 
-      {/* Mensaje si no hay resultados */}
+      {/* Sin resultados */}
       {!isLoading && query.length >= 2 && results.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-sm text-stone-500">No se encontraron resultados</p>
-          <p className="text-xs text-stone-400 mt-1">
+        <div style={{ textAlign: 'center', padding: '32px 0' }}>
+          <div style={{
+            width: 52,
+            height: 52,
+            borderRadius: 18,
+            background: '#F5F4F3',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 12px',
+          }}>
+            <Search style={{ width: 22, height: 22, color: '#C4B9B3' }} strokeWidth={1.5} />
+          </div>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#78716C', marginBottom: 4 }}>
+            Sin resultados
+          </p>
+          <p style={{ fontSize: 12, color: '#A8A29E' }}>
             Prueba con otro término o usa el método de texto
           </p>
         </div>
@@ -90,60 +134,105 @@ export function ManualSearch({
 
       {/* Mensaje de inicio */}
       {query.length < 2 && (
-        <div className="text-center py-8">
-          <Search className="w-10 h-10 text-stone-200 mx-auto mb-2" strokeWidth={1.5} />
-          <p className="text-sm text-stone-400">
-            Escribe al menos 2 caracteres para buscar
+        <div style={{ textAlign: 'center', padding: '32px 0' }}>
+          <div style={{
+            width: 60,
+            height: 60,
+            borderRadius: 20,
+            background: 'linear-gradient(135deg, #FED7AA 0%, #F97316 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 14px',
+            boxShadow: '0 6px 20px rgba(249,115,22,0.3)',
+          }}>
+            <Search style={{ width: 26, height: 26, color: 'white' }} strokeWidth={2} />
+          </div>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#78716C', marginBottom: 4 }}>
+            Busca tu alimento
+          </p>
+          <p style={{ fontSize: 12, color: '#A8A29E' }}>
+            Escribe al menos 2 caracteres
           </p>
         </div>
       )}
 
       {/* Lista de resultados */}
       {results.length > 0 && (
-        <ul className="flex flex-col gap-1.5">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {results.map((food) => (
-            <li key={food.food_id}>
-              <button
-                onClick={() => setSelectedFood(food)}
-                className="
-                  w-full text-left px-4 py-3 rounded-2xl
-                  bg-white border border-stone-200
-                  hover:border-orange-300 hover:bg-orange-50
-                  transition-colors
-                "
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    {/* Nombre del alimento */}
-                    <p className="text-sm font-medium text-stone-800 truncate">
-                      {food.food_name}
-                    </p>
-                    {/* Marca si existe */}
-                    {food.brand && (
-                      <p className="text-xs text-stone-400 truncate">{food.brand}</p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    {/* Calorías por 100g */}
-                    <span className="text-sm font-semibold text-stone-700">
-                      {Math.round(food.calories_kcal)}{' '}
-                      <span className="text-xs font-normal text-stone-400">kcal/100g</span>
-                    </span>
-
-                    {/* Badge de verificado */}
-                    {food.is_verified && (
-                      <span className="text-xs text-stone-400 flex items-center gap-0.5">
-                        <span>✓</span>
-                        <span>Verificado</span>
-                      </span>
-                    )}
-                  </div>
+            <button
+              key={food.food_id}
+              onClick={() => setSelectedFood(food)}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '14px 16px',
+                borderRadius: 16,
+                background: 'white',
+                border: '1.5px solid #E7E5E4',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#FDBA74'
+                e.currentTarget.style.background = '#FFF7ED'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#E7E5E4'
+                e.currentTarget.style.background = 'white'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* Nombre del alimento */}
+                  <p style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: '#1C1917',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    lineHeight: 1.3,
+                  }}>
+                    {food.food_name}
+                  </p>
+                  {/* Marca si existe */}
+                  {food.brand && (
+                    <p style={{ fontSize: 12, color: '#A8A29E', marginTop: 2 }}>{food.brand}</p>
+                  )}
                 </div>
-              </button>
-            </li>
+
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                  {/* Calorías */}
+                  <div className="flex items-baseline gap-1">
+                    <span style={{ fontSize: 15, fontWeight: 700, color: '#F97316' }}>
+                      {Math.round(food.calories_kcal)}
+                    </span>
+                    <span style={{ fontSize: 11, color: '#A8A29E' }}>kcal/100g</span>
+                  </div>
+
+                  {/* Badge de verificado */}
+                  {food.is_verified && (
+                    <span style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: '#059669',
+                      background: '#D1FAE5',
+                      padding: '2px 7px',
+                      borderRadius: 99,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 3,
+                    }}>
+                      ✓ Verificado
+                    </span>
+                  )}
+                </div>
+              </div>
+            </button>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   )

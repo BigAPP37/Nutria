@@ -1,41 +1,35 @@
 'use client'
 
+import Image from 'next/image'
 import type { NutiPose } from '@/constants/nuti-messages'
 
 export type { NutiPose }
 
 interface NutriaImageProps {
   pose?: NutiPose
-  size?: number | string // Allow '100%' or string values
+  size?: number | string
   className?: string
   priority?: boolean
   withGlow?: boolean
-  maxWidth?: string // Added maxWidth for flexible sizing
+  maxWidth?: string
 }
 
 export function NutriaImage({
   pose = 'broccoli',
   size = '100%',
   className,
+  priority = false,
   withGlow = false,
   maxWidth = '420px',
 }: NutriaImageProps) {
-  const img = (
-    <img
-      src={`/nutria-${pose}.png`}
-      alt="Nuti"
-      onError={(e) => {
-        e.currentTarget.src = `/nutria-${pose}.jpg`;
-      }}
-      style={{
-        width: '100%',
-        height: 'auto',
-        display: 'block',
-        margin: '0 auto',
-      }}
-      className={className ?? 'drop-shadow-lg'}
-    />
-  )
+  // Calcular sizes hint para el optimizador de Next.js
+  const sizesHint =
+    typeof size === 'number'
+      ? `${size}px`
+      : `(max-width: 768px) 100vw, ${maxWidth}`
+
+  // Altura mínima del contenedor para evitar layout shift
+  const minH = typeof size === 'number' ? size : 200
 
   return (
     <div
@@ -43,10 +37,7 @@ export function NutriaImage({
       style={{
         width: size,
         maxWidth: maxWidth,
-        minHeight: '200px', // Prevent layout shift (flicker)
-        overflow: 'hidden',
-        border: 'none',
-        borderRadius: '0',
+        minHeight: minH,
         margin: '0 auto',
       }}
     >
@@ -59,7 +50,16 @@ export function NutriaImage({
           }}
         />
       )}
-      <div className="relative z-10 w-full">{img}</div>
+      <div className="relative z-10 w-full" style={{ aspectRatio: '1 / 1' }}>
+        <Image
+          src={`/nutria-${pose}.png`}
+          alt="Nuti"
+          fill
+          sizes={sizesHint}
+          priority={priority}
+          className={`object-contain drop-shadow-lg${className ? ` ${className}` : ''}`}
+        />
+      </div>
     </div>
   )
 }

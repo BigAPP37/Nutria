@@ -33,12 +33,12 @@ interface CompactFormQuestionProps {
 export function CompactFormQuestion({ question, subtitle, fields }: CompactFormQuestionProps) {
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold leading-tight" style={{ color: '#FFFFFF' }}>
+      <div className="text-center">
+        <h2 className="font-bold leading-tight" style={{ color: '#1C1917', fontSize: 26, fontWeight: 800, lineHeight: 1.15 }}>
           {question}
         </h2>
         {subtitle && (
-          <p className="text-sm mt-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <p className="text-sm mt-1.5" style={{ color: '#78716C' }}>
             {subtitle}
           </p>
         )}
@@ -49,7 +49,7 @@ export function CompactFormQuestion({ question, subtitle, fields }: CompactFormQ
           <div key={field.id}>
             <label
               className="block text-sm font-medium mb-2"
-              style={{ color: 'rgba(255,255,255,0.5)' }}
+              style={{ color: '#78716C' }}
             >
               {field.label}
             </label>
@@ -68,24 +68,22 @@ export function CompactFormQuestion({ question, subtitle, fields }: CompactFormQ
                     const val = parseInt(e.target.value)
                     field.onChange(isNaN(val) ? null : Math.min(field.max, Math.max(field.min, val)))
                   }}
-                  className="w-full px-4 py-3.5 rounded-xl text-white outline-none transition-all"
+                  className="w-full px-4 py-3.5 rounded-xl text-stone-900 outline-none transition-all"
                   style={{
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: '#FFFFFF',
+                    border: '1px solid #E7E5E4',
                   }}
                   onFocus={(e) => {
                     e.currentTarget.style.borderColor = 'rgba(249,115,22,0.5)'
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
+                    e.currentTarget.style.borderColor = '#E7E5E4'
                   }}
                 />
                 {field.suffix && (
                   <span
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-sm pointer-events-none"
-                    style={{ color: 'rgba(255,255,255,0.3)' }}
+                    style={{ color: '#A8A29E' }}
                   >
                     {field.suffix}
                   </span>
@@ -103,9 +101,9 @@ export function CompactFormQuestion({ question, subtitle, fields }: CompactFormQ
                       onClick={() => (field as CompactSelectField).onChange(opt.value)}
                       className="px-3.5 py-2 rounded-xl text-sm font-medium transition-all"
                       style={{
-                        background: isSelected ? '#F97316' : 'rgba(255,255,255,0.06)',
-                        color: isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.55)',
-                        border: `1px solid ${isSelected ? '#F97316' : 'rgba(255,255,255,0.08)'}`,
+                        background: isSelected ? '#F97316' : '#FFFFFF',
+                        color: isSelected ? '#FFFFFF' : '#44403C',
+                        border: `1px solid ${isSelected ? '#F97316' : '#E7E5E4'}`,
                       }}
                     >
                       {opt.label}

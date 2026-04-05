@@ -4,7 +4,7 @@
 // Header naranja con anillos concéntricos, micronutrientes, agua segmentada, comidas con emojis
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut, CheckCircle2, Circle, Settings, MessageSquarePlus } from 'lucide-react'
+import { CheckCircle2, Circle, Settings, MessageSquarePlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useProfile } from '@/hooks/useProfile'
 import { useTdeeState } from '@/hooks/useTdeeState'
@@ -157,13 +157,6 @@ export default function DashboardPage() {
     setFoodEntries((data as FoodLogEntry[]) || [])
   }
 
-  // Cerrar sesión
-  async function handleLogout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
-  }
 
   const displayName = profile?.display_name || 'amigo'
 
@@ -187,22 +180,13 @@ export default function DashboardPage() {
               Hola, {displayName} 👋
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/settings"
-              className="w-[34px] h-[34px] rounded-full bg-white/15 flex items-center justify-center"
-              aria-label="Ajustes"
-            >
-              <Settings className="w-4 h-4 text-white" />
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="w-[34px] h-[34px] rounded-full bg-white/15 flex items-center justify-center"
-              aria-label="Cerrar sesión"
-            >
-              <LogOut className="w-4 h-4 text-white" />
-            </button>
-          </div>
+          <Link
+            href="/settings"
+            className="w-[34px] h-[34px] rounded-full bg-white/15 flex items-center justify-center"
+            aria-label="Ajustes"
+          >
+            <Settings className="w-4 h-4 text-white" />
+          </Link>
         </div>
 
         {/* Anillo concéntrico + macros */}
@@ -299,7 +283,16 @@ export default function DashboardPage() {
 
         {/* Marcar día como completo */}
         <button
-          onClick={() => setIsLoggingComplete(!isLoggingComplete)}
+          onClick={async () => {
+            if (!userId) return
+            const newValue = !isLoggingComplete
+            setIsLoggingComplete(newValue)
+            const supabase = createClient()
+            await supabase.from('daily_log_status').upsert(
+              { user_id: userId, log_date: today, is_day_complete: newValue },
+              { onConflict: 'user_id,log_date' }
+            )
+          }}
           className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl border transition-all ${
             isLoggingComplete
               ? 'bg-emerald-50 border-emerald-200 text-emerald-600'

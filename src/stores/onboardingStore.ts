@@ -230,13 +230,15 @@ export const useOnboardingStore = create<OnboardingState>()(
       setSubmitting: (isSubmitting) => set({ isSubmitting }),
       setSubmitError: (submitError) => set({ submitError }),
 
-      reset: () =>
+      reset: () => {
+        useOnboardingStore.persist.clearStorage()
         set({
           currentScreen: 'welcome',
           data: initialData,
           isSubmitting: false,
           submitError: null,
-        }),
+        })
+      },
     }),
     { name: 'nutria-onboarding' },
   ),
