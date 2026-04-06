@@ -7,6 +7,7 @@ interface MealSectionProps {
   mealType: MealType
   entries: FoodLogEntry[]
   onAddEntry: (mealType: MealType) => void
+  onEntryTap?: (entry: FoodLogEntry) => void
 }
 
 const mealConfig: Record<
@@ -54,7 +55,7 @@ const mealConfig: Record<
   },
 }
 
-export function MealSection({ mealType, entries, onAddEntry }: MealSectionProps) {
+export function MealSection({ mealType, entries, onAddEntry, onEntryTap }: MealSectionProps) {
   const config = mealConfig[mealType]
   const totalCalories = entries.reduce((sum, entry) => sum + (entry.calories_kcal || 0), 0)
 
@@ -140,45 +141,41 @@ export function MealSection({ mealType, entries, onAddEntry }: MealSectionProps)
       {entries.length > 0 && (
         <div style={{ borderTop: '1px solid #F5F4F3' }}>
           {entries.map((entry, i) => (
-            <div
+            <button
               key={entry.id}
-              className="flex items-center justify-between"
+              type="button"
+              onClick={() => onEntryTap?.(entry)}
+              className="flex items-center justify-between w-full text-left"
               style={{
                 padding: '10px 16px',
                 borderBottom: i < entries.length - 1 ? '1px solid #F9F8F8' : 'none',
+                background: 'none',
+                cursor: onEntryTap ? 'pointer' : 'default',
               }}
+              onMouseEnter={(e) => { if (onEntryTap) e.currentTarget.style.background = '#FAFAF9' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
             >
               <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                {/* Dot de color */}
                 <div style={{
-                  width: 5,
-                  height: 5,
+                  width: 5, height: 5,
                   borderRadius: '50%',
                   background: config.accentColor,
-                  flexShrink: 0,
-                  opacity: 0.6,
+                  flexShrink: 0, opacity: 0.6,
                 }} />
                 <span style={{
-                  fontSize: 13,
-                  color: '#44403C',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                  fontSize: 13, color: '#44403C',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                 }}>
                   {entry.custom_description || entry.foods?.name || 'Alimento'}
                 </span>
               </div>
               <div className="flex-shrink-0 ml-3 flex items-center gap-1">
-                <span style={{
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: '#1C1917',
-                }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#1C1917' }}>
                   {Math.round(entry.calories_kcal || 0)}
                 </span>
                 <span style={{ fontSize: 11, color: '#A8A29E' }}>kcal</span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       )}

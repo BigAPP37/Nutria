@@ -19,7 +19,7 @@ export type LogStep =
 interface LogSessionState {
   // Estado del flujo
   step: LogStep
-  method: 'photo' | 'text' | 'manual' | null
+  method: 'photo' | 'text' | 'manual' | 'barcode' | null
   mealType: MealType
 
   // Datos de foto
@@ -44,6 +44,7 @@ interface LogSessionState {
   startPhotoCapture(): void
   startTextLog(): void
   startManualSearch(): void
+  startBarcodeCapture(): void
   setStep(step: LogStep): void
   setPhotoFile(file: File, previewUrl: string): void
   setPhotoStoragePath(path: string): void
@@ -95,6 +96,10 @@ export const useLogSessionStore = create<LogSessionState>((set) => ({
   // Inicia el flujo de búsqueda manual
   startManualSearch: () =>
     set({ method: 'manual', step: 'capturing', errorMessage: null }),
+
+  // Inicia el flujo de escáner de código de barras
+  startBarcodeCapture: () =>
+    set({ method: 'barcode', step: 'capturing', errorMessage: null }),
 
   // Cambia el paso del flujo
   setStep: (step) => set({ step }),

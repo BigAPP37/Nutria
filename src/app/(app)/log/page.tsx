@@ -18,6 +18,9 @@ import { ManualSearch } from '@/components/logging/ManualSearch'
 import { AnalyzingSpinner } from '@/components/logging/AnalyzingSpinner'
 import { AiConfirmSheet } from '@/components/logging/AiConfirmSheet'
 import { LogSuccess } from '@/components/logging/LogSuccess'
+import { BarcodeScanner } from '@/components/logging/BarcodeScanner'
+import { BarcodeConfirmCard } from '@/components/logging/BarcodeConfirmCard'
+import type { FoodLookupResult } from '@/app/api/food-lookup/route'
 
 // Monetización Premium — control de límite de fotos
 import { usePremiumStore } from '@/stores/premiumStore'
@@ -37,6 +40,9 @@ export default function LogPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [isDiscarding, setIsDiscarding] = useState(false)
   const [showPhotoPaywall, setShowPhotoPaywall] = useState(false)
+  const [barcodeProduct, setBarcodeProduct] = useState<FoodLookupResult | null>(null)
+  const [isBarcodeSearching, setIsBarcodeSearching] = useState(false)
+  const [isSavingBarcode, setIsSavingBarcode] = useState(false)
 
   // Estado Premium y control de fotos diarias
   const { isPremium, photoLogsToday, maxFreePhotos, canUsePhoto, incrementPhotoLog } = usePremiumStore()
@@ -163,6 +169,55 @@ export default function LogPage() {
     }
   }
 
+  // Manejador: código de barras detectado — busca el producto en Open Food Facts
+  async function handleBarcodeDetected(barcode: string) {
+    setIsBarcodeSearching(true)
+    try {
+      const res = await fetch(`/api/food-lookup?barcode=${encodeURIComponent(barcode)}`)
+      const data: FoodLookupResult = await res.json()
+      if (data.found) {
+        setBarcodeProduct(data)
+      } else {
+        store.setError('Producto no encontrado. Prueba con búsqueda manual.')
+      }
+    } catch {
+      store.setError('Error al buscar el producto. Inténtalo de nuevo.')
+    } finally {
+      setIsBarcodeSearching(false)
+    }
+  }
+
+  // Manejador: usuario confirma el producto escaneado con cantidad elegida
+  async function handleBarcodeConfirm(product: FoodLookupResult, grams: number) {
+    if (!userId) return
+    setIsSavingBarcode(true)
+    try {
+      const ratio = grams / 100
+      const supabase = createClient()
+      await supabase.from('food_log_entries').insert({
+        user_id: userId,
+        food_id: null,
+        log_date: today,
+        meal_type: store.mealType,
+        logging_method: 'barcode',
+        calories_kcal: Math.round(product.kcal_100g * ratio),
+        protein_g: Math.round(product.protein_100g * ratio * 10) / 10,
+        carbs_g: Math.round(product.carbs_100g * ratio * 10) / 10,
+        fat_g: Math.round(product.fat_100g * ratio * 10) / 10,
+        fiber_g: product.fiber_100g != null ? Math.round(product.fiber_100g * ratio * 10) / 10 : null,
+        quantity_grams: grams,
+        custom_description: product.brand ? `${product.name} (${product.brand})` : product.name,
+        deleted_at: null,
+      })
+      store.setSavedKcal(Math.round(product.kcal_100g * ratio))
+      store.setStep('done')
+    } catch {
+      store.setError('Error al guardar. Inténtalo de nuevo.')
+    } finally {
+      setIsSavingBarcode(false)
+    }
+  }
+
   // Manejador: el usuario añadió un alimento manualmente con éxito
   function handleManualAdded(kcal: number) {
     store.setSavedKcal(kcal)
@@ -219,12 +274,15 @@ export default function LogPage() {
           {/* Selector de método — visible cuando el usuario aún no ha empezado a analizar */}
           {!isAnalyzing &&
             store.step !== 'confirming' &&
-            store.method !== 'manual' && (
+            store.method !== 'manual' &&
+            !(store.method === 'barcode' && (barcodeProduct || isBarcodeSearching)) && (
               <LogMethodTabs
                 active={store.method}
                 onSelect={(m) => {
+                  setBarcodeProduct(null)
                   if (m === 'photo') store.startPhotoCapture()
                   else if (m === 'text') store.startTextLog()
+                  else if (m === 'barcode') store.startBarcodeCapture()
                   else store.startManualSearch()
                 }}
               />
@@ -293,6 +351,24 @@ export default function LogPage() {
           {/* Spinner de análisis */}
           {isAnalyzing && store.method !== 'manual' && (
             <AnalyzingSpinner method={store.method as 'photo' | 'text'} />
+          )}
+
+          {/* Código de barras: escáner de cámara */}
+          {store.method === 'barcode' && store.step === 'capturing' && !barcodeProduct && (
+            <BarcodeScanner
+              onDetected={handleBarcodeDetected}
+              isSearching={isBarcodeSearching}
+            />
+          )}
+
+          {/* Código de barras: confirmación de producto */}
+          {store.method === 'barcode' && barcodeProduct && (
+            <BarcodeConfirmCard
+              product={barcodeProduct}
+              onConfirm={handleBarcodeConfirm}
+              onDiscard={() => { setBarcodeProduct(null); store.startBarcodeCapture() }}
+              isSaving={isSavingBarcode}
+            />
           )}
 
           {/* Confirmación del resultado de la IA */}

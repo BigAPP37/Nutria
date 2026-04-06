@@ -3,9 +3,9 @@
 // Selector del método de registro: foto, texto o búsqueda manual
 // Muestra 3 tarjetas con iconos y etiquetas
 
-import { Camera, MessageSquare, Search } from 'lucide-react'
+import { Camera, MessageSquare, Search, Barcode } from 'lucide-react'
 
-type LogMethod = 'photo' | 'text' | 'manual'
+type LogMethod = 'photo' | 'text' | 'manual' | 'barcode'
 
 interface LogMethodTabsProps {
   active: LogMethod | null
@@ -19,9 +19,10 @@ const METHODS: {
   Icon: React.ElementType
   emoji: string
 }[] = [
-  { id: 'photo',  label: 'Foto',     description: 'Haz una foto',          Icon: Camera,         emoji: '📸' },
-  { id: 'text',   label: 'Describir', description: 'Escribe lo que comiste', Icon: MessageSquare,  emoji: '✏️' },
-  { id: 'manual', label: 'Buscar',   description: 'Busca un alimento',      Icon: Search,         emoji: '🔍' },
+  { id: 'photo',   label: 'Foto',     description: 'Haz una foto',          Icon: Camera,        emoji: '📸' },
+  { id: 'text',    label: 'Describir', description: 'Escribe lo que comiste', Icon: MessageSquare, emoji: '✏️' },
+  { id: 'manual',  label: 'Buscar',   description: 'Busca un alimento',      Icon: Search,        emoji: '🔍' },
+  { id: 'barcode', label: 'Código',   description: 'Escanea el código',      Icon: Barcode,       emoji: '📦' },
 ]
 
 export function LogMethodTabs({ active, onSelect }: LogMethodTabsProps) {

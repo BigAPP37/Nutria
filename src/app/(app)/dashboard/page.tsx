@@ -14,6 +14,8 @@ import { MicronutrientRow } from '@/components/dashboard/MicronutrientRow'
 import { WaterTracker } from '@/components/dashboard/WaterTracker'
 import { MealSection } from '@/components/dashboard/MealSection'
 import { NaturalTextLogger } from '@/components/dashboard/NaturalTextLogger'
+import { EditEntrySheet } from '@/components/dashboard/EditEntrySheet'
+import { ReminderBanner } from '@/components/dashboard/ReminderBanner'
 import type { FoodLogEntry, MealType } from '@/types/database'
 import { usePsychFlag } from '@/hooks/usePsychFlag'
 import { PsychSupportCard } from '@/components/psych/PsychSupportCard'
@@ -44,6 +46,7 @@ export default function DashboardPage() {
   const [isLoadingData, setIsLoadingData] = useState(true)
   const [showTextLogger, setShowTextLogger] = useState(false)
   const [streakDays, setStreakDays] = useState(0)
+  const [editingEntry, setEditingEntry] = useState<FoodLogEntry | null>(null)
 
   const today = getTodayISO()
   const formattedDate = getFormattedDate()
@@ -179,13 +182,13 @@ export default function DashboardPage() {
     router.push(`/dashboard/add?meal=${mealType}&date=${today}`)
   }
 
-  // Recargar entradas tras guardar desde el logger de texto
+  // Recargar entradas tras guardar o editar
   async function reloadFoodEntries() {
     if (!userId) return
     const supabase = createClient()
     const { data } = await supabase
       .from('food_log_entries')
-      .select('*')
+      .select('*, foods(name)')
       .eq('user_id', userId)
       .eq('log_date', today)
       .is('deleted_at', null)
@@ -315,6 +318,9 @@ export default function DashboardPage() {
           />
         )}
 
+        {/* Recordatorio contextual */}
+        <ReminderBanner entries={foodEntries} />
+
         {/* Comidas */}
         <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wide pt-1">
           Comidas
@@ -326,6 +332,7 @@ export default function DashboardPage() {
             mealType={meal}
             entries={getEntriesByMeal(meal)}
             onAddEntry={handleAddEntry}
+            onEntryTap={setEditingEntry}
           />
         ))}
 
@@ -372,6 +379,18 @@ export default function DashboardPage() {
         {/* Espaciado inferior */}
         <div className="h-6" />
       </div>
+
+      {/* Sheet: editar/eliminar entrada */}
+      {editingEntry && (
+        <EditEntrySheet
+          entry={editingEntry}
+          onClose={() => setEditingEntry(null)}
+          onUpdated={async () => {
+            setEditingEntry(null)
+            await reloadFoodEntries()
+          }}
+        />
+      )}
 
       {/* Modal: logger de texto natural */}
       {showTextLogger && userId && (

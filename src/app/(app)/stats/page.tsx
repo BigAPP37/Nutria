@@ -22,6 +22,8 @@ import { WeeklySnapshotCard } from '@/components/stats/WeeklySnapshotCard'
 import { WeightLogModal } from '@/components/stats/WeightLogModal'
 import { FastingTracker } from '@/components/stats/FastingTracker'
 import { useTodayTotals } from '@/hooks/useTodayTotals'
+import { useTdeeAdjustment } from '@/hooks/useTdeeAdjustment'
+import { TdeeAdjustmentCard } from '@/components/stats/TdeeAdjustmentCard'
 
 // Monetización Premium
 import { usePremiumStore } from '@/stores/premiumStore'
@@ -58,6 +60,7 @@ export default function StatsPage() {
   const { data: streakData, isLoading: streakLoading } = useStreakDays(userId)
   const { data: macroAverages, isLoading: macroLoading } = useMacroAverages(userId)
   const { data: todayTotals } = useTodayTotals(userId)
+  const { data: tdeeAdjustment } = useTdeeAdjustment(userId)
 
   const lastWeightEntry = weightHistory.length > 0 ? weightHistory[weightHistory.length - 1] : null
   const currentWeight = lastWeightEntry?.weight_kg ?? null
@@ -102,6 +105,11 @@ export default function StatsPage() {
 
         {/* 3. Objetivo calórico diario */}
         <TdeeCard tdeeState={tdeeState ?? null} todayTotals={todayTotals ?? null} isLoading={tdeeLoading} />
+
+        {/* 3b. Sugerencia de ajuste de TDEE (si aplica) */}
+        {tdeeAdjustment?.shouldAdjust && userId && (
+          <TdeeAdjustmentCard adjustment={tdeeAdjustment} userId={userId} />
+        )}
 
         {/* 4. Gráfico de evolución del peso */}
         <section className="relative bg-white rounded-2xl border border-stone-100 p-4">
