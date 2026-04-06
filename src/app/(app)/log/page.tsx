@@ -194,7 +194,7 @@ export default function LogPage() {
     try {
       const ratio = grams / 100
       const supabase = createClient()
-      await supabase.from('food_log_entries').insert({
+      const { error: insertError } = await supabase.from('food_log_entries').insert({
         user_id: userId,
         food_id: null,
         log_date: today,
@@ -209,6 +209,7 @@ export default function LogPage() {
         custom_description: product.brand ? `${product.name} (${product.brand})` : product.name,
         deleted_at: null,
       })
+      if (insertError) throw new Error(insertError.message)
       store.setSavedKcal(Math.round(product.kcal_100g * ratio))
       store.setStep('done')
     } catch {

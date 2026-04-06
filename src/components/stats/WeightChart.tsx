@@ -4,8 +4,6 @@ import { useMemo } from 'react'
 import { Scale, Plus } from 'lucide-react'
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -55,6 +53,12 @@ function formatShortDate(isoDatetime: string): string {
 }
 
 export function WeightChart({ data, unit, onAddWeight, isLoading }: WeightChartProps) {
+  // Must be declared before any early returns to satisfy rules-of-hooks
+  const chartData = useMemo(() => data.map((point) => ({
+    date: formatShortDate(point.recorded_at),
+    weight_kg: point.weight_kg,
+  })), [data])
+
   if (isLoading) {
     return (
       <div className="animate-pulse" style={{
@@ -114,12 +118,6 @@ export function WeightChart({ data, unit, onAddWeight, isLoading }: WeightChartP
       </div>
     )
   }
-
-  // Mapear los puntos al formato que espera Recharts
-  const chartData = useMemo(() => data.map((point) => ({
-    date: formatShortDate(point.recorded_at),
-    weight_kg: point.weight_kg,
-  })), [data])
 
   return (
     <div>

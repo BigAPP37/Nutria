@@ -105,10 +105,6 @@ function getCurrentPhase(elapsedSecs: number) {
   return phase
 }
 
-function getNextPhase(elapsedSecs: number) {
-  const h = elapsedSecs / 3600
-  return PHASES.find(p => p.fromH > h) ?? null
-}
 
 function secsUntilPhase(elapsedSecs: number, fromH: number) {
   return Math.max(fromH * 3600 - elapsedSecs, 0)
@@ -159,7 +155,6 @@ function TimerTab({
   const done       = elapsed >= targetSecs && !!session
   const remaining  = Math.max(targetSecs - elapsed, 0)
   const phase      = getCurrentPhase(elapsed)
-  const nextPhase  = getNextPhase(elapsed)
 
   const R = 72; const STROKE = 8
   const SIZE = (R + STROKE) * 2 + 4; const CENTER = SIZE / 2
@@ -480,7 +475,6 @@ function ScheduleTab({ session, onUpdate }: {
   const endISO    = session ? addHoursISO(session.started_at, session.protocol_hours) : null
   const startHour = new Date(startISO).getHours() + new Date(startISO).getMinutes() / 60
   const endH      = session ? session.protocol_hours : 16
-  const endHour   = (startHour + endH) % 24
 
   // 24h timeline visualization
   const fastStart = startHour
@@ -655,17 +649,20 @@ export function FastingTracker() {
   const [mounted, setMounted]   = useState(false)
 
   useEffect(() => {
-    setMounted(true)
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const s = JSON.parse(raw) as FastSession
-        setSession(s)
-        setProtocol(s.protocol_hours)
-      }
-      const hist = localStorage.getItem(HISTORY_KEY)
-      if (hist) setHistory(JSON.parse(hist))
-    } catch {}
+    function initialize() {
+      setMounted(true)
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY)
+        if (raw) {
+          const s = JSON.parse(raw) as FastSession
+          setSession(s)
+          setProtocol(s.protocol_hours)
+        }
+        const hist = localStorage.getItem(HISTORY_KEY)
+        if (hist) setHistory(JSON.parse(hist))
+      } catch {}
+    }
+    initialize()
   }, [])
 
   useEffect(() => {

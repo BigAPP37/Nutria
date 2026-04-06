@@ -74,7 +74,7 @@ function Row({
 export default function SettingsPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const { data: profile, refetch } = useProfile()
+  const { data: profile } = useProfile()
 
   const [userId, setUserId] = useState<string | null>(null)
   const [email, setEmail] = useState<string | null>(null)

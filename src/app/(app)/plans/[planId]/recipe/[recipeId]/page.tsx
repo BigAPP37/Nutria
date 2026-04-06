@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ChevronLeft, Flame, Clock, Users, CheckCircle2, Plus } from 'lucide-react'
+import type { MealType } from '@/types/database'
 
 type Recipe = {
   id: string
@@ -46,9 +47,22 @@ const MACRO_ITEMS = [
   { key: 'fat_g',         label: 'Grasa',    unit: 'g',    color: '#6366F1', bg: 'rgba(99,102,241,0.08)' },
 ] as const
 
+const MEAL_LABELS: Record<MealType, string> = {
+  breakfast: 'Desayuno', lunch: 'Almuerzo', dinner: 'Cena', snack: 'Snack',
+}
+const MEAL_EMOJIS: Record<MealType, string> = {
+  breakfast: '☕', lunch: '🍽', dinner: '🌙', snack: '🍎',
+}
+const VALID_MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack']
+
 export default function RecipePage({ params }: { params: Promise<{ planId: string; recipeId: string }> }) {
-  const { planId, recipeId } = use(params)
+  const { recipeId } = use(params)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Usar el meal_type del contexto del plan (query param) o dejar al usuario elegir
+  const paramMeal = searchParams.get('meal') as MealType | null
+  const defaultMeal: MealType = VALID_MEAL_TYPES.includes(paramMeal as MealType) ? (paramMeal as MealType) : 'lunch'
 
   const [recipe, setRecipe] = useState<Recipe | null>(null)
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
@@ -56,6 +70,7 @@ export default function RecipePage({ params }: { params: Promise<{ planId: strin
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
   const [logged, setLogged] = useState(false)
+  const [mealType, setMealType] = useState<MealType>(defaultMeal)
 
   useEffect(() => {
     const sb = createClient()
@@ -80,20 +95,24 @@ export default function RecipePage({ params }: { params: Promise<{ planId: strin
     if (!user) return
 
     const today = new Date().toISOString().split('T')[0]
-    await sb.from('food_log_entries').insert({
-      user_id:          user.id,
-      log_date:         today,
-      meal_type:        'lunch',
-      logging_method:   'manual',
-      calories_kcal:    recipe.calories_kcal || 0,
-      protein_g:        recipe.protein_g || 0,
-      carbs_g:          recipe.carbs_g || 0,
-      fat_g:            recipe.fat_g || 0,
-      fiber_g:          recipe.fiber_g || null,
-      quantity_grams:   100,
-      custom_description: recipe.title,
+    // Los macros de la receta son para 1 ración (servings=1) o el total de la receta.
+    // Usamos los valores tal cual ya que representan la porción que se va a comer.
+    const servings = recipe.servings || 1
+    const { error } = await sb.from('food_log_entries').insert({
+      user_id:            user.id,
+      log_date:           today,
+      meal_type:          mealType,
+      logging_method:     'manual',
+      calories_kcal:      Math.round((recipe.calories_kcal || 0) / servings),
+      protein_g:          Math.round(((recipe.protein_g || 0) / servings) * 10) / 10,
+      carbs_g:            Math.round(((recipe.carbs_g || 0) / servings) * 10) / 10,
+      fat_g:              Math.round(((recipe.fat_g || 0) / servings) * 10) / 10,
+      fiber_g:            recipe.fiber_g != null ? Math.round((recipe.fiber_g / servings) * 10) / 10 : null,
+      quantity_grams:     1,   // 1 = "1 ración"; no es un alimento en gramos
+      custom_description: `${recipe.title} (1 ración)`,
+      deleted_at:         null,
     })
-    setLogged(true)
+    if (!error) setLogged(true)
   }
 
   function toggleStep(n: number) {
@@ -272,7 +291,38 @@ export default function RecipePage({ params }: { params: Promise<{ planId: strin
         )}
 
         {/* Registrar en diario */}
-        <div className="pb-6">
+        <div className="pb-6 space-y-3">
+          {/* Selector de tipo de comida */}
+          {!logged && (
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#A8A29E', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
+                Añadir a
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {VALID_MEAL_TYPES.map(m => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMealType(m)}
+                    style={{
+                      padding: '8px 4px',
+                      borderRadius: 12,
+                      border: mealType === m ? '1.5px solid #F97316' : '1.5px solid #E7E5E4',
+                      background: mealType === m ? '#FFF7ED' : 'white',
+                      cursor: 'pointer',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                    }}
+                  >
+                    <span style={{ fontSize: 16 }}>{MEAL_EMOJIS[m]}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: mealType === m ? '#F97316' : '#78716C' }}>
+                      {MEAL_LABELS[m]}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button
             onClick={handleLogToDay}
             disabled={logged}
@@ -284,9 +334,9 @@ export default function RecipePage({ params }: { params: Promise<{ planId: strin
             }}
           >
             {logged ? (
-              <><CheckCircle2 className="w-4 h-4" /> Registrado en el diario</>
+              <><CheckCircle2 className="w-4 h-4" /> Registrado en {MEAL_LABELS[mealType]}</>
             ) : (
-              <><Plus className="w-4 h-4" /> Registrar en mi diario</>
+              <><Plus className="w-4 h-4" /> Registrar en {MEAL_LABELS[mealType]}</>
             )}
           </button>
         </div>

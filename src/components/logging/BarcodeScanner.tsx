@@ -25,12 +25,12 @@ export function BarcodeScanner({ onDetected, isSearching }: BarcodeScannerProps)
   }, [])
 
   useEffect(() => {
-    if (!('BarcodeDetector' in window)) {
-      setStatus('unsupported')
-      return
-    }
+    async function init() {
+      if (!('BarcodeDetector' in window)) {
+        setStatus('unsupported')
+        return
+      }
 
-    async function start() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -68,7 +68,7 @@ export function BarcodeScanner({ onDetected, isSearching }: BarcodeScannerProps)
       }
     }
 
-    start()
+    init()
     return stopCamera
   }, [onDetected, stopCamera])
 

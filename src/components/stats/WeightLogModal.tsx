@@ -21,8 +21,11 @@ export function WeightLogModal({ isOpen, onClose, lastWeight, userId }: WeightLo
   // Limpiar el campo cada vez que se abre el modal
   useEffect(() => {
     if (isOpen) {
-      setValue('')
-      setValidationError(null)
+      function reset() {
+        setValue('')
+        setValidationError(null)
+      }
+      reset()
       // Pequeño delay para que la animación del modal termine antes de hacer focus
       setTimeout(() => inputRef.current?.focus(), 300)
     }

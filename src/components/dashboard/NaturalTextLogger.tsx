@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { X, Sparkles, AlertTriangle } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import type { MealType } from '@/types/database'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -48,9 +49,6 @@ const LOADING_MESSAGES = [
   'Calculando nutrientes...',
 ]
 
-const SUPABASE_URL      = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
 /** Infiere la comida según la hora del día */
 function inferMealType(): MealType {
   const h = new Date().getHours()
@@ -62,11 +60,12 @@ function inferMealType(): MealType {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function NaturalTextLogger({ userId, logDate, onSaved, onClose }: NaturalTextLoggerProps) {
+export function NaturalTextLogger({ logDate, onSaved, onClose }: NaturalTextLoggerProps) {
   const [text,     setText]     = useState('')
   const [mealType, setMealType] = useState<MealType>(inferMealType())
   const [status,   setStatus]   = useState<'idle' | 'loading' | 'result' | 'error'>('idle')
   const [result,   setResult]   = useState<AILogResult | null>(null)
+  const [logEntryIds, setLogEntryIds] = useState<string[]>([])
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0])
 
@@ -103,17 +102,13 @@ export function NaturalTextLogger({ userId, logDate, onSaved, onClose }: Natural
     const timeoutId = setTimeout(() => abortCtrl.current?.abort(), 25_000)
 
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-log`, {
+      const res = await fetch('/api/ai-log', {
         method:  'POST',
         signal:  abortCtrl.current.signal,
-        headers: {
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type':  'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          method:       'natural_text',
+          method:       'text',
           payload:      text.trim(),
-          user_id:      userId,
           meal_type:    mealType,
           country_code: 'ES',
           timezone:     Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -125,8 +120,24 @@ export function NaturalTextLogger({ userId, logDate, onSaved, onClose }: Natural
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
-      const data: AILogResult = await res.json()
-      setResult(data)
+      // Mapear AiLogResponse al formato interno de este componente
+      const data = await res.json()
+      if (!data.success) throw new Error('La IA no pudo analizar el texto')
+
+      setLogEntryIds(data.log_entry_ids ?? [])
+      setResult({
+        dish_name:  data.plato_descripcion ?? text.trim(),
+        total_kcal: Math.round(data.totales?.calorias ?? 0),
+        items: (data.alimentos ?? []).map((a: {
+          nombre: string; cantidad_gramos: number;
+          calorias_estimadas: number; confianza: number
+        }) => ({
+          name:       a.nombre,
+          grams:      a.cantidad_gramos,
+          kcal:       Math.round(a.calorias_estimadas),
+          confidence: a.confianza,
+        })),
+      })
       setStatus('result')
     } catch (err) {
       clearTimeout(timeoutId)
@@ -141,7 +152,16 @@ export function NaturalTextLogger({ userId, logDate, onSaved, onClose }: Natural
   }
 
   function handleConfirm() {
-    onSaved()   // Edge Function ya insertó — solo recargar
+    onSaved()   // /api/ai-log ya insertó — solo recargar dashboard
+  }
+
+  async function handleDiscard() {
+    // Eliminar las entradas que /api/ai-log ya insertó
+    if (logEntryIds.length > 0) {
+      const supabase = createClient()
+      await supabase.from('food_log_entries').delete().in('id', logEntryIds)
+    }
+    onClose()
   }
 
   function handleRetry() {
@@ -543,7 +563,7 @@ export function NaturalTextLogger({ userId, logDate, onSaved, onClose }: Natural
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleDiscard}
                 style={{
                   flex: 1,
                   padding: '15px',

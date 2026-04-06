@@ -95,16 +95,18 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
     if (!day) return
 
     const sb = createClient()
-    setMealsLoading(true)
 
-    sb.from('meal_plan_meals')
-      .select('id, meal_type, order_index, recipe:recipes(id, title, calories_kcal, protein_g, ready_in_min, image_url)')
-      .eq('day_id', day.id)
-      .order('order_index')
-      .then(({ data }) => {
-        setMeals((data as unknown as Meal[]) || [])
-        setMealsLoading(false)
-      })
+    async function fetchMeals() {
+      setMealsLoading(true)
+      const { data } = await sb.from('meal_plan_meals')
+        .select('id, meal_type, order_index, recipe:recipes(id, title, calories_kcal, protein_g, ready_in_min, image_url)')
+        .eq('day_id', day.id)
+        .order('order_index')
+      setMeals((data as unknown as Meal[]) || [])
+      setMealsLoading(false)
+    }
+
+    fetchMeals()
   }, [selectedDay, days])
 
   async function handleActivatePlan() {
@@ -112,9 +114,17 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
     const { data: { user } } = await sb.auth.getUser()
     if (!user || !plan) return
 
+    // Desactivar cualquier plan activo anterior antes de activar el nuevo
     await sb.from('user_meal_plans')
-      .upsert({ user_id: user.id, plan_id: plan.id, started_at: new Date().toISOString().split('T')[0], is_active: true },
-               { onConflict: 'user_id,plan_id' })
+      .update({ is_active: false })
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+
+    await sb.from('user_meal_plans')
+      .upsert(
+        { user_id: user.id, plan_id: plan.id, started_at: new Date().toISOString().split('T')[0], is_active: true },
+        { onConflict: 'user_id,plan_id' }
+      )
     setIsActivePlan(true)
   }
 
@@ -273,7 +283,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
                 <MealCard
                   key={meal.id}
                   meal={meal}
-                  onPress={() => meal.recipe && router.push(`/plans/${planId}/recipe/${meal.recipe.id}`)}
+                  onPress={() => meal.recipe && router.push(`/plans/${planId}/recipe/${meal.recipe.id}?meal=${meal.meal_type}`)}
                 />
               ))}
             </div>

@@ -34,7 +34,7 @@ export const usePremiumStore = create<PremiumStoreState>((set, get) => {
   }
 
   return {
-    isPremium: true,
+    isPremium: false,
     premiumExpiresAt: null,
     photoLogsToday: loadPhotoCount(),
     maxFreePhotos: 3,

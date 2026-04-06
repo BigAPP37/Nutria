@@ -8,7 +8,6 @@ import { createClient } from '@/lib/supabase/server'
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
 const MODEL = 'claude-haiku-4-5-20251001'
-console.log('[ai-log] KEY loaded:', ANTHROPIC_API_KEY?.slice(0, 20), '| len:', ANTHROPIC_API_KEY?.length)
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status })
@@ -98,7 +97,6 @@ Usa porciones típicas de ${regionLabel}. Sé preciso con las estimaciones caló
     }
 
     // ── 4. Llamar a Anthropic ────────────────────────────────────────────────
-    console.log('API KEY prefix:', ANTHROPIC_API_KEY?.slice(0, 25))
     const aiResp = await fetch(ANTHROPIC_URL, {
       method: 'POST',
       headers: {

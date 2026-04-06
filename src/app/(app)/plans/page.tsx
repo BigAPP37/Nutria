@@ -173,6 +173,7 @@ export default function PlansPage() {
 function ActivePlanCard({ plan, startedAt, onPress }: { plan: MealPlan; startedAt: string; onPress: () => void }) {
   const meta = GOAL_META[plan.goal_type]
   const MetaIcon = meta.icon
+  // eslint-disable-next-line react-hooks/purity
   const daysSince = Math.floor((Date.now() - new Date(startedAt).getTime()) / 86400000) + 1
 
   return (

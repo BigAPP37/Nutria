@@ -13,7 +13,6 @@ import { SingleSelectQuestion } from '@/components/onboarding/SingleSelectQuesti
 import { MultiSelectQuestion } from '@/components/onboarding/MultiSelectQuestion'
 import { EducationalScreen } from '@/components/onboarding/EducationalScreen'
 import { AiFoodScanner } from '@/components/AiFoodScanner'
-import { CompactFormQuestion } from '@/components/onboarding/CompactFormQuestion'
 import { NutriaImage } from '@/components/NutriaImage'
 
 import { useOnboardingStore, getScreenSequence } from '@/stores/onboardingStore'
@@ -291,7 +290,6 @@ export default function OnboardingPage() {
   }
 
   // ─── Detectar auth tras redirect OAuth ────────────────────────────────────
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (currentScreen !== 'register') return
 

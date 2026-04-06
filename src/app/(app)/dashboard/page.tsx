@@ -37,7 +37,7 @@ function getTodayISO(): string {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { data: profile, isLoading: profileLoading } = useProfile()
+  const { data: profile } = useProfile()
 
   const [userId, setUserId] = useState<string | null>(null)
   const [foodEntries, setFoodEntries] = useState<FoodLogEntry[]>([])

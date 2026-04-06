@@ -19,7 +19,6 @@ type CardState = 'visible' | 'feedback' | 'done'
 
 export function PsychSupportCard({
   flagId,
-  flagType,
   messageKey,
   messageContent,
   userId,

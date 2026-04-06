@@ -43,7 +43,7 @@
   --color-neutral-stone: #78716C;
   --color-neutral-bg: #FAFAF9;
 
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
 
   --radius-2xl: 1rem;
   --radius-3xl: 1.5rem;

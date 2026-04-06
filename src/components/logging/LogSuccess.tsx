@@ -58,12 +58,11 @@ function ConfettiParticle({ index }: { index: number }) {
 
 export function LogSuccess({ kcal, mealType, onLogAnother }: LogSuccessProps) {
   const router = useRouter()
-  const [showParticles, setShowParticles] = useState(false)
+  const showParticles = true
   const [countdown, setCountdown] = useState(3)
 
   // Redirige automáticamente al dashboard tras 3 segundos
   useEffect(() => {
-    setShowParticles(true)
     const timer = setTimeout(() => {
       router.push('/dashboard')
     }, 3000)
