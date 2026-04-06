@@ -43,6 +43,7 @@ export default function DashboardPage() {
   const [isLoggingComplete, setIsLoggingComplete] = useState(false)
   const [isLoadingData, setIsLoadingData] = useState(true)
   const [showTextLogger, setShowTextLogger] = useState(false)
+  const [streakDays, setStreakDays] = useState(0)
 
   const today = getTodayISO()
   const formattedDate = getFormattedDate()
@@ -62,6 +63,41 @@ export default function DashboardPage() {
     })
   }, [router])
 
+  // Calcular racha de días consecutivos (contando desde ayer hacia atrás)
+  useEffect(() => {
+    if (!userId) return
+    async function loadStreak() {
+      if (!userId) return
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('daily_log_status')
+        .select('log_date')
+        .eq('user_id', userId)
+        .eq('is_day_complete', true)
+        .order('log_date', { ascending: false })
+
+      if (!data || data.length === 0) return
+
+      // Contar días consecutivos hacia atrás desde ayer
+      let streak = 0
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+
+      for (let i = 0; i < data.length; i++) {
+        const expected = new Date(yesterday)
+        expected.setDate(expected.getDate() - i)
+        const expectedStr = expected.toISOString().split('T')[0]
+        if (data[i].log_date === expectedStr) {
+          streak++
+        } else {
+          break
+        }
+      }
+      setStreakDays(streak)
+    }
+    loadStreak()
+  }, [userId])
+
   // Cargar datos del día
   useEffect(() => {
     if (!userId) return
@@ -73,7 +109,7 @@ export default function DashboardPage() {
       // Cargar entradas de comida del día
       const { data: entries } = await supabase
         .from('food_log_entries')
-        .select('*')
+        .select('*, foods(name)')
         .eq('user_id', userId)
         .eq('log_date', today)
         .is('deleted_at', null)
@@ -176,9 +212,16 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-xs text-white/75 capitalize">{formattedDate}</p>
-            <p className="text-lg font-semibold text-white mt-0.5">
-              Hola, {displayName} 👋
-            </p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <p className="text-lg font-semibold text-white">
+                Hola, {displayName} 👋
+              </p>
+              {streakDays > 0 && (
+                <span className="bg-white/20 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+                  🔥 {streakDays}
+                </span>
+              )}
+            </div>
           </div>
           <Link
             href="/settings"
@@ -221,6 +264,23 @@ export default function DashboardPage() {
               Completa el onboarding para ver tu plan personalizado
             </p>
           </div>
+        )}
+
+        {/* Mensaje contextual de Nuti */}
+        {!tdeeLoading && goals && (
+          <p className="text-center text-xs text-white/80 italic mt-2">
+            {totals.calories === 0
+              ? '¡Buenos días! Empieza registrando tu primer alimento 🦦'
+              : totals.calories / goals.calories <= 0.30
+              ? 'Buen comienzo, sigue así 💪'
+              : totals.calories / goals.calories <= 0.60
+              ? '¡Vas genial! A mitad de camino 🌊'
+              : totals.calories / goals.calories <= 0.90
+              ? 'Casi lo tienes, último tramo 🎯'
+              : totals.calories / goals.calories < 1
+              ? '¡Increíble! Meta casi alcanzada ✨'
+              : '¡Meta del día completada! Nuti está orgulloso 🦦🎉'}
+          </p>
         )}
       </div>
 

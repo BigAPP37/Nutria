@@ -72,20 +72,21 @@ export default function OnboardingPage() {
   const [oauthError, setOauthError] = useState<string | null>(null)
 
   // Redirigir al dashboard si el usuario ya completó el onboarding
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      supabase
-        .from('user_profiles')
-        .select('onboarding_completed')
-        .eq('id', user.id)
-        .maybeSingle()
-        .then(({ data: profile }) => {
-          if (profile?.onboarding_completed) router.replace('/dashboard')
-        })
-    })
-  }, [router]) // eslint-disable-line
+  // TODO: descomentar en producción
+  // useEffect(() => {
+  //   const supabase = createClient()
+  //   supabase.auth.getUser().then(({ data: { user } }) => {
+  //     if (!user) return
+  //     supabase
+  //       .from('user_profiles')
+  //       .select('onboarding_completed')
+  //       .eq('id', user.id)
+  //       .maybeSingle()
+  //       .then(({ data: profile }) => {
+  //         if (profile?.onboarding_completed) router.replace('/dashboard')
+  //       })
+  //   })
+  // }, [router]) // eslint-disable-line
 
   // Auto-detectar país desde navigator.language al montar (una sola vez)
   useEffect(() => {

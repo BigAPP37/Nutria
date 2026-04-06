@@ -4,6 +4,8 @@
 // Anillo exterior: calorías | Medio: proteína | Interior: grasa
 // NUNCA usa rojo
 
+import Image from 'next/image'
+
 interface CalorieRingProps {
   consumed: number
   goal: number
@@ -95,24 +97,28 @@ export function CalorieRing({
           />
         </svg>
 
-        {/* Texto central */}
+        {/* Centro: Nuti + kcal restantes */}
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
-          <p style={{ fontSize: '30px', fontWeight: 800, color: 'white', lineHeight: 1, letterSpacing: '-0.5px' }}>
-            {consumed.toLocaleString()}
-          </p>
-          <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.65)', marginTop: '2px' }}>
-            de {goal.toLocaleString()}
-          </p>
-          <div style={{
-            marginTop: '4px',
-            background: 'rgba(255,255,255,0.15)',
-            borderRadius: '8px',
-            padding: '2px 8px',
-          }}>
-            <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>
-              {remaining > 0 ? `−${remaining.toLocaleString()} kcal` : '¡Meta!'}
-            </p>
+          <div className="relative" style={{ width: 56, height: 56 }}>
+            <Image
+              src={`/nutria-${
+                consumed === 0 ? 'wave'
+                : p1 <= 0.60 ? 'apple'
+                : p1 < 1 ? 'fire'
+                : 'trophy'
+              }.png`}
+              alt="Nuti"
+              fill
+              sizes="56px"
+              className="object-contain drop-shadow-md"
+            />
           </div>
+          <p style={{ fontSize: '11px', fontWeight: 700, color: 'white', lineHeight: 1, marginTop: 2 }}>
+            {remaining > 0 ? `${remaining.toLocaleString()}` : '¡Meta!'}
+          </p>
+          {remaining > 0 && (
+            <p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.6)' }}>kcal restantes</p>
+          )}
         </div>
       </div>
 
