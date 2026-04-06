@@ -14,7 +14,7 @@ interface ManualSearchProps {
   mealType: MealType
   logDate: string
   userId: string
-  onAdded: () => void
+  onAdded: (kcal: number) => void
 }
 
 export function ManualSearch({
@@ -36,10 +36,10 @@ export function ManualSearch({
         mealType={mealType}
         logDate={logDate}
         userId={userId}
-        onAdded={() => {
+        onAdded={(kcal) => {
           setSelectedFood(null)
           setQuery('')
-          onAdded()
+          onAdded(kcal)
         }}
         onBack={() => setSelectedFood(null)}
       />

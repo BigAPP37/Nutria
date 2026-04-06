@@ -104,53 +104,59 @@ Analiza el alimento o comida y devuelve ÚNICAMENTE un JSON válido sin markdown
 }
 Usa porciones típicas de ${regionLabel}. Sé preciso con las estimaciones calóricas.`
 
+    // ── Formato OpenAI-compatible (AIPrime proxy) ─────────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let messages: any[]
 
     if (method === 'photo') {
-      messages = [{
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: { type: 'base64', media_type: 'image/jpeg', data: payload },
-          },
-          {
-            type: 'text',
-            text: `Analiza esta foto de comida. Tipo de comida: ${meal_type}. País: ${country_code}. Devuelve el JSON nutricional.`,
-          },
-        ],
-      }]
+      // Formato OpenAI vision: image_url con data URI base64
+      messages = [
+        { role: 'system', content: systemPrompt },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: { url: `data:image/jpeg;base64,${payload}` },
+            },
+            {
+              type: 'text',
+              text: `Analiza esta foto de comida. Tipo de comida: ${meal_type}. País: ${country_code}. Devuelve el JSON nutricional.`,
+            },
+          ],
+        },
+      ]
     } else {
-      messages = [{
-        role: 'user',
-        content: `Analiza este alimento: "${payload}". Tipo de comida: ${meal_type}. País: ${country_code}. Devuelve el JSON nutricional.`,
-      }]
+      messages = [
+        { role: 'system', content: systemPrompt },
+        {
+          role: 'user',
+          content: `Analiza este alimento: "${payload}". Tipo de comida: ${meal_type}. País: ${country_code}. Devuelve el JSON nutricional.`,
+        },
+      ]
     }
 
-    const anthropicResp = await fetch('https://api.anthropic.com/v1/messages', {
+    const anthropicResp = await fetch('https://aiprime.store/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
+        'Authorization': `Bearer ${ANTHROPIC_API_KEY}`,
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-3-5-haiku-20241022',
         max_tokens: 2048,
-        system: systemPrompt,
         messages,
       }),
     })
 
     if (!anthropicResp.ok) {
       const errText = await anthropicResp.text()
-      console.error('Anthropic error:', errText)
+      console.error('AIPrime error:', errText)
       return json({ error: 'Error al analizar con IA. Intenta de nuevo.' }, 502)
     }
 
     const anthropicData = await anthropicResp.json()
-    const rawContent: string = anthropicData.content?.[0]?.text ?? ''
+    const rawContent: string = anthropicData.choices?.[0]?.message?.content ?? ''
 
     // ── 4. Parsear respuesta de Claude ────────────────────────────────────────
     let analysis: {

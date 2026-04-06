@@ -2,9 +2,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
 
 // Hooks de datos
 import { useTdeeState } from '@/hooks/useTdeeState'
@@ -21,6 +20,8 @@ import { CalorieChart } from '@/components/stats/CalorieChart'
 import { MacroAverages } from '@/components/stats/MacroAverages'
 import { WeeklySnapshotCard } from '@/components/stats/WeeklySnapshotCard'
 import { WeightLogModal } from '@/components/stats/WeightLogModal'
+import { FastingTracker } from '@/components/stats/FastingTracker'
+import { useTodayTotals } from '@/hooks/useTodayTotals'
 
 // Monetización Premium
 import { usePremiumStore } from '@/stores/premiumStore'
@@ -31,17 +32,14 @@ export default function StatsPage() {
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lb'>('kg')
   const [showWeightModal, setShowWeightModal] = useState(false)
 
-  // Estado Premium desde el store global
   const { isPremium } = usePremiumStore()
 
-  // Obtener userId y preferencias del usuario al montar
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       setUserId(user.id)
 
-      // Cargar la unidad de peso preferida desde el perfil
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('unit_weight')
@@ -54,40 +52,39 @@ export default function StatsPage() {
     })
   }, [])
 
-  // ── Carga de datos con TanStack Query ────────────────────────────────────
   const { data: tdeeState, isLoading: tdeeLoading } = useTdeeState(userId)
   const { data: snapshots = [], isLoading: snapshotsLoading } = useWeeklySnapshots(userId)
   const { data: weightHistory = [], isLoading: weightLoading } = useWeightHistory(userId)
   const { data: streakData, isLoading: streakLoading } = useStreakDays(userId)
   const { data: macroAverages, isLoading: macroLoading } = useMacroAverages(userId)
+  const { data: todayTotals } = useTodayTotals(userId)
 
-  // ── Datos derivados ───────────────────────────────────────────────────────
   const lastWeightEntry = weightHistory.length > 0 ? weightHistory[weightHistory.length - 1] : null
   const currentWeight = lastWeightEntry?.weight_kg ?? null
-
   const daysLogged = streakData?.totalComplete ?? 0
   const streak = streakData?.streak ?? 0
-
-  // Objetivo calórico para el gráfico de barras (2000 por defecto si no hay estado aún)
   const goalKcal = tdeeState?.goal_kcal ?? 2000
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      {/* Cabecera sticky */}
-      <header className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-stone-100">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
-          <Link
-            href="/dashboard"
-            className="w-10 h-10 rounded-xl bg-stone-100 text-stone-500 flex items-center justify-center active:bg-stone-200 transition-colors"
-            aria-label="Volver al dashboard"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <h1 className="text-base font-bold text-stone-900">Progreso</h1>
+    <div className="min-h-screen bg-[#FAFAF9]">
+      {/* Header con gradiente naranja */}
+      <div
+        className="relative px-5 pt-14 pb-8"
+        style={{ background: 'linear-gradient(160deg, #F97316 0%, #EA6C0A 100%)' }}
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex-1">
+            <p className="text-white/70 text-xs font-medium uppercase tracking-wider mb-1">Tu evolución</p>
+            <h1 className="text-white text-2xl font-black leading-tight">Progreso</h1>
+            <p className="text-white/80 text-sm mt-1">Estadísticas y seguimiento</p>
+          </div>
+          <div className="w-14 h-14 relative">
+            <Image src="/nutria-trophy.png" alt="Nuti" fill className="object-contain drop-shadow-md" sizes="56px" />
+          </div>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-md mx-auto px-4 py-5 space-y-4 pb-12">
+      <main className="max-w-md mx-auto px-4 py-5 space-y-4 pb-24">
         {/* 1. Tarjetas de resumen rápido */}
         <QuickStats
           daysLogged={daysLogged}
@@ -97,14 +94,18 @@ export default function StatsPage() {
           isLoading={streakLoading || weightLoading}
         />
 
-        {/* 2. Objetivo calórico diario */}
-        <TdeeCard tdeeState={tdeeState ?? null} isLoading={tdeeLoading} />
+        {/* 2. Ayuno intermitente */}
+        <section>
+          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3 px-1">Ayuno</p>
+          <FastingTracker />
+        </section>
 
-        {/* 3. Gráfico de evolución del peso — con overlay Premium si es usuario gratuito */}
+        {/* 3. Objetivo calórico diario */}
+        <TdeeCard tdeeState={tdeeState ?? null} todayTotals={todayTotals ?? null} isLoading={tdeeLoading} />
+
+        {/* 4. Gráfico de evolución del peso */}
         <section className="relative bg-white rounded-2xl border border-stone-100 p-4">
-          <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wide mb-3">
-            Peso
-          </p>
+          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">Peso</p>
           <WeightChart
             data={weightHistory}
             unit={weightUnit}
@@ -114,11 +115,9 @@ export default function StatsPage() {
           {!isPremium && <StatsPaywallOverlay />}
         </section>
 
-        {/* 4. Gráfico de calorías semanales — con overlay Premium si es usuario gratuito */}
+        {/* 5. Gráfico de calorías semanales */}
         <section className="relative bg-white rounded-2xl border border-stone-100 p-4">
-          <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wide mb-3">
-            Calorías semanales
-          </p>
+          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">Calorías semanales</p>
           <CalorieChart
             snapshots={snapshots}
             goalKcal={goalKcal}
@@ -127,11 +126,9 @@ export default function StatsPage() {
           {!isPremium && <StatsPaywallOverlay />}
         </section>
 
-        {/* 5. Macros promedio de la semana actual — con overlay Premium si es usuario gratuito */}
+        {/* 6. Macros promedio de la semana actual */}
         <section className="relative bg-white rounded-2xl border border-stone-100 p-4">
-          <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wide mb-3">
-            Macros esta semana
-          </p>
+          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">Macros esta semana</p>
           <MacroAverages
             data={macroAverages ?? null}
             targets={tdeeState?.macro_targets ?? null}
@@ -140,25 +137,18 @@ export default function StatsPage() {
           {!isPremium && <StatsPaywallOverlay />}
         </section>
 
-        {/* 6. Historial de semanas anteriores */}
+        {/* 7. Historial de semanas anteriores */}
         <section>
-          <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wide mb-3">
-            Historial semanal
-          </p>
+          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3 px-1">Historial semanal</p>
           {snapshotsLoading ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="animate-pulse bg-stone-100 rounded-2xl h-16 w-full"
-                />
+                <div key={i} className="animate-pulse bg-stone-100 rounded-2xl h-16 w-full" />
               ))}
             </div>
           ) : snapshots.length === 0 ? (
             <div className="bg-white rounded-2xl border border-stone-100 p-4">
-              <p className="text-sm text-stone-400 text-center">
-                Aún no hay semanas registradas
-              </p>
+              <p className="text-sm text-stone-400 text-center">Aún no hay semanas registradas</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -170,7 +160,6 @@ export default function StatsPage() {
         </section>
       </main>
 
-      {/* Modal de registro de peso — solo se monta cuando hay userId */}
       {userId && (
         <WeightLogModal
           isOpen={showWeightModal}

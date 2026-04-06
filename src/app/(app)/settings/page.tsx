@@ -255,14 +255,18 @@ export default function SettingsPage() {
         {/* ── Legal ── */}
         <Section title="Legal">
           <a
-            href="#"
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center justify-between px-4 py-3.5 border-b border-stone-50 hover:bg-stone-50 transition-colors"
           >
             <span className="text-sm text-stone-700">Política de privacidad</span>
             <ExternalLink className="w-4 h-4 text-stone-300" />
           </a>
           <a
-            href="#"
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center justify-between px-4 py-3.5 hover:bg-stone-50 transition-colors"
           >
             <span className="text-sm text-stone-700">Términos de uso</span>

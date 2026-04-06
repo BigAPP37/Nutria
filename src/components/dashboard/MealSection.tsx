@@ -165,7 +165,7 @@ export function MealSection({ mealType, entries, onAddEntry }: MealSectionProps)
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                 }}>
-                  {entry.custom_description || entry.food_id || 'Alimento'}
+                  {entry.custom_description || entry.foods?.name || 'Alimento'}
                 </span>
               </div>
               <div className="flex-shrink-0 ml-3 flex items-center gap-1">

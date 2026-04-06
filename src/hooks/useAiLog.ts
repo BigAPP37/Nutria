@@ -7,7 +7,6 @@ import { useMutation } from '@tanstack/react-query'
 import type { MealType } from '@/types/database'
 import type { AiLogResponse } from '@/types/logging'
 import { uploadPhoto } from '@/hooks/usePhotoUpload'
-import { createClient } from '@/lib/supabase/client'
 
 interface AiLogParams {
   method: 'photo' | 'text'
@@ -25,13 +24,45 @@ async function blobToBase64(blob: Blob): Promise<string> {
     const reader = new FileReader()
     reader.onload = () => {
       const result = reader.result as string
-      // Extrae solo el contenido base64 (sin el prefijo data:...)
-      const base64 = result.split(',')[1]
-      resolve(base64)
+      resolve(result.split(',')[1])
     }
     reader.onerror = () => reject(new Error('Error al convertir imagen a base64'))
     reader.readAsDataURL(blob)
   })
+}
+
+
+// Llama al Route Handler /api/ai-log con timeout de 25s
+async function fetchAiLog(
+  body: Record<string, unknown>
+): Promise<AiLogResponse> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 25_000)
+
+  try {
+    const response = await fetch('/api/ai-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Error del servidor (${response.status}): ${errorText || 'Error desconocido'}`)
+    }
+
+    const data: AiLogResponse = await response.json()
+    if (!data.success) throw new Error('La IA no pudo analizar la comida. Intenta de nuevo.')
+    return data
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('La solicitud tardó demasiado. Intenta de nuevo.')
+    }
+    throw err
+  } finally {
+    clearTimeout(timeoutId)
+  }
 }
 
 // Función principal que llama a la Edge Function de análisis
@@ -50,77 +81,24 @@ async function callAiLog(params: AiLogParams): Promise<AiLogResponse> {
   let photoStoragePath: string | undefined
 
   if (method === 'photo') {
-    if (!photoFile) {
-      throw new Error('Se requiere una foto para el método photo')
-    }
-
-    // Sube la foto y obtiene la ruta y base64
+    if (!photoFile) throw new Error('Se requiere una foto para el método photo')
     const { path } = await uploadPhoto(photoFile, userId, logDate)
     photoStoragePath = path
-
-    // Convierte la foto a base64 para enviar a la Edge Function
     payload = await blobToBase64(photoFile)
   } else {
-    // Método texto: usa el texto tal cual
-    if (!textPayload?.trim()) {
-      throw new Error('Se requiere texto para el método text')
-    }
+    if (!textPayload?.trim()) throw new Error('Se requiere texto para el método text')
     payload = textPayload.trim()
   }
 
-  // Obtener el JWT del usuario autenticado (no el anon key)
-  const supabase = createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) throw new Error('No autenticado. Por favor inicia sesión.')
-
-  // Configura el timeout de 25 segundos
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 25_000)
-
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-log`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          method,
-          payload,
-          meal_type: mealType,
-          country_code: countryCode,
-          photo_storage_path: photoStoragePath,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          log_date: logDate,
-        }),
-        signal: controller.signal,
-      }
-    )
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(
-        `Error del servidor (${response.status}): ${errorText || 'Error desconocido'}`
-      )
-    }
-
-    const data: AiLogResponse = await response.json()
-
-    if (!data.success) {
-      throw new Error('La IA no pudo analizar la comida. Intenta de nuevo.')
-    }
-
-    return data
-  } catch (err) {
-    if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error('La solicitud tardó demasiado. Intenta de nuevo.')
-    }
-    throw err
-  } finally {
-    clearTimeout(timeoutId)
-  }
+  return fetchAiLog({
+    method,
+    payload,
+    meal_type: mealType,
+    country_code: countryCode,
+    photo_storage_path: photoStoragePath,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    log_date: logDate,
+  })
 }
 
 // Hook que retorna la mutación de TanStack Query para el análisis con IA

@@ -55,6 +55,7 @@ export interface FoodLogEntry {
   quantity_grams: number
   custom_description: string | null
   deleted_at: string | null
+  foods?: { name: string } | null // join opcional con tabla foods
 }
 
 // Base de datos de alimentos

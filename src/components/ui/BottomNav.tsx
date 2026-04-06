@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, PlusCircle, BarChart2, Settings } from 'lucide-react'
+import { Home, PlusCircle, BarChart2, Settings, UtensilsCrossed } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { href: '/dashboard', icon: Home,      label: 'Inicio'    },
-  { href: '/log',       icon: PlusCircle, label: 'Registrar', accent: true },
-  { href: '/stats',     icon: BarChart2,  label: 'Progreso'  },
-  { href: '/settings',  icon: Settings,   label: 'Ajustes'   },
+  { href: '/dashboard', icon: Home,             label: 'Inicio'    },
+  { href: '/plans',     icon: UtensilsCrossed,  label: 'Dietas'    },
+  { href: '/log',       icon: PlusCircle,       label: 'Registrar', accent: true },
+  { href: '/stats',     icon: BarChart2,        label: 'Progreso'  },
+  { href: '/settings',  icon: Settings,         label: 'Ajustes'   },
 ]
 
 export function BottomNav() {

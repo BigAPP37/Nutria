@@ -13,9 +13,9 @@ async function searchFoods(query: string): Promise<FoodSearchResult[]> {
   const supabase = createClient()
 
   const { data, error } = await supabase.rpc('search_foods', {
-    query,
-    country: 'ES',
-    limit: 20,
+    p_query:   query,
+    p_country: 'ES',
+    p_limit:   20,
   })
 
   if (error) {

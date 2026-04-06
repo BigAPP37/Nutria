@@ -15,7 +15,7 @@ interface PortionSelectorProps {
   mealType: MealType
   logDate: string
   userId: string
-  onAdded: () => void
+  onAdded: (kcal: number) => void
   onBack: () => void
 }
 
@@ -107,7 +107,7 @@ export function PortionSelector({
         fatG: macros.fat,
         fiberG: null,
       })
-      onAdded()
+      onAdded(macros.kcal)
     } catch {
       // El error se maneja en el estado de la mutación
     }

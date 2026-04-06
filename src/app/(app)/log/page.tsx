@@ -164,8 +164,8 @@ export default function LogPage() {
   }
 
   // Manejador: el usuario añadió un alimento manualmente con éxito
-  function handleManualAdded() {
-    store.setSavedKcal(0) // No tenemos el total exacto en manual por ahora
+  function handleManualAdded(kcal: number) {
+    store.setSavedKcal(kcal)
     store.setStep('done')
   }
 
@@ -285,7 +285,7 @@ export default function LogPage() {
                 mealType={store.mealType}
                 logDate={today}
                 userId={userId}
-                onAdded={handleManualAdded}
+                onAdded={(kcal) => handleManualAdded(kcal)}
               />
             </div>
           )}

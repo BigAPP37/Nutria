@@ -1,0 +1,6 @@
+# Dependencias para seed_meal_plans.py
+# Instalar con: scripts/.venv/bin/pip install -r scripts/requirements_plans.txt
+
+requests>=2.31.0
+supabase>=2.10.0
+python-dotenv>=1.0.0
