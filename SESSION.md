@@ -74,3 +74,70 @@ Use this structure for each daily update:
   - Schema DB: `supabase/nutria_schema.sql` (807 líneas)
   - Precio Claude Haiku: input $0.25/MTok, output $1.25/MTok
   - Prompt caching Anthropic: `cache_control: { type: "ephemeral" }` en el message de sistema
+
+### 2026-04-07 (sesión 3) Europe/Madrid
+- Workspace Used: `/Users/alex/Desktop/Nutria` para desarrollo y pruebas locales; `/Users/alex/Documents/GitHub/Nutria` para guardar contexto compartido.
+- Current Goal: Preparar la estructura inicial de dietas en NutrIA, probar recetas keto con imagen dentro de la app y diseñar un flujo escalable con Gemini para generar recetas por lotes.
+- Completed Today:
+  - Arrancado NutrIA en local sobre `http://localhost:3000` usando Webpack y cerrada la instancia antigua que causaba confusión.
+  - Diagnosticado el error de `/plans`: la UI consultaba `meal_plans.diet_style` pero la columna aún no existe en Supabase remoto; se añadió compatibilidad temporal para que `/plans` y el detalle de plan no fallen mientras la migración no se aplica.
+  - Añadida la estructura de `diet_style` en código local:
+    - migración nueva `supabase/migrations/add_diet_style_to_meal_plans_and_recipes.sql`
+    - soporte en `scripts/seed_meal_plans_static.py`
+    - badges y lectura compatible en `src/app/(app)/plans/page.tsx` y `src/app/(app)/plans/[planId]/page.tsx`
+  - Definida la taxonomía base de NutrIA:
+    - `goal_type` separado de `diet_style`
+    - dietas principales: `mediterranea`, `keto`, `vegana`, `vegetariana`, `paleo`, `low_carb`, `high_protein`
+    - `meal_type`: `breakfast`, `lunch`, `dinner`, `snack`
+  - Se decidió trabajar primero el catálogo de recetas por dieta antes de construir planes completos.
+  - Creada la carpeta de trabajo de imágenes del usuario para desayunos keto: `/Users/alex/Desktop/platos Keto desayuno`.
+  - Subidas y conectadas en la app 3 recetas keto de desayuno/almuerzo con foto local + receta en Supabase:
+    - `Huevos a la sartén con bacon crujiente` → imagen en `public/images/recipes/keto/breakfast/huevos-a-la-sarten-con-bacon-crujiente.png` → `recipe_id: ea933fc6-7b91-415f-a425-1854065cd81d`
+    - `Tortilla de espinacas y queso feta` → imagen en `public/images/recipes/keto/breakfast/tortilla-espinacas-queso-feta.png` → `recipe_id: 72034a36-50b1-4dc7-8683-d4f39b1615a6`
+    - `Aguacate relleno de huevo al horno` → imagen en `public/images/recipes/keto/breakfast/aguacate-relleno-huevo-al-horno.png` → `recipe_id: 986e85f8-072a-448b-b508-cd6ac37d5248`
+    - además quedó una receta de prueba de almuerzo: `Tortilla keto de pollo y cheddar con guacamole` → `recipe_id: 89a90018-4c66-44db-98c7-9dff609d342e`
+  - Las recetas de prueba se colgaron temporalmente dentro del `Plan Mantenimiento · 7 días` para verlas rápido en UI sin esperar al plan keto completo:
+    - Día 1 desayuno
+    - Día 2 desayuno
+    - Día 3 desayuno
+    - Día 1 almuerzo
+  - Se validó que el flujo manual receta + foto funciona, pero resulta demasiado lento para escalar.
+  - Se diseñó un flujo de automatización con Gemini por lotes:
+    - generar varias recetas a la vez
+    - nombrar imágenes por slug
+    - guardar imágenes en carpeta de trabajo
+    - devolver un único JSON batch
+  - Se detectó que Gemini mezcla bien el JSON pero falla si intenta hacer imágenes en collage; decisión: batch JSON y generación de imágenes individuales en pasos separados.
+  - Creados en el escritorio los archivos base para automatizar el flujo con Gemini:
+    - `/Users/alex/Desktop/NUTRIA_BATCH_RULES.md`
+    - `/Users/alex/Desktop/keto_breakfast_batch_01_input.txt`
+- Decisions:
+  - Trabajar por lotes (`batch`) y no receta a receta.
+  - Usar `/Users/alex/Desktop/platos Keto desayuno` como carpeta origen para fotos de desayunos keto.
+  - Mantener dos fases en Gemini:
+    - generación del batch JSON
+    - generación de imágenes individuales, nunca collage
+  - El usuario solo pasará después el archivo batch y la carpeta de imágenes; Codex se encargará de normalizar, importar y enlazar.
+  - Guardar siempre el contexto al cerrar sesión en `SESSION.md`.
+- Open Issues:
+  - La migración de `diet_style` todavía no está aplicada en Supabase remoto; la app funciona por fallback, pero la estructura real no existe aún en producción de datos.
+  - El repo compartido `/Users/alex/Documents/GitHub/Nutria` tiene cambios locales ajenos (`src/app/onboarding/page.tsx`, `src/stores/onboardingStore.ts` y archivos `.temp` de Supabase); no deben tocarse al guardar contexto.
+  - Las recetas keto visibles hoy están injertadas en un plan mediterráneo de mantenimiento solo como prueba visual; falta construir el plan keto real.
+  - Falta el segundo Gem o prompt de limpieza del batch para dejar los JSON aún más cerca del formato importable final.
+- Next Session:
+  - Crear el segundo prompt/Gem de limpieza de batches.
+  - Importar el resto de desayunos keto desde lote, no manualmente.
+  - Dejar un `keto_breakfast_batch_01.json` limpio y estable como primer lote real.
+  - Después pasar a `keto_lunch_batch_01`.
+  - Cuando el catálogo mínimo exista, construir el `Plan Keto` real en Supabase en vez de usar el plan de mantenimiento como soporte visual.
+- Refs:
+  - UI local: `http://localhost:3000`
+  - Plan de mantenimiento usado para pruebas: `98343483-40f5-4fa8-bf4d-57cc1cf9a8d1`
+  - Archivos modificados en la base activa:
+    - `/Users/alex/Desktop/Nutria/scripts/seed_meal_plans_static.py`
+    - `/Users/alex/Desktop/Nutria/src/app/(app)/plans/page.tsx`
+    - `/Users/alex/Desktop/Nutria/src/app/(app)/plans/[planId]/page.tsx`
+    - `/Users/alex/Desktop/Nutria/supabase/migrations/add_diet_style_to_meal_plans_and_recipes.sql`
+  - Archivos de automatización en escritorio:
+    - `/Users/alex/Desktop/NUTRIA_BATCH_RULES.md`
+    - `/Users/alex/Desktop/keto_breakfast_batch_01_input.txt`
