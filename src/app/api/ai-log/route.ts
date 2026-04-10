@@ -8,9 +8,70 @@ import { createClient } from '@/lib/supabase/server'
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
 const MODEL = 'claude-haiku-4-5-20251001'
+const MAX_FREE_PHOTO_LOGS_PER_DAY = 3
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status })
+}
+
+function hasPremiumAccess(profile: {
+  is_premium: boolean | null
+  premium_expires_at: string | null
+  subscription_status: string | null
+} | null) {
+  if (!profile?.is_premium) return false
+  if (profile.subscription_status === 'past_due' || profile.subscription_status === 'canceled') {
+    return false
+  }
+  if (!profile.premium_expires_at) return true
+  return new Date(profile.premium_expires_at) > new Date()
+}
+
+async function enforcePhotoQuota(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  logDate: string
+) {
+  const { data: profile, error: profileError } = await supabase
+    .from('user_profiles')
+    .select('is_premium, premium_expires_at, subscription_status')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (profileError) {
+    throw new Error(`No se pudo leer el estado premium: ${profileError.message}`)
+  }
+
+  if (hasPremiumAccess(profile)) {
+    return null
+  }
+
+  const { data: existingPhotoEntries, error: countError } = await supabase
+    .from('food_log_entries')
+    .select('photo_storage_path')
+    .eq('user_id', userId)
+    .eq('log_date', logDate)
+    .eq('logging_method', 'photo')
+    .is('deleted_at', null)
+
+  if (countError) {
+    throw new Error(`No se pudo comprobar la cuota de fotos: ${countError.message}`)
+  }
+
+  const uniquePhotoLogs = new Set(
+    (existingPhotoEntries ?? [])
+      .map((entry) => entry.photo_storage_path)
+      .filter((path): path is string => Boolean(path))
+  )
+
+  if (uniquePhotoLogs.size >= MAX_FREE_PHOTO_LOGS_PER_DAY) {
+    return jsonError(
+      'Has alcanzado el límite diario de fotos del plan gratuito. Actualiza a Premium para seguir usando análisis por foto.',
+      403
+    )
+  }
+
+  return null
 }
 
 export async function POST(req: NextRequest) {
@@ -43,6 +104,13 @@ export async function POST(req: NextRequest) {
 
     if (!method || !payload || !meal_type || !log_date) {
       return jsonError('Faltan parámetros: method, payload, meal_type, log_date', 400)
+    }
+
+    if (method === 'photo') {
+      const quotaError = await enforcePhotoQuota(supabase, user.id, log_date)
+      if (quotaError) {
+        return quotaError
+      }
     }
 
     // ── 3. Construir prompt ──────────────────────────────────────────────────

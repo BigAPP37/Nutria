@@ -3,6 +3,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { formatLocalDateKey, getTodayDateKey, parseDateKey } from '@/lib/date'
 
 interface StreakData {
   streak: number
@@ -10,13 +11,13 @@ interface StreakData {
 }
 
 function getTodayString(): string {
-  return new Date().toISOString().split('T')[0]
+  return getTodayDateKey()
 }
 
 function getYesterdayString(): string {
   const d = new Date()
   d.setDate(d.getDate() - 1)
-  return d.toISOString().split('T')[0]
+  return formatLocalDateKey(d)
 }
 
 async function fetchStreakDays(userId: string): Promise<StreakData> {
@@ -44,16 +45,16 @@ async function fetchStreakDays(userId: string): Promise<StreakData> {
   // La racha empieza desde hoy si hoy está completo, sino desde ayer
   let currentDate: Date
   if (completionMap.get(today)) {
-    currentDate = new Date(today + 'T12:00:00')
+    currentDate = parseDateKey(today)
   } else if (completionMap.get(yesterday)) {
-    currentDate = new Date(yesterday + 'T12:00:00')
+    currentDate = parseDateKey(yesterday)
   } else {
     return { streak: 0, totalComplete }
   }
 
   let streak = 0
   while (true) {
-    const dateStr = currentDate.toISOString().split('T')[0]
+    const dateStr = formatLocalDateKey(currentDate)
     if (completionMap.get(dateStr) === true) {
       streak++
       currentDate.setDate(currentDate.getDate() - 1)

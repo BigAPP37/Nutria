@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getTodayDateKey } from '@/lib/date'
 import { ChevronLeft, Flame, Clock, Users, CheckCircle2, Plus } from 'lucide-react'
 import type { MealType } from '@/types/database'
 
@@ -94,7 +95,7 @@ export default function RecipePage({ params }: { params: Promise<{ planId: strin
     const { data: { user } } = await sb.auth.getUser()
     if (!user) return
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = getTodayDateKey()
     // Los macros de la receta son para 1 ración (servings=1) o el total de la receta.
     // Usamos los valores tal cual ya que representan la porción que se va a comer.
     const servings = recipe.servings || 1

@@ -3,6 +3,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { getTodayDateKey, formatLocalDateKey } from '@/lib/date'
 import type { MacroAveragesData } from '@/types/logging'
 
 // Obtiene el lunes de la semana actual en formato YYYY-MM-DD
@@ -13,11 +14,11 @@ function getStartOfWeek(): string {
   const diff = day === 0 ? -6 : 1 - day
   const monday = new Date(today)
   monday.setDate(today.getDate() + diff)
-  return monday.toISOString().split('T')[0]
+  return formatLocalDateKey(monday)
 }
 
 function getTodayString(): string {
-  return new Date().toISOString().split('T')[0]
+  return getTodayDateKey()
 }
 
 async function fetchMacroAverages(userId: string): Promise<MacroAveragesData> {

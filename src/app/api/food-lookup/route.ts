@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     const n = p.nutriments ?? {}
 
     const kcal = n['energy-kcal_100g'] ?? n['energy-kcal'] ?? null
-    if (!kcal) {
+    if (kcal == null) {
       return NextResponse.json({ found: false } as FoodLookupResult)
     }
 

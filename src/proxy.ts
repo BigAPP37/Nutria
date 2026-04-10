@@ -5,7 +5,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // Rutas que requieren autenticación
-const PROTECTED_ROUTES = ['/dashboard', '/stats', '/settings', '/log']
+const PROTECTED_ROUTES = ['/dashboard', '/stats', '/settings', '/log', '/plans', '/premium']
 
 // Rutas solo accesibles sin autenticación
 const AUTH_ROUTES = ['/login', '/register']
@@ -57,6 +57,19 @@ export async function proxy(request: NextRequest) {
   const isAuthRoute = AUTH_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(route + '/')
   )
+  const isOnboardingRoute = pathname === '/onboarding'
+
+  let hasCompletedOnboarding = false
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('onboarding_completed')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    hasCompletedOnboarding = profile?.onboarding_completed === true
+  }
 
   // Redirigir a /login si el usuario no está autenticado y trata de acceder a ruta protegida
   if (isProtectedRoute && !user) {
@@ -65,9 +78,17 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // Redirigir a /dashboard si el usuario ya está autenticado y trata de acceder a login/register
-  if (isAuthRoute && user) {
+  if (isProtectedRoute && user && !hasCompletedOnboarding) {
+    return NextResponse.redirect(new URL('/onboarding', request.url))
+  }
+
+  if (isOnboardingRoute && user && hasCompletedOnboarding) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  if (isAuthRoute && user) {
+    const destination = hasCompletedOnboarding ? '/dashboard' : '/onboarding'
+    return NextResponse.redirect(new URL(destination, request.url))
   }
 
   return supabaseResponse

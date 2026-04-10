@@ -1,13 +1,26 @@
 // Layout raíz de la aplicación
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Fraunces, Manrope, Oswald } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({
+const manrope = Manrope({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-sans',
+})
+
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-display',
+})
+
+const oswald = Oswald({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   display: 'swap',
-  variable: '--font-inter',
+  variable: '--font-oswald',
 })
 
 export const metadata: Metadata = {
@@ -19,8 +32,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  themeColor: '#F97316',
+  themeColor: '#C96A2B',
 }
 
 export default function RootLayout({
@@ -29,8 +41,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className={inter.variable} suppressHydrationWarning>
-      <body className="font-sans bg-[#FAFAF9] text-stone-900 min-h-screen">
+    <html
+      lang="es"
+      className={`${manrope.variable} ${fraunces.variable} ${oswald.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="font-sans bg-[var(--surface-0)] text-[var(--ink-1)] min-h-screen">
         {children}
       </body>
     </html>

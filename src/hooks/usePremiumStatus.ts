@@ -19,9 +19,19 @@ export function usePremiumStatus(userId: string | null) {
         .from('user_profiles')
         .select('is_premium, premium_expires_at, stripe_customer_id, subscription_status')
         .eq('id', userId!)
-        .single()
+        .maybeSingle()
 
       if (error) throw error
+
+      if (!data) {
+        setPremium(false, null)
+        return {
+          isPremium: false,
+          premiumExpiresAt: null,
+          stripeCustomerId: null,
+          subscriptionStatus: 'free' as const,
+        }
+      }
 
       // Verificar si la suscripción ha caducado
       let isPremium = data.is_premium ?? false

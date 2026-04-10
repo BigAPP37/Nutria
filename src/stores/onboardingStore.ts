@@ -85,7 +85,13 @@ export interface OnboardingData {
 // Calcula la secuencia de pantallas a mostrar según los datos actuales
 // Esta función es la fuente de verdad para la navegación condicional
 export function getScreenSequence(data: OnboardingData): ScreenId[] {
-  const screens: ScreenId[] = ['welcome', 'goal']
+  // Hook educativo al inicio — antes de pedir datos, como Yazio
+  const screens: ScreenId[] = [
+    'welcome',
+    'education-restrictive-diets', // "Las dietas restrictivas no son la solución"
+    'education-ai-scanner',         // Demo IA scanner — propuesta de valor
+    'goal',
+  ]
 
   // Pantallas condicionales de experiencia con la pérdida de peso
   if (data.goal === 'lose_weight') {
@@ -101,13 +107,11 @@ export function getScreenSequence(data: OnboardingData): ScreenId[] {
     'body-about',
     'body-measurements',
     'activity-level',
-    'education-restrictive-diets',
     'food-relationship',
     'eating-triggers',
     'emotional-eating',
     'biggest-challenges',
     'education-normal',
-    'education-ai-scanner',
     'meals-routine',
     'lifestyle',
     'diet-restrictions',

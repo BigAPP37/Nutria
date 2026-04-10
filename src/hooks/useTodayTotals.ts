@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { getTodayDateKey } from '@/lib/date'
 
 export type TodayTotals = {
   calories: number
@@ -12,7 +13,7 @@ export type TodayTotals = {
 
 async function fetchTodayTotals(userId: string): Promise<TodayTotals> {
   const supabase = createClient()
-  const today = new Date().toISOString().split('T')[0]
+  const today = getTodayDateKey()
 
   const { data, error } = await supabase
     .from('food_log_entries')

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Search, X, ChevronRight, PenLine, Plus, Minus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { getTodayDateKey } from '@/lib/date'
 import type { Food, FoodServing, MealType } from '@/types/database'
 
 // ─── Config ────────────────────────────────────────────────────────────────
@@ -29,7 +30,7 @@ function AddFoodContent() {
 
   const rawMeal = params.get('meal')
   const mealType: MealType = isMealType(rawMeal) ? rawMeal : 'breakfast'
-  const logDate = params.get('date') ?? new Date().toISOString().split('T')[0]
+  const logDate = params.get('date') ?? getTodayDateKey()
   const meal = mealConfig[mealType]
 
   // ── State ────────────────────────────────────────────────────────────────

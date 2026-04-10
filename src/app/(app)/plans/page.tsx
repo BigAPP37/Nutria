@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ChevronRight, Lock, Sparkles, Target, Dumbbell, Scale } from 'lucide-react'
 import Image from 'next/image'
+import { AppHero, AppPage, AppPanel, AppSectionHeader } from '@/components/ui/AppPage'
 
 type MealPlan = {
   id: string
@@ -62,48 +63,51 @@ export default function PlansPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-orange-400 border-t-transparent animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
-      {/* Header */}
-      <div
-        className="relative px-5 pt-14 pb-8"
-        style={{ background: 'linear-gradient(160deg, #F97316 0%, #EA6C0A 100%)' }}
+    <AppPage>
+      <AppHero
+        eyebrow="Planificación"
+        title="Comer bien también necesita estructura."
+        description="Planes claros, objetivos visibles y una forma más tranquila de decidir qué toca comer cada día."
+        action={
+          <div className="hidden h-14 w-14 md:block">
+            <div className="relative h-14 w-14">
+              <Image src="/nutria-reading.png" alt="Nuti" fill className="object-contain drop-shadow-md" sizes="56px" />
+            </div>
+          </div>
+        }
       >
-        <div className="flex items-start gap-3">
-          <div className="flex-1">
-            <p className="text-white/70 text-xs font-medium uppercase tracking-wider mb-1">Nutrición</p>
-            <h1 className="text-white text-2xl font-black leading-tight">Planes de dieta</h1>
-            <p className="text-white/80 text-sm mt-1">Menús semanales creados por dietistas</p>
-          </div>
-          <div className="w-14 h-14 relative">
-            <Image src="/nutria-reading.png" alt="Nuti" fill className="object-contain drop-shadow-md" sizes="56px" />
-          </div>
+        <div className="glass-pill inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-white/82">
+          <span className="h-2 w-2 rounded-full bg-amber-200" />
+          Menús semanales creados para metas distintas
         </div>
-      </div>
+      </AppHero>
 
-      <div className="px-4 py-5 space-y-6">
+      <div className="space-y-6">
 
         {/* Plan activo */}
         {activePlan && (
           <section>
-            <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-2 px-1">Mi plan activo</p>
-            <ActivePlanCard plan={activePlan} startedAt={userPlan!.started_at} onPress={() => router.push(`/plans/${activePlan.id}`)} />
+            <AppSectionHeader
+              title="Mi plan activo"
+              description="Tu referencia principal para esta semana."
+            />
+            <div className="mt-3">
+              <ActivePlanCard plan={activePlan} startedAt={userPlan!.started_at} onPress={() => router.push(`/plans/${activePlan.id}`)} />
+            </div>
           </section>
         )}
 
         {/* Sin plan todavía */}
         {!activePlan && (
           <section>
-            <div
-              className="rounded-2xl p-4 flex items-center gap-3"
-              style={{ background: 'rgba(249,115,22,0.07)', border: '1px dashed rgba(249,115,22,0.35)' }}
-            >
+            <AppPanel className="flex items-center gap-3 border-dashed p-4">
               <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(249,115,22,0.15)' }}>
                 <Sparkles className="w-5 h-5" style={{ color: '#F97316' }} />
               </div>
@@ -111,24 +115,25 @@ export default function PlansPage() {
                 <p className="text-sm font-semibold text-stone-700">Empieza tu primer plan</p>
                 <p className="text-xs text-stone-400 mt-0.5">Elige uno de los planes de abajo</p>
               </div>
-            </div>
+            </AppPanel>
           </section>
         )}
 
         {/* Catálogo */}
         <section>
-          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3 px-1">
-            {plans.length === 0 ? 'Próximamente' : 'Planes disponibles'}
-          </p>
+          <AppSectionHeader
+            title={plans.length === 0 ? 'Próximamente' : 'Planes disponibles'}
+            description="Cada plan deja claro para qué sirve y cuánto exige."
+          />
 
           {plans.length === 0 ? (
-            <div className="rounded-2xl bg-white p-8 text-center" style={{ border: '1px solid #F0EDE9' }}>
+            <AppPanel className="p-8 text-center">
               <p className="text-3xl mb-2">🥗</p>
               <p className="text-sm font-medium text-stone-600">Los planes se están preparando</p>
               <p className="text-xs text-stone-400 mt-1">Vuelve pronto</p>
-            </div>
+            </AppPanel>
           ) : (
-            <div className="space-y-3">
+            <div className="mt-3 space-y-3">
               {plans.map(plan => (
                 <PlanCard
                   key={plan.id}
@@ -145,10 +150,7 @@ export default function PlansPage() {
         {/* Banner premium si no es premium */}
         {!isPremium && plans.some(p => p.is_premium) && (
           <section>
-            <div
-              className="rounded-2xl p-5"
-              style={{ background: 'linear-gradient(135deg, #1C1917 0%, #292524 100%)' }}
-            >
+            <div className="rounded-[1.8rem] bg-[linear-gradient(135deg,#1C1917_0%,#2E2019_58%,#3B352B_100%)] p-5 shadow-[0_24px_46px_rgba(28,25,23,0.22)]">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-4 h-4 text-amber-400" />
                 <span className="text-amber-400 text-xs font-bold uppercase tracking-wider">Nutria Premium</span>
@@ -166,7 +168,7 @@ export default function PlansPage() {
           </section>
         )}
       </div>
-    </div>
+    </AppPage>
   )
 }
 
@@ -179,8 +181,7 @@ function ActivePlanCard({ plan, startedAt, onPress }: { plan: MealPlan; startedA
   return (
     <button
       onClick={onPress}
-      className="w-full rounded-2xl p-4 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
-      style={{ background: 'white', border: '1.5px solid #F97316', boxShadow: '0 2px 12px rgba(249,115,22,0.15)' }}
+      className="app-panel w-full flex items-center gap-3 rounded-[1.6rem] border-[1.5px] border-[var(--color-primary-400)] p-4 text-left transition-transform active:scale-[0.98]"
     >
       <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: meta.bg }}>
         <MetaIcon className="w-5 h-5" style={{ color: meta.color }} />
@@ -204,27 +205,30 @@ function PlanCard({ plan, isPremium, isActive, onPress }: {
   return (
     <button
       onClick={onPress}
-      className="w-full rounded-2xl p-4 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
-      style={{ background: 'white', border: `1px solid ${isActive ? '#F97316' : '#F0EDE9'}` }}
+      className={`app-panel w-full rounded-[1.6rem] p-4 text-left transition-transform active:scale-[0.98] ${
+        isActive ? 'border-[var(--color-primary-400)]' : 'border-[var(--line-soft)]'
+      }`}
     >
-      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: meta.bg }}>
-        <MetaIcon className="w-5 h-5" style={{ color: meta.color }} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 mb-0.5">
-          <p className="text-sm font-bold text-stone-800 truncate">{plan.title}</p>
-          {locked && <Lock className="w-3 h-3 text-stone-400 flex-shrink-0" />}
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl" style={{ background: meta.bg }}>
+          <MetaIcon className="w-5 h-5" style={{ color: meta.color }} />
         </div>
-        <p className="text-xs text-stone-500 leading-snug line-clamp-2">{plan.description}</p>
-        <div className="flex items-center gap-2 mt-2">
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: meta.bg, color: meta.color }}>
-            {meta.label}
-          </span>
-          <span className="text-[10px] text-stone-400">{plan.target_calories} kcal/día</span>
-          <span className="text-[10px] text-stone-400">{plan.duration_days} días</span>
+        <div className="min-w-0 flex-1">
+          <div className="mb-0.5 flex items-center gap-1.5">
+            <p className="truncate text-sm font-bold text-stone-800">{plan.title}</p>
+            {locked && <Lock className="h-3 w-3 flex-shrink-0 text-stone-400" />}
+          </div>
+          <p className="line-clamp-2 text-xs leading-snug text-stone-500">{plan.description}</p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: meta.bg, color: meta.color }}>
+              {meta.label}
+            </span>
+            <span className="text-[10px] text-stone-400">{plan.target_calories} kcal/día</span>
+            <span className="text-[10px] text-stone-400">{plan.duration_days} días</span>
+          </div>
         </div>
+        <ChevronRight className="h-4 w-4 flex-shrink-0 text-stone-300" />
       </div>
-      <ChevronRight className="w-4 h-4 text-stone-300 flex-shrink-0" />
     </button>
   )
 }

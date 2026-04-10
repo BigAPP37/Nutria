@@ -1,9 +1,10 @@
 // Store de Zustand para el estado Premium y control de fotos diarias
 import { create } from 'zustand'
+import { getTodayDateKey } from '@/lib/date'
 
 // Genera la clave de localStorage para el día de hoy
 function getTodayKey(): string {
-  const today = new Date().toISOString().split('T')[0]
+  const today = getTodayDateKey()
   return `nutria_photo_logs_${today}`
 }
 

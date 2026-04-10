@@ -24,6 +24,7 @@ import { FastingTracker } from '@/components/stats/FastingTracker'
 import { useTodayTotals } from '@/hooks/useTodayTotals'
 import { useTdeeAdjustment } from '@/hooks/useTdeeAdjustment'
 import { TdeeAdjustmentCard } from '@/components/stats/TdeeAdjustmentCard'
+import { AppHero, AppPage, AppPanel, AppSectionHeader } from '@/components/ui/AppPage'
 
 // Monetización Premium
 import { usePremiumStore } from '@/stores/premiumStore'
@@ -69,25 +70,25 @@ export default function StatsPage() {
   const goalKcal = tdeeState?.goal_kcal ?? 2000
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
-      {/* Header con gradiente naranja */}
-      <div
-        className="relative px-5 pt-14 pb-8"
-        style={{ background: 'linear-gradient(160deg, #F97316 0%, #EA6C0A 100%)' }}
-      >
-        <div className="flex items-start gap-3">
-          <div className="flex-1">
-            <p className="text-white/70 text-xs font-medium uppercase tracking-wider mb-1">Tu evolución</p>
-            <h1 className="text-white text-2xl font-black leading-tight">Progreso</h1>
-            <p className="text-white/80 text-sm mt-1">Estadísticas y seguimiento</p>
-          </div>
-          <div className="w-14 h-14 relative">
+    <AppPage>
+      <AppHero
+        eyebrow="Tu evolución"
+        eyebrowClassName="[font-family:var(--font-oswald)] text-sm tracking-[0.22em] not-italic font-medium"
+        title="Tu progreso merece una lectura más clara."
+        description="Peso, consistencia y energía en una sola vista. El objetivo es detectar cambios útiles sin perderte entre widgets."
+        action={
+          <div className="soft-ring relative hidden h-16 w-16 rounded-[1.4rem] bg-white/10 p-2 md:block">
             <Image src="/nutria-trophy.png" alt="Nuti" fill className="object-contain drop-shadow-md" sizes="56px" />
           </div>
+        }
+      >
+        <div className="glass-pill inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-white/82">
+          <span className="h-2 w-2 rounded-full bg-emerald-300" />
+          Seguimiento semanal y señales de ajuste
         </div>
-      </div>
+      </AppHero>
 
-      <main className="max-w-md mx-auto px-4 py-5 space-y-4 pb-24">
+      <main className="space-y-4">
         {/* 1. Tarjetas de resumen rápido */}
         <QuickStats
           daysLogged={daysLogged}
@@ -99,8 +100,13 @@ export default function StatsPage() {
 
         {/* 2. Ayuno intermitente */}
         <section>
-          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3 px-1">Ayuno</p>
-          <FastingTracker />
+          <AppSectionHeader
+            title="Ayuno"
+            description="Una referencia rápida para entender tu patrón diario."
+          />
+          <div className="mt-3">
+            <FastingTracker />
+          </div>
         </section>
 
         {/* 3. Objetivo calórico diario */}
@@ -112,8 +118,11 @@ export default function StatsPage() {
         )}
 
         {/* 4. Gráfico de evolución del peso */}
-        <section className="relative bg-white rounded-2xl border border-stone-100 p-4">
-          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">Peso</p>
+        <AppPanel className="relative p-4">
+          <AppSectionHeader
+            title="Peso"
+            description="Observa la tendencia, no solo el número del día."
+          />
           <WeightChart
             data={weightHistory}
             unit={weightUnit}
@@ -121,45 +130,54 @@ export default function StatsPage() {
             isLoading={weightLoading}
           />
           {!isPremium && <StatsPaywallOverlay />}
-        </section>
+        </AppPanel>
 
         {/* 5. Gráfico de calorías semanales */}
-        <section className="relative bg-white rounded-2xl border border-stone-100 p-4">
-          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">Calorías semanales</p>
+        <AppPanel className="relative p-4">
+          <AppSectionHeader
+            title="Calorías semanales"
+            description="Compara tu intake real con el objetivo para ajustar antes de desviarte."
+          />
           <CalorieChart
             snapshots={snapshots}
             goalKcal={goalKcal}
             isLoading={snapshotsLoading}
           />
           {!isPremium && <StatsPaywallOverlay />}
-        </section>
+        </AppPanel>
 
         {/* 6. Macros promedio de la semana actual */}
-        <section className="relative bg-white rounded-2xl border border-stone-100 p-4">
-          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">Macros esta semana</p>
+        <AppPanel className="relative p-4">
+          <AppSectionHeader
+            title="Macros esta semana"
+            description="Detecta desequilibrios antes de que se conviertan en hábito."
+          />
           <MacroAverages
             data={macroAverages ?? null}
             targets={tdeeState?.macro_targets ?? null}
             isLoading={macroLoading}
           />
           {!isPremium && <StatsPaywallOverlay />}
-        </section>
+        </AppPanel>
 
         {/* 7. Historial de semanas anteriores */}
         <section>
-          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3 px-1">Historial semanal</p>
+          <AppSectionHeader
+            title="Historial semanal"
+            description="Semanas anteriores para entender consistencia, no perfección."
+          />
           {snapshotsLoading ? (
-            <div className="space-y-2">
+            <div className="mt-3 space-y-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-pulse bg-stone-100 rounded-2xl h-16 w-full" />
+                <div key={i} className="h-16 w-full animate-pulse rounded-[1.4rem] bg-[var(--surface-1)]" />
               ))}
             </div>
           ) : snapshots.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-stone-100 p-4">
-              <p className="text-sm text-stone-400 text-center">Aún no hay semanas registradas</p>
-            </div>
+            <AppPanel className="p-4">
+              <p className="text-center text-sm text-[var(--ink-3)]">Aún no hay semanas registradas</p>
+            </AppPanel>
           ) : (
-            <div className="space-y-2">
+            <div className="mt-3 space-y-2">
               {snapshots.map((snapshot) => (
                 <WeeklySnapshotCard key={snapshot.week_start} snapshot={snapshot} />
               ))}
@@ -176,6 +194,6 @@ export default function StatsPage() {
           userId={userId}
         />
       )}
-    </div>
+    </AppPage>
   )
 }

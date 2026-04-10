@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Eye, EyeOff, Sparkles, TrendingUp, Apple, Flame } from 'lucide-react'
+import { Apple, Eye, EyeOff, Flame, Sparkles, TrendingUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 
 type AuthMode = 'login' | 'register'
 
@@ -49,7 +51,10 @@ export function AuthForm({ mode }: AuthFormProps) {
       const supabase = createClient()
 
       if (isLogin) {
-        const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
+        const { data, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
 
         if (authError) {
           if (authError.message.includes('Invalid login credentials')) {
@@ -63,29 +68,35 @@ export function AuthForm({ mode }: AuthFormProps) {
         }
 
         if (data.user) {
-          const { data: profile } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
             .select('onboarding_completed')
             .eq('id', data.user.id)
-            .single()
+            .maybeSingle()
 
-          if (profile?.onboarding_completed) {
-            window.location.href = '/dashboard'
-          } else {
-            window.location.href = '/onboarding'
+          if (profileError) {
+            setError('No pudimos recuperar tu perfil. Intenta de nuevo.')
+            return
           }
+
+          window.location.href = profile?.onboarding_completed
+            ? '/dashboard'
+            : '/onboarding'
         }
       } else {
         const { error: authError } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo: `${window.location.origin}/onboarding`,
           },
         })
 
         if (authError) {
-          if (authError.message.includes('already registered') || authError.message.includes('User already registered')) {
+          if (
+            authError.message.includes('already registered') ||
+            authError.message.includes('User already registered')
+          ) {
             setError('Este email ya está registrado. ¿Quieres iniciar sesión?')
           } else {
             setError(authError.message || 'Ocurrió un error al registrarte. Intenta de nuevo.')
@@ -102,449 +113,187 @@ export function AuthForm({ mode }: AuthFormProps) {
     }
   }
 
-  // ── Shared input style helper ─────────────────────────────────────────────
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    height: 50,
-    paddingLeft: 16,
-    paddingRight: 16,
-    borderRadius: 14,
-    border: '1.5px solid #E7E5E4',
-    background: 'white',
-    fontSize: 14,
-    color: '#1C1917',
-    outline: 'none',
-    transition: 'border-color 0.2s, box-shadow 0.2s',
-    fontFamily: 'inherit',
-    boxSizing: 'border-box',
-  }
-
   return (
-    <div style={{ minHeight: '100vh', display: 'flex' }}>
-
-      {/* ── Panel izquierdo — branding (desktop) ── */}
-      <div
-        className="hidden lg:flex"
-        style={{
-          width: '50%',
-          background: 'linear-gradient(160deg, #F97316 0%, #C2410C 55%, #7C2D12 100%)',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '64px 56px',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Decorative blobs */}
-        <div style={{
-          position: 'absolute',
-          top: -80,
-          left: -80,
-          width: 350,
-          height: 350,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.06)',
-        }} />
-        <div style={{
-          position: 'absolute',
-          bottom: -60,
-          right: -60,
-          width: 280,
-          height: 280,
-          borderRadius: '50%',
-          background: 'rgba(0,0,0,0.1)',
-        }} />
-        <div style={{
-          position: 'absolute',
-          top: '45%',
-          right: -20,
-          width: 140,
-          height: 140,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.06)',
-        }} />
-
-        {/* Content */}
-        <div style={{ position: 'relative', zIndex: 1, color: 'white', maxWidth: 380 }}>
-          {/* Wordmark */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48 }}>
-            <div style={{
-              width: 52,
-              height: 52,
-              borderRadius: 18,
-              background: 'rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(8px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 26,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-            }}>
-              🥗
-            </div>
-            <span style={{ fontSize: 30, fontWeight: 900, letterSpacing: '-1px' }}>Nutria</span>
-          </div>
-
-          <h2 style={{
-            fontSize: 40,
-            fontWeight: 900,
-            lineHeight: 1.15,
-            marginBottom: 16,
-            letterSpacing: '-1px',
-          }}>
-            Tu camino hacia una alimentación{' '}
-            <span style={{ color: '#FDE68A' }}>consciente</span>
-          </h2>
-          <p style={{
-            fontSize: 16,
-            color: 'rgba(255,255,255,0.75)',
-            lineHeight: 1.7,
-            marginBottom: 48,
-          }}>
-            Registra lo que comes, entiende tus hábitos y alcanza tus metas nutricionales con inteligencia artificial.
-          </p>
-
-          {/* Feature pills */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {[
-              { Icon: TrendingUp, text: 'Seguimiento de macros en tiempo real' },
-              { Icon: Apple,      text: 'Base de datos con miles de alimentos' },
-              { Icon: Sparkles,   text: 'Insights personalizados con IA' },
-              { Icon: Flame,      text: 'Rachas diarias para mantenerte motivado' },
-            ].map(({ Icon, text }) => (
-              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 11,
-                  background: 'rgba(255,255,255,0.12)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  backdropFilter: 'blur(4px)',
-                }}>
-                  <Icon style={{ width: 16, height: 16, color: 'white' }} />
-                </div>
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)', lineHeight: 1.4 }}>
-                  {text}
-                </span>
-              </div>
-            ))}
-          </div>
+    <div className="min-h-screen lg:grid lg:grid-cols-[1.08fr_0.92fr]">
+      <aside className="hero-surface relative hidden min-h-screen overflow-hidden px-12 py-14 lg:flex lg:flex-col lg:justify-between">
+        <div className="pointer-events-none absolute inset-0 opacity-60">
+          <div className="absolute left-[-4rem] top-[-4rem] h-56 w-56 rounded-full bg-white/14 blur-2xl" />
+          <div className="absolute bottom-12 right-[-2rem] h-64 w-64 rounded-full bg-[#f3b843]/25 blur-3xl" />
         </div>
-      </div>
 
-      {/* ── Panel derecho — formulario ── */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#FAFAF9',
-        padding: '40px 24px',
-      }}>
-        <div style={{ width: '100%', maxWidth: 380 }}>
-
-          {/* Logo mobile — solo visible en móvil */}
-          <div className="flex lg:hidden" style={{ alignItems: 'center', gap: 10, marginBottom: 36 }}>
-            <div style={{
-              width: 44,
-              height: 44,
-              borderRadius: 15,
-              background: 'linear-gradient(135deg, #F97316 0%, #C2410C 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 22,
-              boxShadow: '0 4px 16px rgba(249,115,22,0.4)',
-            }}>
-              🥗
+        <div className="relative z-10 max-w-[30rem]">
+          <div className="mb-10 flex items-center gap-3">
+            <div className="soft-ring flex h-14 w-14 items-center justify-center rounded-[1.2rem] bg-white/12 text-2xl">
+              🦦
             </div>
-            <span style={{
-              fontSize: 26,
-              fontWeight: 900,
-              color: '#1C1917',
-              letterSpacing: '-0.5px',
-            }}>
-              Nutria
-            </span>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-white/70">
+                Nutria
+              </p>
+              <h2 className="display-title text-3xl font-semibold text-white">
+                Nutrición con criterio
+              </h2>
+            </div>
           </div>
 
-          {/* Cabecera */}
-          <div style={{ marginBottom: 32 }}>
-            <h1 style={{
-              fontSize: 28,
-              fontWeight: 900,
-              color: '#1C1917',
-              letterSpacing: '-0.5px',
-              marginBottom: 8,
-              lineHeight: 1.2,
-            }}>
-              {isLogin ? 'Bienvenido de vuelta' : 'Crea tu cuenta'}
+          <div className="space-y-5">
+            <p className="app-kicker text-white/70">Tu sistema diario</p>
+            <h1 className="display-title text-5xl font-semibold leading-[0.96] text-white">
+              {isLogin ? 'Vuelve a tu tablero y sigue el hilo.' : 'Empieza con una app que se siente hecha para cuidarte.'}
             </h1>
-            <p style={{ fontSize: 15, color: '#78716C', lineHeight: 1.5 }}>
-              {isLogin
-                ? 'Introduce tus datos para continuar'
-                : 'Empieza gratis, sin tarjeta de crédito'}
+            <p className="max-w-md text-base leading-7 text-white/78">
+              Registra comidas, entiende tus patrones y mantén el progreso visible sin una interfaz clínica ni genérica.
             </p>
           </div>
+        </div>
 
-          {/* Mensaje de éxito */}
-          {successMessage && (
-            <div style={{
-              marginBottom: 20,
-              padding: '14px 16px',
-              background: '#ECFDF5',
-              border: '1px solid #A7F3D0',
-              borderRadius: 14,
-            }}>
-              <p style={{ fontSize: 13, color: '#065F46' }}>{successMessage}</p>
+        <div className="relative z-10 grid gap-3">
+          {[
+            { icon: TrendingUp, text: 'Resumen diario claro y accionable' },
+            { icon: Apple, text: 'Registro flexible: texto, foto y búsqueda' },
+            { icon: Sparkles, text: 'Insights y acompañamiento sin ruido visual' },
+            { icon: Flame, text: 'Motivación basada en continuidad, no culpa' },
+          ].map(({ icon: Icon, text }) => (
+            <div
+              key={text}
+              className="flex items-center gap-3 rounded-[1.2rem] border border-white/12 bg-white/10 px-4 py-3 backdrop-blur-sm"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-white/12">
+                <Icon className="h-4 w-4 text-white" />
+              </div>
+              <p className="text-sm font-medium text-white/88">{text}</p>
             </div>
-          )}
+          ))}
+        </div>
+      </aside>
 
-          {/* Formulario */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <section className="relative flex min-h-screen items-center justify-center px-5 py-10 lg:px-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(243,184,67,0.08),transparent_30%)]" />
 
-            {/* Email */}
+        <div className="relative z-10 w-full max-w-[26rem]">
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
+            <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,var(--hero-start),var(--hero-mid),var(--hero-end))] text-2xl text-white shadow-[0_14px_28px_rgba(126,62,34,0.26)]">
+              🦦
+            </div>
             <div>
-              <label style={{
-                display: 'block',
-                fontSize: 13,
-                fontWeight: 600,
-                color: '#44403C',
-                marginBottom: 6,
-              }}>
-                Email
-              </label>
-              <input
+              <p className="app-kicker">Nutria</p>
+              <h2 className="display-title text-2xl font-semibold text-[var(--ink-1)]">
+                Nutrición con criterio
+              </h2>
+            </div>
+          </div>
+
+          <div className="app-card p-6 sm:p-8">
+            <div className="mb-6 space-y-2">
+              <p className="app-kicker">
+                {isLogin ? 'Acceso' : 'Crear cuenta'}
+              </p>
+              <h1 className="display-title text-4xl font-semibold text-[var(--ink-1)]">
+                {isLogin ? 'Bienvenido de vuelta' : 'Haz espacio para un mejor ritmo'}
+              </h1>
+              <p className="text-sm leading-6 text-[var(--ink-2)]">
+                {isLogin
+                  ? 'Entra para retomar tu día, revisar tus métricas y seguir registrando.'
+                  : 'Empieza gratis y configura un sistema que te acompañe de forma constante.'}
+              </p>
+            </div>
+
+            {successMessage && (
+              <div className="mb-4 rounded-[1rem] border border-[rgba(40,89,79,0.16)] bg-[var(--forest-soft)] px-4 py-3 text-sm text-[var(--forest)]">
+                {successMessage}
+              </div>
+            )}
+
+            {error && (
+              <div className="mb-4 rounded-[1rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
                 type="email"
+                label="Email"
                 placeholder="tu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 disabled={isLoading}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#F97316'
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(249,115,22,0.12)'
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = '#E7E5E4'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}
               />
-            </div>
 
-            {/* Contraseña */}
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: 13,
-                fontWeight: 600,
-                color: '#44403C',
-                marginBottom: 6,
-              }}>
-                Contraseña
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete={isLogin ? 'current-password' : 'new-password'}
-                  disabled={isLoading}
-                  style={{ ...inputStyle, paddingRight: 48 }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#F97316'
-                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(249,115,22,0.12)'
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = '#E7E5E4'
-                    e.currentTarget.style.boxShadow = 'none'
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  tabIndex={-1}
-                  style={{
-                    position: 'absolute',
-                    right: 14,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#A8A29E',
-                    padding: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  {showPassword ? <EyeOff style={{ width: 18, height: 18 }} /> : <Eye style={{ width: 18, height: 18 }} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Confirmar contraseña — solo registro */}
-            {!isLogin && (
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: '#44403C',
-                  marginBottom: 6,
-                }}>
-                  Confirmar contraseña
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    autoComplete="new-password"
-                    disabled={isLoading}
-                    style={{ ...inputStyle, paddingRight: 48 }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = '#F97316'
-                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(249,115,22,0.12)'
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = '#E7E5E4'
-                      e.currentTarget.style.boxShadow = 'none'
-                    }}
-                  />
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                label="Contraseña"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={isLogin ? 'current-password' : 'new-password'}
+                disabled={isLoading}
+                suffix={
                   <button
                     type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    tabIndex={-1}
-                    style={{
-                      position: 'absolute',
-                      right: 14,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: '#A8A29E',
-                      padding: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="pointer-events-auto rounded-md p-1 text-[var(--ink-3)] transition hover:text-[var(--ink-2)]"
+                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   >
-                    {showConfirmPassword ? <EyeOff style={{ width: 18, height: 18 }} /> : <Eye style={{ width: 18, height: 18 }} />}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
-                </div>
-              </div>
-            )}
+                }
+              />
 
-            {/* Error — amber, nunca rojo */}
-            {error && (
-              <div style={{
-                padding: '12px 14px',
-                background: '#FFFBEB',
-                border: '1px solid #FDE68A',
-                borderRadius: 12,
-              }}>
-                <p style={{ fontSize: 13, color: '#92400E' }}>{error}</p>
-              </div>
-            )}
-
-            {/* Botón submit */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              style={{
-                width: '100%',
-                height: 52,
-                marginTop: 4,
-                borderRadius: 16,
-                border: 'none',
-                background: isLoading
-                  ? '#E7E5E4'
-                  : 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
-                color: isLoading ? '#A8A29E' : 'white',
-                fontSize: 15,
-                fontWeight: 700,
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                boxShadow: isLoading ? 'none' : '0 4px 20px rgba(249,115,22,0.45)',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                letterSpacing: '-0.2px',
-              }}
-              onMouseEnter={(e) => {
-                if (!isLoading) e.currentTarget.style.transform = 'translateY(-1px)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)'
-              }}
-            >
-              {isLoading ? (
-                <>
-                  <svg
-                    style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  {isLogin ? 'Entrando...' : 'Creando cuenta...'}
-                </>
-              ) : (
-                isLogin ? 'Iniciar sesión' : '🚀 Crear cuenta gratis'
+              {!isLogin && (
+                <Input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  label="Confirmar contraseña"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  disabled={isLoading}
+                  suffix={
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((value) => !value)}
+                      className="pointer-events-auto rounded-md p-1 text-[var(--ink-3)] transition hover:text-[var(--ink-2)]"
+                      aria-label={
+                        showConfirmPassword ? 'Ocultar confirmación' : 'Mostrar confirmación'
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  }
+                />
               )}
-            </button>
-          </form>
 
-          {/* Enlace alternativo */}
-          <p style={{
-            textAlign: 'center',
-            fontSize: 14,
-            color: '#78716C',
-            marginTop: 24,
-          }}>
-            {isLogin ? (
-              <>
-                ¿No tienes cuenta?{' '}
-                <Link href="/register" style={{ color: '#F97316', fontWeight: 700, textDecoration: 'none' }}>
-                  Regístrate gratis
-                </Link>
-              </>
-            ) : (
-              <>
-                ¿Ya tienes cuenta?{' '}
-                <Link href="/login" style={{ color: '#F97316', fontWeight: 700, textDecoration: 'none' }}>
-                  Inicia sesión
-                </Link>
-              </>
-            )}
-          </p>
+              <Button type="submit" size="lg" fullWidth isLoading={isLoading}>
+                {isLogin ? 'Iniciar sesión' : 'Crear cuenta gratis'}
+              </Button>
+            </form>
 
-          {/* Legal fine print */}
-          {!isLogin && (
-            <p style={{
-              textAlign: 'center',
-              fontSize: 11,
-              color: '#C4B9B3',
-              marginTop: 16,
-              lineHeight: 1.5,
-            }}>
-              Al registrarte aceptas nuestros términos de servicio y política de privacidad
-            </p>
-          )}
+            <div className="mt-6 space-y-4">
+              <p className="text-center text-sm text-[var(--ink-2)]">
+                {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}{' '}
+                <Link
+                  href={isLogin ? '/register' : '/login'}
+                  className="font-semibold text-[var(--color-primary-600)]"
+                >
+                  {isLogin ? 'Regístrate gratis' : 'Inicia sesión'}
+                </Link>
+              </p>
+
+              {!isLogin && (
+                <p className="text-center text-xs leading-5 text-[var(--ink-3)]">
+                  Al registrarte aceptas nuestros términos de servicio y política de privacidad.
+                </p>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </section>
     </div>
   )
 }

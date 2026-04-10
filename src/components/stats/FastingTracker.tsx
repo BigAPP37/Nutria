@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Timer, User, BarChart2, CalendarDays, Pencil, Check, X } from 'lucide-react'
+import { formatLocalDateKey, getTodayDateKey } from '@/lib/date'
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 const STORAGE_KEY  = 'nutria-fast-v1'
@@ -383,7 +384,7 @@ function HistoryTab({ history, session, elapsed }: { history: FastRecord[]; sess
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() - (6 - i))
-    return d.toISOString().split('T')[0]
+    return formatLocalDateKey(d)
   })
 
   const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
@@ -393,7 +394,7 @@ function HistoryTab({ history, session, elapsed }: { history: FastRecord[]; sess
       .filter(r => r.started_at.startsWith(day))
       .reduce((acc, r) => acc + r.actual_hours, 0)
     // Si hay sesión activa hoy, añadir el tiempo actual
-    if (session && day === new Date().toISOString().split('T')[0]) {
+    if (session && day === getTodayDateKey()) {
       h += elapsed / 3600
     }
     return Math.min(h, 24)

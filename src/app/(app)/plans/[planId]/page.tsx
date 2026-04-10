@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getTodayDateKey } from '@/lib/date'
 import { ChevronLeft, ChevronRight, Lock, Clock, Flame, Beef, Wheat, Droplets, CheckCircle2 } from 'lucide-react'
 
 type Plan = {
@@ -62,6 +63,8 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
   const [meals, setMeals] = useState<Meal[]>([])
   const [isPremium, setIsPremium] = useState(false)
   const [isActivePlan, setIsActivePlan] = useState(false)
+  const [isActivatingPlan, setIsActivatingPlan] = useState(false)
+  const [activationError, setActivationError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [mealsLoading, setMealsLoading] = useState(false)
 
@@ -76,7 +79,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
         sb.from('meal_plans').select('*').eq('id', planId).maybeSingle(),
         sb.from('meal_plan_days').select('*').eq('plan_id', planId).order('day_number'),
         sb.from('user_profiles').select('is_premium').eq('id', user.id).maybeSingle(),
-        sb.from('user_meal_plans').select('plan_id').eq('user_id', user.id).eq('plan_id', planId).maybeSingle(),
+        sb.from('user_meal_plans').select('plan_id').eq('user_id', user.id).eq('plan_id', planId).eq('is_active', true).maybeSingle(),
       ])
 
       setPlan(planRes.data)
@@ -91,8 +94,9 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
   // Cargar comidas del día seleccionado
   useEffect(() => {
     if (!days.length) return
-    const day = days.find(d => d.day_number === selectedDay)
-    if (!day) return
+    const selectedPlanDay = days.find(d => d.day_number === selectedDay)
+    if (!selectedPlanDay) return
+    const dayId = selectedPlanDay.id
 
     const sb = createClient()
 
@@ -100,7 +104,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
       setMealsLoading(true)
       const { data } = await sb.from('meal_plan_meals')
         .select('id, meal_type, order_index, recipe:recipes(id, title, calories_kcal, protein_g, ready_in_min, image_url)')
-        .eq('day_id', day.id)
+        .eq('day_id', dayId)
         .order('order_index')
       setMeals((data as unknown as Meal[]) || [])
       setMealsLoading(false)
@@ -111,21 +115,24 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
 
   async function handleActivatePlan() {
     const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user || !plan) return
+    if (!plan || isActivatingPlan) return
 
-    // Desactivar cualquier plan activo anterior antes de activar el nuevo
-    await sb.from('user_meal_plans')
-      .update({ is_active: false })
-      .eq('user_id', user.id)
-      .eq('is_active', true)
+    setIsActivatingPlan(true)
+    setActivationError(null)
 
-    await sb.from('user_meal_plans')
-      .upsert(
-        { user_id: user.id, plan_id: plan.id, started_at: new Date().toISOString().split('T')[0], is_active: true },
-        { onConflict: 'user_id,plan_id' }
-      )
+    const { error: activationError } = await sb.rpc('activate_meal_plan_atomic', {
+      p_plan_id: plan.id,
+      p_started_at: getTodayDateKey(),
+    })
+
+    if (activationError) {
+      setActivationError('No pudimos activar el plan. Inténtalo de nuevo.')
+      setIsActivatingPlan(false)
+      return
+    }
+
     setIsActivePlan(true)
+    setIsActivatingPlan(false)
   }
 
   if (loading || !plan) {
@@ -178,13 +185,22 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
 
         {/* Botón activar plan */}
         {!isActivePlan && !locked && (
+          <>
           <button
             onClick={handleActivatePlan}
+            disabled={isActivatingPlan}
             className="w-full py-3 rounded-2xl text-sm font-bold text-white active:scale-[0.98] transition-transform"
-            style={{ background: 'linear-gradient(135deg, #F97316, #EA6C0A)', boxShadow: '0 4px 14px rgba(249,115,22,0.35)' }}
+            style={{
+              background: isActivatingPlan ? '#FDBA74' : 'linear-gradient(135deg, #F97316, #EA6C0A)',
+              boxShadow: isActivatingPlan ? 'none' : '0 4px 14px rgba(249,115,22,0.35)',
+            }}
           >
-            Empezar este plan
+            {isActivatingPlan ? 'Activando...' : 'Empezar este plan'}
           </button>
+          {activationError && (
+            <p className="mt-2 text-sm text-red-600">{activationError}</p>
+          )}
+          </>
         )}
 
         {/* Paywall */}

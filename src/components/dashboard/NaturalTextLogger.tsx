@@ -23,6 +23,7 @@ interface AILogResult {
 interface NaturalTextLoggerProps {
   userId:    string
   logDate:   string
+  countryCode?: string
   onSaved:   () => void   // called after confirm → dashboard reloads
   onClose:   () => void
 }
@@ -60,7 +61,12 @@ function inferMealType(): MealType {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function NaturalTextLogger({ logDate, onSaved, onClose }: NaturalTextLoggerProps) {
+export function NaturalTextLogger({
+  logDate,
+  countryCode = 'ES',
+  onSaved,
+  onClose,
+}: NaturalTextLoggerProps) {
   const [text,     setText]     = useState('')
   const [mealType, setMealType] = useState<MealType>(inferMealType())
   const [status,   setStatus]   = useState<'idle' | 'loading' | 'result' | 'error'>('idle')
@@ -110,7 +116,7 @@ export function NaturalTextLogger({ logDate, onSaved, onClose }: NaturalTextLogg
           method:       'text',
           payload:      text.trim(),
           meal_type:    mealType,
-          country_code: 'ES',
+          country_code: countryCode,
           timezone:     Intl.DateTimeFormat().resolvedOptions().timeZone,
           log_date:     logDate,
         }),

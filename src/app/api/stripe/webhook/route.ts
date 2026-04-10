@@ -32,6 +32,25 @@ export async function POST(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  async function updateProfile(
+    userId: string,
+    updates: {
+      is_premium?: boolean
+      subscription_status?: string
+      premium_expires_at?: string | null
+      stripe_customer_id?: string
+    }
+  ) {
+    const { error } = await supabase
+      .from('user_profiles')
+      .update(updates)
+      .eq('id', userId)
+
+    if (error) {
+      throw new Error(`No se pudo actualizar user_profiles para ${userId}: ${error.message}`)
+    }
+  }
+
   // Función auxiliar: obtener user_id desde metadata o por stripe_customer_id
   async function resolveUserId(
     metadata: Stripe.Metadata | null,
@@ -42,11 +61,18 @@ export async function POST(request: NextRequest) {
 
     // Si no hay metadata, buscar por stripe_customer_id en la base de datos
     if (customerId) {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_profiles')
         .select('id')
         .eq('stripe_customer_id', customerId)
-        .single()
+        .maybeSingle()
+
+      if (error) {
+        throw new Error(
+          `No se pudo resolver stripe_customer_id ${customerId}: ${error.message}`
+        )
+      }
+
       return data?.id ?? null
     }
 
@@ -62,7 +88,13 @@ export async function POST(request: NextRequest) {
           session.metadata,
           session.customer as string | null
         )
-        if (!userId) break
+        if (!userId) {
+          console.warn('[webhook] Usuario no resuelto para checkout.session.completed', {
+            eventId: event.id,
+            customerId: session.customer,
+          })
+          break
+        }
 
         // Recuperar detalles de la suscripción para obtener la fecha de expiración
         let premiumExpiresAt: string | null = null
@@ -80,15 +112,12 @@ export async function POST(request: NextRequest) {
             subscription.status === 'trialing' ? 'trialing' : 'active'
         }
 
-        await supabase
-          .from('user_profiles')
-          .update({
-            is_premium: true,
-            subscription_status: subscriptionStatus,
-            premium_expires_at: premiumExpiresAt,
-            stripe_customer_id: session.customer as string,
-          })
-          .eq('id', userId)
+        await updateProfile(userId, {
+          is_premium: true,
+          subscription_status: subscriptionStatus,
+          premium_expires_at: premiumExpiresAt,
+          stripe_customer_id: session.customer as string,
+        })
 
         break
       }
@@ -100,7 +129,14 @@ export async function POST(request: NextRequest) {
           subscription.metadata,
           subscription.customer as string
         )
-        if (!userId) break
+        if (!userId) {
+          console.warn('[webhook] Usuario no resuelto para customer.subscription.updated', {
+            eventId: event.id,
+            customerId: subscription.customer,
+            subscriptionId: subscription.id,
+          })
+          break
+        }
 
         const premiumExpiresAt = new Date(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -119,14 +155,11 @@ export async function POST(request: NextRequest) {
         const isPremium =
           subscription.status === 'active' || subscription.status === 'trialing'
 
-        await supabase
-          .from('user_profiles')
-          .update({
-            is_premium: isPremium,
-            subscription_status: subscriptionStatus,
-            premium_expires_at: premiumExpiresAt,
-          })
-          .eq('id', userId)
+        await updateProfile(userId, {
+          is_premium: isPremium,
+          subscription_status: subscriptionStatus,
+          premium_expires_at: premiumExpiresAt,
+        })
 
         break
       }
@@ -138,15 +171,19 @@ export async function POST(request: NextRequest) {
           subscription.metadata,
           subscription.customer as string
         )
-        if (!userId) break
-
-        await supabase
-          .from('user_profiles')
-          .update({
-            is_premium: false,
-            subscription_status: 'canceled',
+        if (!userId) {
+          console.warn('[webhook] Usuario no resuelto para customer.subscription.deleted', {
+            eventId: event.id,
+            customerId: subscription.customer,
+            subscriptionId: subscription.id,
           })
-          .eq('id', userId)
+          break
+        }
+
+        await updateProfile(userId, {
+          is_premium: false,
+          subscription_status: 'canceled',
+        })
 
         break
       }
@@ -157,12 +194,15 @@ export async function POST(request: NextRequest) {
         const customerId =
           typeof invoice.customer === 'string' ? invoice.customer : null
         const userId = await resolveUserId(null, customerId)
-        if (!userId) break
+        if (!userId) {
+          console.warn('[webhook] Usuario no resuelto para invoice.payment_failed', {
+            eventId: event.id,
+            customerId,
+          })
+          break
+        }
 
-        await supabase
-          .from('user_profiles')
-          .update({ subscription_status: 'past_due' })
-          .eq('id', userId)
+        await updateProfile(userId, { subscription_status: 'past_due' })
 
         break
       }
@@ -172,10 +212,13 @@ export async function POST(request: NextRequest) {
         break
     }
   } catch (error) {
-    console.error('[webhook] Error procesando evento:', event.type, error)
-    // Devolver 200 para que Stripe no reintente indefinidamente
+    console.error('[webhook] Error procesando evento:', {
+      eventId: event.id,
+      eventType: event.type,
+      error,
+    })
+    return NextResponse.json({ error: 'Error procesando webhook' }, { status: 500 })
   }
 
-  // Siempre responder 200 para confirmar recepción
   return NextResponse.json({ received: true }, { status: 200 })
 }

@@ -16,6 +16,7 @@ export type LoggingMethod = 'photo' | 'natural_text' | 'manual' | 'barcode'
 export interface UserProfile {
   id: string
   display_name: string
+  avatar_url: string | null
   height_cm: number
   date_of_birth: string // ISO date YYYY-MM-DD
   biological_sex: BiologicalSex

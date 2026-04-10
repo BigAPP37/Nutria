@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useLogSessionStore } from '@/stores/logSessionStore'
 import { useAiLog } from '@/hooks/useAiLog'
 import { useProfile } from '@/hooks/useProfile'
+import { getTodayDateKey } from '@/lib/date'
 import { MealTypeSelector } from '@/components/logging/MealTypeSelector'
 import { LogMethodTabs } from '@/components/logging/LogMethodTabs'
 import { PhotoCapture } from '@/components/logging/PhotoCapture'
@@ -29,7 +30,7 @@ import { PaywallModal } from '@/components/premium/PaywallModal'
 
 // Obtiene la fecha de hoy en formato ISO (YYYY-MM-DD)
 function getTodayIso(): string {
-  return new Date().toISOString().split('T')[0]
+  return getTodayDateKey()
 }
 
 export default function LogPage() {
@@ -232,8 +233,8 @@ export default function LogPage() {
   // Pantalla de éxito — ocupa toda la pantalla sin cabecera
   if (store.step === 'done') {
     return (
-      <div className="min-h-screen bg-stone-50">
-        <div className="max-w-md mx-auto px-4 py-8">
+      <div className="min-h-screen">
+        <div className="page-container py-8">
           <LogSuccess
             kcal={store.savedKcal}
             mealType={store.mealType}
@@ -245,25 +246,34 @@ export default function LogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <div className="max-w-md mx-auto px-4 pb-12">
+    <div className="min-h-screen">
+      <div className="hero-surface">
+        <div className="app-shell px-4 pb-6 pt-3">
         {/* Cabecera con botón de volver */}
-        <header className="flex items-center gap-3 py-4 sticky top-0 bg-stone-50 z-10">
+        <header className="flex items-center gap-3 py-4">
           <button
             onClick={() => router.push('/dashboard')}
             className="
-              p-2.5 rounded-xl text-stone-500
-              hover:bg-stone-100 transition-colors
+              soft-ring rounded-2xl bg-white/12 p-2.5 text-white
+              transition-colors hover:bg-white/16
               min-h-[44px] min-w-[44px] flex items-center justify-center
             "
             aria-label="Volver al dashboard"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold text-stone-800">Registrar comida</h1>
+          <div>
+            <p className="app-kicker text-white/70">Registro</p>
+            <h1 className="display-title text-3xl font-semibold text-white">Registrar comida</h1>
+          </div>
         </header>
+        <p className="max-w-[16rem] text-sm text-white/78">
+          Usa el método que te resulte más natural y mantenlo rápido.
+        </p>
+      </div>
+      </div>
 
-        <div className="flex flex-col gap-5">
+      <div className="page-container flex flex-col gap-5 pt-5">
           {/* Selector de tipo de comida — siempre visible (excepto análisis) */}
           {!isAnalyzing && store.step !== 'confirming' && (
             <MealTypeSelector
@@ -331,8 +341,8 @@ export default function LogPage() {
               <button
                 onClick={() => store.reset()}
                 className="
-                  flex items-center gap-2 text-sm text-stone-500
-                  hover:text-stone-700 transition-colors
+                  flex w-fit items-center gap-2 text-sm font-medium text-[var(--ink-2)]
+                  transition-colors hover:text-[var(--ink-1)]
                   min-h-[44px] w-fit
                 "
               >
@@ -384,7 +394,7 @@ export default function LogPage() {
 
           {/* Tarjeta de error */}
           {store.step === 'error' && (
-            <div className="rounded-2xl bg-amber-50 border border-amber-200 p-5 flex flex-col gap-4">
+            <div className="app-card flex flex-col gap-4 border-amber-200 bg-amber-50 p-5">
               <div className="flex gap-3 items-start">
                 <span className="text-amber-500 text-lg">⚠️</span>
                 <div>
@@ -412,14 +422,13 @@ export default function LogPage() {
 
           {/* Placeholder de inicio: invita al usuario a seleccionar un método */}
           {store.step === 'idle' && store.method === null && (
-            <div className="text-center py-12">
-              <p className="text-stone-400 text-sm">
+            <div className="app-card py-12 text-center">
+              <p className="text-sm text-[var(--ink-3)]">
                 Selecciona cómo quieres registrar tu comida
               </p>
             </div>
           )}
         </div>
-      </div>
 
       {/* Modal de paywall para límite de fotos */}
       {showPhotoPaywall && (

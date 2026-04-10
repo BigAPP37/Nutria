@@ -71,21 +71,30 @@ export default function OnboardingPage() {
   const [oauthError, setOauthError] = useState<string | null>(null)
 
   // Redirigir al dashboard si el usuario ya completó el onboarding
-  // TODO: descomentar en producción
-  // useEffect(() => {
-  //   const supabase = createClient()
-  //   supabase.auth.getUser().then(({ data: { user } }) => {
-  //     if (!user) return
-  //     supabase
-  //       .from('user_profiles')
-  //       .select('onboarding_completed')
-  //       .eq('id', user.id)
-  //       .maybeSingle()
-  //       .then(({ data: profile }) => {
-  //         if (profile?.onboarding_completed) router.replace('/dashboard')
-  //       })
-  //   })
-  // }, [router]) // eslint-disable-line
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase
+        .from('user_profiles')
+        .select('onboarding_completed')
+        .eq('id', user.id)
+        .maybeSingle()
+        .then(({ data: profile }) => {
+          if (profile?.onboarding_completed) router.replace('/dashboard')
+        })
+    })
+  }, [router])
+
+  // Resetear store si el usuario llega a /onboarding con currentScreen='register'
+  // pero sin un OAuth code activo — significa que es una sesión persistida de una
+  // cuenta ya completada, no un flujo de registro en curso.
+  useEffect(() => {
+    const hasOAuthCode = window.location.search.includes('code=')
+    if (currentScreen === 'register' && !hasOAuthCode) {
+      useOnboardingStore.getState().goToScreen('welcome')
+    }
+  }, []) // eslint-disable-line
 
   // Auto-detectar país desde navigator.language al montar (una sola vez)
   useEffect(() => {
@@ -103,7 +112,7 @@ export default function OnboardingPage() {
 
   // ─── Guardar datos del onboarding una vez autenticado ─────────────────────
 
-  async function submitOnboardingData(userId: string) {
+  async function submitOnboardingData() {
     // Evitar doble ejecución (handleEmailRegister + onAuthStateChange simultáneos)
     if (isSubmittingRef.current) return
     isSubmittingRef.current = true
@@ -131,90 +140,51 @@ export default function OnboardingPage() {
         goal: storeData.goal,
       })
 
-      // 1. Upsert perfil del usuario
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .upsert({
-          id: userId,
-          display_name: storeData.name || 'Usuario',
-          height_cm: storeData.height_cm,
-          date_of_birth: storeData.birth_date,
-          biological_sex: storeData.biological_sex,
-          goal: storeData.goal,
-          activity_level: storeData.activity_level,
-          onboarding_completed: true,
-          country_code: (storeData.country && storeData.country.length === 2) ? storeData.country.toUpperCase() : 'ES',
-          unit_weight: storeData.units_weight,
-          unit_energy: storeData.units_energy,
-          timezone: storeData.timezone,
-          updated_at: new Date().toISOString(),
-        })
-
-      if (profileError) {
-        console.error('Error guardando perfil:', profileError)
-        setRegisterError('Error al guardar tu perfil. Por favor intenta de nuevo.')
-        return
-      }
-
-      // 2. Registrar peso inicial
-      await supabase.from('weight_entries').insert({
-        user_id: userId,
-        weight_kg: storeData.weight_kg,
-        notes: 'Peso inicial registrado durante el onboarding',
-        recorded_at: new Date().toISOString(),
+      const { error: onboardingError } = await supabase.rpc('complete_onboarding_atomic', {
+        p_display_name: storeData.name || 'Usuario',
+        p_height_cm: storeData.height_cm,
+        p_date_of_birth: storeData.birth_date,
+        p_biological_sex: storeData.biological_sex,
+        p_goal: storeData.goal,
+        p_activity_level: storeData.activity_level,
+        p_country_code: (storeData.country && storeData.country.length === 2) ? storeData.country.toUpperCase() : 'ES',
+        p_unit_weight: storeData.units_weight,
+        p_unit_energy: storeData.units_energy,
+        p_timezone: storeData.timezone,
+        p_weight_kg: storeData.weight_kg,
+        p_weight_loss_experience: storeData.weight_loss_experience ?? null,
+        p_past_diets: storeData.past_diets.length > 0 ? storeData.past_diets : null,
+        p_biggest_challenges: storeData.biggest_challenges.length > 0 ? storeData.biggest_challenges : null,
+        p_eating_triggers: storeData.eating_triggers.length > 0 ? storeData.eating_triggers : null,
+        p_emotional_eating_frequency: storeData.emotional_eating_frequency ?? null,
+        p_food_relationship: storeData.food_relationship ?? null,
+        p_meals_per_day: storeData.meals_per_day ?? null,
+        p_snacking_frequency: storeData.snacking_frequency ?? null,
+        p_cooking_frequency: storeData.cooking_frequency ?? null,
+        p_eats_out_frequency: storeData.eats_out_frequency ?? null,
+        p_water_intake: storeData.water_intake ?? null,
+        p_sleep_quality: storeData.sleep_quality ?? null,
+        p_stress_level: storeData.stress_level ?? null,
+        p_diet_restrictions: storeData.diet_restrictions.length > 0 ? storeData.diet_restrictions : null,
+        p_allergies: storeData.allergies.length > 0 ? storeData.allergies : null,
+        p_secondary_goals: storeData.secondary_goals.length > 0 ? storeData.secondary_goals : null,
+        p_commitment_time: storeData.commitment_time ?? null,
+        p_progress_tracking: storeData.progress_tracking.length > 0 ? storeData.progress_tracking : null,
+        p_living_situation: storeData.living_situation ?? null,
+        p_household_support: storeData.household_support ?? null,
+        p_ai_tone_preference: storeData.ai_tone_preference ?? null,
+        p_wants_daily_tips: storeData.wants_daily_tips,
+        p_tca_answer: storeData.tca_answer ?? null,
+        p_tca_flagged: storeData.tca_flagged ?? false,
+        p_tdee: nutritionGoals.tdee,
+        p_goal_kcal: nutritionGoals.calorie_goal,
+        p_protein_g: nutritionGoals.protein_g,
+        p_carbs_g: nutritionGoals.carbs_g,
+        p_fat_g: nutritionGoals.fat_g,
       })
 
-      // 3. Upsert contexto psicológico y conductual
-      const now = new Date().toISOString()
-      const { error: contextError } = await supabase
-        .from('user_context')
-        .upsert({
-          user_id: userId,
-          weight_loss_experience: storeData.weight_loss_experience,
-          past_diets: storeData.past_diets.length > 0 ? storeData.past_diets : null,
-          biggest_challenges: storeData.biggest_challenges.length > 0 ? storeData.biggest_challenges : null,
-          eating_triggers: storeData.eating_triggers.length > 0 ? storeData.eating_triggers : null,
-          emotional_eating_frequency: storeData.emotional_eating_frequency,
-          food_relationship: storeData.food_relationship,
-          meals_per_day: storeData.meals_per_day,
-          snacking_frequency: storeData.snacking_frequency,
-          cooking_frequency: storeData.cooking_frequency,
-          eats_out_frequency: storeData.eats_out_frequency,
-          water_intake: storeData.water_intake,
-          sleep_quality: storeData.sleep_quality,
-          stress_level: storeData.stress_level,
-          diet_restrictions: storeData.diet_restrictions.length > 0 ? storeData.diet_restrictions : null,
-          allergies: storeData.allergies.length > 0 ? storeData.allergies : null,
-          secondary_goals: storeData.secondary_goals.length > 0 ? storeData.secondary_goals : null,
-          commitment_time: storeData.commitment_time,
-          progress_tracking: storeData.progress_tracking.length > 0 ? storeData.progress_tracking : null,
-          living_situation: storeData.living_situation,
-          household_support: storeData.household_support,
-          ai_tone_preference: storeData.ai_tone_preference,
-          wants_daily_tips: storeData.wants_daily_tips,
-          tca_answer: storeData.tca_answer ?? null,
-          tca_flagged: storeData.tca_flagged ?? false,
-          onboarding_completed_at: now,
-          updated_at: now,
-        }, { onConflict: 'user_id' })
-
-      if (contextError) {
-        console.warn('Error guardando contexto (no bloqueante):', contextError)
-      }
-
-      // 4. Upsert TDEE inicial (fallo silencioso si la tabla no existe)
-      try {
-        await supabase.from('user_tdee_state').upsert({
-          user_id: userId,
-          tdee: nutritionGoals.tdee,
-          goal_kcal: nutritionGoals.calorie_goal,
-          protein_g: nutritionGoals.protein_g,
-          carbs_g: nutritionGoals.carbs_g,
-          fat_g: nutritionGoals.fat_g,
-          updated_at: now,
-        }, { onConflict: 'user_id' })
-      } catch {
-        // Tabla puede no existir todavía
+      if (onboardingError) {
+        throw onboardingError
       }
 
       useOnboardingStore.getState().reset()
@@ -265,7 +235,7 @@ export default function OnboardingPage() {
 
       // Si hay sesión inmediata (email confirmation desactivado), guardar datos
       if (authData.session?.user) {
-        await submitOnboardingData(authData.session.user.id)
+        await submitOnboardingData()
       } else {
         // Email confirmation requerido — mostrar mensaje
         setRegisterError('¡Cuenta creada! Revisa tu email para confirmar y acceder a tu plan.')
@@ -318,7 +288,7 @@ export default function OnboardingPage() {
         if (user && !submitted) {
           if (timeout) clearTimeout(timeout)
           submitted = true
-          submitOnboardingData(user.id)
+          submitOnboardingData()
         }
         // Si no hay usuario aún, onAuthStateChange lo capturará cuando termine el exchange
       })
@@ -331,7 +301,7 @@ export default function OnboardingPage() {
         if (timeout) clearTimeout(timeout)
         submitted = true
         setIsOAuthLoading(false)
-        submitOnboardingData(session.user.id)
+        submitOnboardingData()
       }
     })
 

@@ -31,8 +31,7 @@ export function usePsychFlag(userId: string | null) {
         .order('detected_at', { ascending: false })
 
       if (flagsError) {
-        console.error('Error fetching psychological_flags:', flagsError.message)
-        return null
+        throw new Error(`Error fetching psychological_flags: ${flagsError.message}`)
       }
 
       if (!flags || flags.length === 0) return null
@@ -45,8 +44,7 @@ export function usePsychFlag(userId: string | null) {
         .not('dismissed_at', 'is', null)
 
       if (responsesError) {
-        console.error('Error fetching psychological_responses:', responsesError.message)
-        return null
+        throw new Error(`Error fetching psychological_responses: ${responsesError.message}`)
       }
 
       const dismissedFlagIds = new Set(

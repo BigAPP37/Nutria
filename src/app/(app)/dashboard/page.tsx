@@ -4,6 +4,7 @@
 // Header naranja con anillos concéntricos, micronutrientes, agua segmentada, comidas con emojis
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { CheckCircle2, Circle, Settings, MessageSquarePlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useProfile } from '@/hooks/useProfile'
@@ -20,6 +21,7 @@ import type { FoodLogEntry, MealType } from '@/types/database'
 import { usePsychFlag } from '@/hooks/usePsychFlag'
 import { PsychSupportCard } from '@/components/psych/PsychSupportCard'
 import { getMessageKey, getMessageContent } from '@/lib/psychMessages'
+import { formatLocalDateKey, getTodayDateKey } from '@/lib/date'
 import type { FlagType } from '@/types/psych'
 
 function getFormattedDate(): string {
@@ -31,7 +33,7 @@ function getFormattedDate(): string {
 }
 
 function getTodayISO(): string {
-  return new Date().toISOString().split('T')[0]
+  return getTodayDateKey()
 }
 
 
@@ -89,7 +91,7 @@ export default function DashboardPage() {
       for (let i = 0; i < data.length; i++) {
         const expected = new Date(yesterday)
         expected.setDate(expected.getDate() - i)
-        const expectedStr = expected.toISOString().split('T')[0]
+        const expectedStr = formatLocalDateKey(expected)
         if (data[i].log_date === expectedStr) {
           streak++
         } else {
@@ -208,27 +210,39 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
-      {/* ============ HEADER NARANJA ============ */}
-      <div className="bg-gradient-to-br from-orange-500 to-orange-600 px-5 pt-4 pb-6">
+    <div className="min-h-screen">
+      <div className="hero-surface">
+        <div className="app-shell px-5 pt-5 pb-7">
         {/* Fila superior: fecha, nombre, acciones */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs text-white/75 capitalize">{formattedDate}</p>
+            <p className="app-kicker text-white/70 capitalize">{formattedDate}</p>
             <div className="flex items-center gap-2 mt-0.5">
-              <p className="text-lg font-semibold text-white">
-                Hola, {displayName} 👋
+              {profile?.avatar_url ? (
+                <Image
+                  src={profile.avatar_url}
+                  alt="Foto de perfil"
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-2xl border border-white/20 object-cover shadow-[0_10px_30px_rgba(18,16,12,0.18)]"
+                />
+              ) : null}
+              <p className="display-title text-[2rem] font-semibold leading-none text-white">
+                Hola, {displayName}
               </p>
               {streakDays > 0 && (
-                <span className="bg-white/20 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+                <span className="rounded-full border border-white/20 bg-white/12 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
                   🔥 {streakDays}
                 </span>
               )}
             </div>
+            <p className="mt-2 max-w-[15rem] text-sm text-white/78">
+              Tu tablero del día, claro y sin ruido.
+            </p>
           </div>
           <Link
             href="/settings"
-            className="w-[34px] h-[34px] rounded-full bg-white/15 flex items-center justify-center"
+            className="soft-ring flex h-11 w-11 items-center justify-center rounded-2xl bg-white/12"
             aria-label="Ajustes"
           >
             <Settings className="w-4 h-4 text-white" />
@@ -271,7 +285,7 @@ export default function DashboardPage() {
 
         {/* Mensaje contextual de Nuti */}
         {!tdeeLoading && goals && (
-          <p className="text-center text-xs text-white/80 italic mt-2">
+          <p className="mt-3 rounded-full bg-white/10 px-4 py-2 text-center text-xs font-medium text-white/84 backdrop-blur-sm">
             {totals.calories === 0
               ? '¡Buenos días! Empieza registrando tu primer alimento 🦦'
               : totals.calories / goals.calories <= 0.30
@@ -286,9 +300,10 @@ export default function DashboardPage() {
           </p>
         )}
       </div>
+      </div>
 
       {/* ============ CONTENIDO ============ */}
-      <div className="px-4 -mt-0 pt-4 space-y-3">
+      <div className="page-container -mt-3 space-y-4 pt-4">
         {/* Tarjeta de soporte psicológico (si hay un flag activo) */}
         {psychFlag && userId && (
           <PsychSupportCard
@@ -322,9 +337,17 @@ export default function DashboardPage() {
         <ReminderBanner entries={foodEntries} />
 
         {/* Comidas */}
-        <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wide pt-1">
-          Comidas
-        </p>
+        <div className="flex items-end justify-between pt-1">
+          <div>
+            <p className="app-kicker">Registro del día</p>
+            <h2 className="display-title mt-1 text-2xl font-semibold text-[var(--ink-1)]">
+              Tus comidas
+            </h2>
+          </div>
+          <div className="rounded-full bg-[var(--forest-soft)] px-3 py-1 text-xs font-semibold text-[var(--forest)]">
+            {foodEntries.length} items
+          </div>
+        </div>
 
         {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map((meal) => (
           <MealSection
@@ -341,9 +364,9 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={() => setShowTextLogger(true)}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-white border border-stone-100 text-stone-600 text-sm font-medium hover:bg-stone-50 active:bg-stone-100 transition-colors"
+            className="app-card flex w-full items-center justify-center gap-2 px-4 py-4 text-sm font-semibold text-[var(--ink-2)] transition-colors hover:bg-[var(--surface-2)] active:bg-[var(--surface-1)]"
           >
-            <MessageSquarePlus className="w-4 h-4 text-orange-400" />
+            <MessageSquarePlus className="h-4 w-4 text-[var(--color-primary-500)]" />
             Registrar con texto
           </button>
         )}
@@ -360,10 +383,10 @@ export default function DashboardPage() {
               { onConflict: 'user_id,log_date' }
             )
           }}
-          className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl border transition-all ${
+          className={`flex w-full items-center justify-center gap-2 rounded-[1.4rem] border px-4 py-4 transition-all ${
             isLoggingComplete
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
-              : 'bg-white border-stone-100 text-stone-400'
+              ? 'border-[rgba(40,89,79,0.16)] bg-[var(--forest-soft)] text-[var(--forest)]'
+              : 'bg-white/90 border-[var(--line-soft)] text-[var(--ink-3)] shadow-[0_10px_30px_rgba(86,49,26,0.06)]'
           }`}
         >
           {isLoggingComplete ? (
@@ -372,9 +395,9 @@ export default function DashboardPage() {
             <Circle className="w-4 h-4" />
           )}
           <span className="text-sm font-medium">
-            {isLoggingComplete ? 'Día completado ✓' : 'He terminado de registrar hoy'}
-          </span>
-        </button>
+              {isLoggingComplete ? 'Día completado ✓' : 'Marcar día como registrado'}
+            </span>
+          </button>
 
         {/* Espaciado inferior */}
         <div className="h-6" />
@@ -397,6 +420,7 @@ export default function DashboardPage() {
         <NaturalTextLogger
           userId={userId}
           logDate={today}
+          countryCode={profile?.country_code ?? 'ES'}
           onSaved={async () => {
             setShowTextLogger(false)
             await reloadFoodEntries()
