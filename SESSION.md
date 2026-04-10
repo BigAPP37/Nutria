@@ -258,6 +258,33 @@ Use this structure for each daily update:
   - Si se va a publicar, revisar `git diff` y agrupar cambios por bloques (`web stability`, `expo stability`, `avatars`, `migrations`) antes de commit.
 - Refs:
   - Web avatar/settings: `/Users/alex/Documents/GitHub/Nutria/src/app/(app)/settings/page.tsx`
+
+### 2026-04-10 21:00 Europe/Madrid
+- Workspace Used: `/Users/alex/Documents/GitHub/Nutria` para saneo pre-auditoría en web y contexto compartido.
+- Current Goal: Cerrar hallazgos evitables antes de pasar una nueva auditoría externa con Opus.
+- Completed Today:
+  - Revisión rápida de vigencia de la auditoría antigua frente al estado actual del repo.
+  - Confirmado que varios findings viejos ya no aplican: rutas legales existentes, objetivos reales en dashboard, persistencia de `is_day_complete`, validación JWT en endpoints Stripe y verificación real en `/premium/success`.
+  - Eliminada la parte engañosa del dashboard que mostraba vitamina C, hierro y calcio como métricas simuladas; ahora solo se muestra fibra calculada y un estado explícito para micronutrientes avanzados.
+  - Añadido `.env.example` con variables necesarias para web, Stripe, Supabase, Anthropic y Expo/RevenueCat.
+  - Ajustado `.gitignore` para permitir versionar `.env.example` sin abrir la puerta a secretos reales.
+  - Validación del repo web completada con `npm run lint` OK y `npm run build` OK.
+- Decisions:
+  - Antes de una auditoría nueva, es mejor quitar métricas falsas aunque eso deje una sección más austera.
+  - La nueva auditoría debe hacerse ya sobre el estado validado por `lint` + `build`, no sobre la auditoría de marzo ni sobre clones divergentes.
+- Open Issues:
+  - Sigue pendiente aplicar en Supabase la migración `20260410_add_profile_avatars.sql` y probar el flujo real de avatar end-to-end.
+  - El subdirectorio `Nutria/` sigue apareciendo como no trackeado desde este repo raíz; no se tocó en esta sesión.
+  - La auditoría nueva aún puede encontrar deuda real en arquitectura, datos y mobile, pero debería tener bastante menos ruido por findings caducados o triviales.
+- Next Session:
+  - Pasar la nueva auditoría con Opus sobre `/Users/alex/Documents/GitHub/Nutria`.
+  - Pedir foco en issues vigentes de seguridad, consistencia de datos, onboarding, Supabase runtime y frontera web/mobile, ignorando hallazgos ya resueltos de la auditoría de marzo.
+  - Después, contrastar findings nuevos con este estado validado y decidir qué se cierra antes de tocar diseño o features nuevas.
+- Refs:
+  - `/Users/alex/Documents/GitHub/Nutria/src/app/(app)/dashboard/page.tsx`
+  - `/Users/alex/Documents/GitHub/Nutria/src/components/dashboard/MicronutrientRow.tsx`
+  - `/Users/alex/Documents/GitHub/Nutria/.env.example`
+  - `/Users/alex/Documents/GitHub/Nutria/.gitignore`
   - Web avatar/dashboard: `/Users/alex/Documents/GitHub/Nutria/src/app/(app)/dashboard/page.tsx`
   - Mobile avatar UI: `/Users/alex/Documents/GitHub/Nutria/Nutria/src/app/(tabs)/stats.tsx`
   - Mobile avatar helper: `/Users/alex/Documents/GitHub/Nutria/Nutria/src/features/profile/avatarUpload.ts`
@@ -598,3 +625,62 @@ Use this structure for each daily update:
   - aplicar en Supabase la migración `20260410_add_profile_avatars.sql`
   - regenerar tipos reales de Supabase dentro de `Nutria/`
   - si se quiere seguir limpiando deuda funcional: revisar `psych-detector`/mensajería sensible y decidir si los placeholders Expo se implementan o se eliminan del árbol
+
+### 2026-04-10 21:00 Europe/Madrid
+- Workspace Used: `/Users/alex/Documents/GitHub/Nutria` y subproyecto Expo en `/Users/alex/Documents/GitHub/Nutria/Nutria`.
+- Current Goal: Cerrar los bloques vigentes de la auditoría nueva antes de seguir con features o diseño.
+- Completed Today:
+  - Bloque 1 de seguridad web/IA cerrado en código:
+    - `src/app/api/ai-log/route.ts` endurecido con rate limiting, validación de `meal_type`, `country_code`, tamaño de payload, ventana válida de `log_date` y validación de rangos de salida de IA.
+    - `supabase/functions/ai-log/index.ts` reescrito para dejar de usar `aiprime.store` y llamar directo a Anthropic; ahora también tiene rate limiting, validaciones equivalentes y CORS restringido.
+    - `next.config.ts` ampliado con headers de hardening y CSP.
+    - `.env.example` y `.gitignore` ajustados para reflejar Upstash/App URL sin exponer secretos.
+  - Bloque 2 de consistencia web/móvil muy avanzado:
+    - móvil migrado a la misma RPC atómica `complete_onboarding_atomic` en `Nutria/src/features/onboarding/submitOnboarding.ts`
+    - `Nutria/src/features/tdee/useTdeeState.ts` ahora prioriza `goal_kcal` y macros persistidos en BD, usando recálculo solo como fallback de compatibilidad
+    - `src/lib/calculations.ts` alineado con el mínimo calórico por sexo del móvil
+    - `src/hooks/useFoodSearch.ts` ya usa `country_code` real del perfil en vez de hardcodear `ES`
+    - `src/app/(app)/settings/page.tsx` ya invoca `tdee-update` al registrar peso en web
+    - racha unificada:
+      - web sigue usando `src/hooks/useStreakDays.ts`
+      - móvil añade `Nutria/src/features/dashboard/useStreakDays.ts` y deja de inferir la racha desde `complete_days` de la última snapshot
+    - agua web normalizada para sumar filas diarias existentes y reescribir el total diario en `src/components/dashboard/WaterTracker.tsx` y `src/app/(app)/dashboard/page.tsx`
+    - móvil deja de mostrar objetivos falsos si falta TDEE:
+      - `Nutria/src/app/(tabs)/index.tsx`
+      - `Nutria/src/app/(tabs)/stats.tsx`
+    - dashboard web corregido en dos hallazgos finos:
+      - el toggle `is_day_complete` revierte si falla el `upsert`
+      - `today` deja de quedarse stale si la pestaña cruza medianoche o vuelve a foco
+  - Limpieza visual pre-auditoría mantenida:
+    - `src/components/dashboard/MicronutrientRow.tsx` y `src/app/(app)/dashboard/page.tsx` ya no muestran micronutrientes simulados; solo fibra real + estado explícito.
+- Validation:
+  - Web:
+    - `npm run lint` OK
+    - `npm run build` OK
+  - Expo:
+    - `npm run typecheck` OK
+    - eslint sobre archivos tocados del bloque OK
+- Decisions:
+  - Priorizar una sola fuente de verdad para onboarding y TDEE: BD + RPC compartida, no cálculos divergentes por plataforma.
+  - Cuando no hay datos reales de objetivo en móvil, mostrar estado pendiente en vez de inventar números.
+  - Tratar agua como total diario compatible con histórico existente, evitando que web y móvil se pisen con modelos distintos.
+- Open Issues:
+  - Sigue pendiente aplicar en Supabase la migración `20260410_add_profile_avatars.sql`.
+  - Aún quedan findings secundarios de la auditoría, pero ya no los críticos principales de onboarding/TDEE/web-mobile ni los de IA que estaban más expuestos.
+  - Falta revisar y, si conviene, fragmentar el diff actual por bloques antes de commit (`security`, `web-mobile consistency`, `dashboard cleanup`).
+- Next Session:
+  - Actualizar y ordenar `git diff` por bloques para preparar commit limpio.
+  - Si se sigue con deuda técnica, siguiente foco razonable:
+    - `psych-detector` y mensajería sensible
+    - revisión de findings restantes de Stripe/webhook
+    - aplicar migración de avatares y probar el flujo real end-to-end
+- Refs:
+  - `/Users/alex/Documents/GitHub/Nutria/AUDITORIA_COMPLETA_10_04_2026.md`
+  - `/Users/alex/Documents/GitHub/Nutria/src/app/api/ai-log/route.ts`
+  - `/Users/alex/Documents/GitHub/Nutria/supabase/functions/ai-log/index.ts`
+  - `/Users/alex/Documents/GitHub/Nutria/src/app/(app)/dashboard/page.tsx`
+  - `/Users/alex/Documents/GitHub/Nutria/src/components/dashboard/WaterTracker.tsx`
+  - `/Users/alex/Documents/GitHub/Nutria/src/lib/calculations.ts`
+  - `/Users/alex/Documents/GitHub/Nutria/Nutria/src/features/onboarding/submitOnboarding.ts`
+  - `/Users/alex/Documents/GitHub/Nutria/Nutria/src/features/tdee/useTdeeState.ts`
+  - `/Users/alex/Documents/GitHub/Nutria/Nutria/src/features/dashboard/useStreakDays.ts`
