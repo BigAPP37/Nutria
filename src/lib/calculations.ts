@@ -67,10 +67,16 @@ export function calculateTDEE(params: {
 }
 
 // Calcular objetivo calórico según la meta del usuario
-export function calculateCalorieGoal(tdee: number, goal: UserGoal): number {
+export function calculateCalorieGoal(
+  tdee: number,
+  goal: UserGoal,
+  biological_sex: BiologicalSex
+): number {
+  const minimumCalories = biological_sex === 'male' ? 1500 : 1200
+
   switch (goal) {
     case 'lose_weight':
-      return Math.max(1200, tdee - 500) // mínimo saludable de 1200 kcal
+      return Math.max(minimumCalories, tdee - 500)
     case 'maintain':
       return tdee
     case 'gain_muscle':
@@ -109,7 +115,7 @@ export function calculateNutritionGoals(params: {
   fat_g: number
 } {
   const tdee = calculateTDEE(params)
-  const calorie_goal = calculateCalorieGoal(tdee, params.goal)
+  const calorie_goal = calculateCalorieGoal(tdee, params.goal, params.biological_sex)
   const macros = calculateMacros(calorie_goal, params.goal)
 
   return {

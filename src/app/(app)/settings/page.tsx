@@ -367,6 +367,15 @@ export default function SettingsPage() {
         return
       }
 
+      const { error: tdeeUpdateError } = await supabase.functions.invoke('tdee-update', {
+        body: { user_id: userId },
+      })
+
+      if (tdeeUpdateError) {
+        console.error('[settings] Error recalculando TDEE tras registrar peso:', tdeeUpdateError)
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ['tdeeState', userId] })
       setShowWeightModal(false)
       setWeightInput('')
     } finally {

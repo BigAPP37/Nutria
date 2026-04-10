@@ -9,6 +9,7 @@ import { CheckCircle2, Circle, Settings, MessageSquarePlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useProfile } from '@/hooks/useProfile'
 import { useTdeeState } from '@/hooks/useTdeeState'
+import { useStreakDays } from '@/hooks/useStreakDays'
 import Link from 'next/link'
 import { CalorieRing } from '@/components/dashboard/CalorieRing'
 import { MicronutrientRow } from '@/components/dashboard/MicronutrientRow'
@@ -21,19 +22,19 @@ import type { FoodLogEntry, MealType } from '@/types/database'
 import { usePsychFlag } from '@/hooks/usePsychFlag'
 import { PsychSupportCard } from '@/components/psych/PsychSupportCard'
 import { getMessageKey, getMessageContent } from '@/lib/psychMessages'
-import { formatLocalDateKey, getTodayDateKey } from '@/lib/date'
+import { getTodayDateKey } from '@/lib/date'
 import type { FlagType } from '@/types/psych'
 
-function getFormattedDate(): string {
-  return new Date().toLocaleDateString('es-ES', {
+function getFormattedDate(date: Date): string {
+  return date.toLocaleDateString('es-ES', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
   })
 }
 
-function getTodayISO(): string {
-  return getTodayDateKey()
+function getTodayISO(date: Date): string {
+  return getTodayDateKey(date)
 }
 
 
@@ -47,13 +48,14 @@ export default function DashboardPage() {
   const [isLoggingComplete, setIsLoggingComplete] = useState(false)
   const [isLoadingData, setIsLoadingData] = useState(true)
   const [showTextLogger, setShowTextLogger] = useState(false)
-  const [streakDays, setStreakDays] = useState(0)
   const [editingEntry, setEditingEntry] = useState<FoodLogEntry | null>(null)
+  const [currentDate, setCurrentDate] = useState(() => new Date())
 
-  const today = getTodayISO()
-  const formattedDate = getFormattedDate()
+  const today = getTodayISO(currentDate)
+  const formattedDate = getFormattedDate(currentDate)
 
   const { data: tdeeState, isLoading: tdeeLoading } = useTdeeState(userId)
+  const { data: streakData } = useStreakDays(userId)
   const { data: psychFlag } = usePsychFlag(userId)
 
   // Obtener el usuario actual
@@ -68,40 +70,22 @@ export default function DashboardPage() {
     })
   }, [router])
 
-  // Calcular racha de días consecutivos (contando desde ayer hacia atrás)
   useEffect(() => {
-    if (!userId) return
-    async function loadStreak() {
-      if (!userId) return
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('daily_log_status')
-        .select('log_date')
-        .eq('user_id', userId)
-        .eq('is_day_complete', true)
-        .order('log_date', { ascending: false })
+    const syncCurrentDate = () => setCurrentDate(new Date())
+    const intervalId = window.setInterval(syncCurrentDate, 60_000)
 
-      if (!data || data.length === 0) return
-
-      // Contar días consecutivos hacia atrás desde ayer
-      let streak = 0
-      const yesterday = new Date()
-      yesterday.setDate(yesterday.getDate() - 1)
-
-      for (let i = 0; i < data.length; i++) {
-        const expected = new Date(yesterday)
-        expected.setDate(expected.getDate() - i)
-        const expectedStr = formatLocalDateKey(expected)
-        if (data[i].log_date === expectedStr) {
-          streak++
-        } else {
-          break
-        }
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        syncCurrentDate()
       }
-      setStreakDays(streak)
     }
-    loadStreak()
-  }, [userId])
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      window.clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
 
   // Cargar datos del día
   useEffect(() => {
@@ -135,16 +119,15 @@ export default function DashboardPage() {
       }
 
       // Cargar agua del día
-      const { data: waterData } = await supabase
+      const { data: waterRows } = await supabase
         .from('water_log')
         .select('amount_ml')
         .eq('user_id', userId)
         .eq('log_date', today)
-        .maybeSingle()
+        .order('created_at', { ascending: false })
 
-      if (waterData) {
-        setWaterGlasses(Math.round((waterData.amount_ml || 0) / 250))
-      }
+      const totalWaterMl = (waterRows ?? []).reduce((sum, row) => sum + Number(row.amount_ml ?? 0), 0)
+      setWaterGlasses(Math.round(totalWaterMl / 250))
 
       setIsLoadingData(false)
     }
@@ -200,14 +183,9 @@ export default function DashboardPage() {
 
 
   const displayName = profile?.display_name || 'amigo'
+  const streakDays = streakData?.streak ?? 0
 
-  // Micronutrientes simulados (se calcularán de verdad cuando haya datos)
-  const microPercents = {
-    vitaminC: goals && totals.calories > 0 ? Math.min(100, Math.round((totals.calories / goals.calories) * 65)) : 0,
-    iron: goals && totals.calories > 0 ? Math.min(100, Math.round((totals.calories / goals.calories) * 30)) : 0,
-    calcium: goals && totals.calories > 0 ? Math.min(100, Math.round((totals.calories / goals.calories) * 45)) : 0,
-    fiber: totals.fiber > 0 ? Math.min(100, Math.round((totals.fiber / 25) * 100)) : 0,
-  }
+  const fiberPercent = totals.fiber > 0 ? Math.min(100, Math.round((totals.fiber / 25) * 100)) : 0
 
   return (
     <div className="min-h-screen">
@@ -317,10 +295,7 @@ export default function DashboardPage() {
 
         {/* Micronutrientes */}
         <MicronutrientRow
-          vitaminC_percent={microPercents.vitaminC}
-          iron_percent={microPercents.iron}
-          calcium_percent={microPercents.calcium}
-          fiber_percent={microPercents.fiber}
+          fiberPercent={fiberPercent}
         />
 
         {/* Agua */}
@@ -378,10 +353,15 @@ export default function DashboardPage() {
             const newValue = !isLoggingComplete
             setIsLoggingComplete(newValue)
             const supabase = createClient()
-            await supabase.from('daily_log_status').upsert(
+            const { error } = await supabase.from('daily_log_status').upsert(
               { user_id: userId, log_date: today, is_day_complete: newValue },
               { onConflict: 'user_id,log_date' }
             )
+
+            if (error) {
+              console.error('[dashboard] Error actualizando is_day_complete:', error)
+              setIsLoggingComplete(!newValue)
+            }
           }}
           className={`flex w-full items-center justify-center gap-2 rounded-[1.4rem] border px-4 py-4 transition-all ${
             isLoggingComplete

@@ -9,8 +9,8 @@ export function formatLocalDateKey(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-export function getTodayDateKey(): string {
-  return formatLocalDateKey(new Date())
+export function getTodayDateKey(date = new Date()): string {
+  return formatLocalDateKey(date)
 }
 
 export function parseDateKey(dateKey: string): Date {

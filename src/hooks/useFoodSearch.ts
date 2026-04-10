@@ -6,15 +6,16 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { useProfile } from '@/hooks/useProfile'
 import type { FoodSearchResult } from '@/types/logging'
 
 // Busca alimentos llamando al RPC de Supabase
-async function searchFoods(query: string): Promise<FoodSearchResult[]> {
+async function searchFoods(query: string, countryCode: string): Promise<FoodSearchResult[]> {
   const supabase = createClient()
 
   const { data, error } = await supabase.rpc('search_foods', {
     query,
-    country: 'ES',
+    country: countryCode,
     limit:   20,
   })
 
@@ -30,6 +31,7 @@ export function useFoodSearch(query: string): {
   results: FoodSearchResult[]
   isLoading: boolean
 } {
+  const { data: profile } = useProfile()
   // Estado del query con debounce aplicado
   const [debouncedQuery, setDebouncedQuery] = useState(query)
 
@@ -43,8 +45,8 @@ export function useFoodSearch(query: string): {
   }, [query])
 
   const { data, isLoading } = useQuery({
-    queryKey: ['food-search', debouncedQuery],
-    queryFn: () => searchFoods(debouncedQuery),
+    queryKey: ['food-search', debouncedQuery, profile?.country_code ?? 'ES'],
+    queryFn: () => searchFoods(debouncedQuery, profile?.country_code ?? 'ES'),
     // Solo busca si hay al menos 2 caracteres
     enabled: debouncedQuery.length >= 2,
     // Mantiene los resultados anteriores mientras carga nuevos

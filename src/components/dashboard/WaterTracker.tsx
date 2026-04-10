@@ -30,21 +30,35 @@ export function WaterTracker({
 
     try {
       const supabase = createClient()
-      const { data: existing } = await supabase
+      const { data: existingRows, error: readError } = await supabase
         .from('water_log')
-        .select('id')
+        .select('id, amount_ml')
         .eq('user_id', userId)
         .eq('log_date', date)
-        .maybeSingle()
+        .order('created_at', { ascending: false })
 
-      const { error } = existing
+      if (readError) {
+        throw readError
+      }
+
+      const existingIds = (existingRows ?? []).map((row) => row.id)
+      if (existingIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('water_log')
+          .delete()
+          .in('id', existingIds)
+
+        if (deleteError) {
+          throw deleteError
+        }
+      }
+
+      const nextAmountMl = newGlasses * 250
+      const { error } = nextAmountMl > 0
         ? await supabase
             .from('water_log')
-            .update({ amount_ml: newGlasses * 250 })
-            .eq('id', existing.id)
-        : await supabase
-            .from('water_log')
-            .insert({ user_id: userId, amount_ml: newGlasses * 250, log_date: date })
+            .insert({ user_id: userId, amount_ml: nextAmountMl, log_date: date })
+        : { error: null }
 
       if (error) {
         console.error('Error guardando agua:', error)
