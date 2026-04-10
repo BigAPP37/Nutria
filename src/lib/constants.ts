@@ -8,6 +8,7 @@ export const queryKeys = {
   weeklySnapshots: () => ["weekly-snapshots"] as const,
   weightHistory: () => ["weight-history"] as const,
   waterLog: (date: string) => ["water-log", date] as const,
+  streakDays: () => ["streak-days"] as const,
   profile: () => ["user-profile"] as const,
   psychFlags: () => ["psych-flags"] as const,
 } as const;

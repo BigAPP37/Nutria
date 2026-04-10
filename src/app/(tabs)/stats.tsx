@@ -32,6 +32,7 @@ import {
   uploadProfileAvatar,
 } from "@/features/profile/avatarUpload";
 import { useDailyLog } from "@/features/dashboard/useDailyLog";
+import { useStreakDays } from "@/features/dashboard/useStreakDays";
 import { useAuthStore } from "@/stores/authStore";
 
 // Componentes
@@ -53,6 +54,7 @@ export default function StatsScreen() {
   const { data: snapshots = [], isLoading: snapshotsLoading } = useWeeklySnapshots();
   const { data: weightHistory = [], isLoading: weightLoading } = useWeightHistory();
   const { data: profile } = useProfile();
+  const { data: streakData } = useStreakDays();
 
   // Datos de la última semana para macros promedio
   const todayStr = getTodayDateKey();
@@ -67,12 +69,10 @@ export default function StatsScreen() {
     ? weightHistory[weightHistory.length - 1].weight_kg
     : null;
 
-  // Días logueados: semanas con datos / total semanas
+  // Semanas con suficiente señal para gráficos
   const weeksWithData = snapshots.filter((s) => s.complete_days >= 4).length;
 
-  // Racha de días consecutivos (simplificado: días completos de la última semana)
-  const latestSnapshot = snapshots.length > 0 ? snapshots[0] : null;
-  const currentStreak = latestSnapshot?.complete_days ?? 0;
+  const currentStreak = streakData?.streak ?? 0;
 
   // Macros promedio de la semana actual (desde las últimas 7 entradas del dailyLog)
   // Simplificación: usamos los datos de hoy como proxy
@@ -346,11 +346,17 @@ export default function StatsScreen() {
         </Text>
         {snapshotsLoading ? (
           <View className="h-64 rounded-2xl bg-neutral-100" />
-        ) : (
+        ) : tdee ? (
           <CalorieChart
             snapshots={snapshots}
-            goalKcal={tdee?.goal_kcal ?? 2000}
+            goalKcal={tdee.goal_kcal}
           />
+        ) : (
+          <View className="h-64 rounded-2xl border border-neutral-100 bg-white px-6 items-center justify-center">
+            <Text className="text-neutral-500 text-center">
+              Completa el onboarding para ver tu objetivo calórico semanal.
+            </Text>
+          </View>
         )}
       </View>
 

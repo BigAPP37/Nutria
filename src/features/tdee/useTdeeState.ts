@@ -17,8 +17,28 @@ export function useTdeeState() {
       ]);
       if (tdeeRes.error) throw tdeeRes.error;
       if (profileRes.error) throw profileRes.error;
-      const g = getCalorieGoal(Number(tdeeRes.data.current_tdee_kcal), profileRes.data.goal, profileRes.data.biological_sex, Number(tdeeRes.data.confidence_level));
-      return { goal_kcal:g.goal_kcal, confidence_level:g.confidence_level, confidence_label:g.confidence_label, weeks_of_data:Number(tdeeRes.data.weeks_of_data), last_adjusted:tdeeRes.data.last_adjusted_at, macro_targets:{protein_g:g.protein_g,carbs_g:g.carbs_g,fat_g:g.fat_g} };
+
+      const confidenceLevel = Number(tdeeRes.data.confidence_level ?? 0.3);
+      const persistedTdee = Number(tdeeRes.data.tdee ?? tdeeRes.data.current_tdee_kcal ?? 0);
+      const fallbackGoal = getCalorieGoal(
+        persistedTdee,
+        profileRes.data.goal,
+        profileRes.data.biological_sex,
+        confidenceLevel
+      );
+
+      return {
+        goal_kcal: Number(tdeeRes.data.goal_kcal ?? fallbackGoal.goal_kcal),
+        confidence_level: confidenceLevel,
+        confidence_label: fallbackGoal.confidence_label,
+        weeks_of_data: Number(tdeeRes.data.weeks_of_data ?? 0),
+        last_adjusted: tdeeRes.data.last_adjusted ?? tdeeRes.data.last_adjusted_at ?? tdeeRes.data.updated_at,
+        macro_targets: {
+          protein_g: Number(tdeeRes.data.protein_g ?? tdeeRes.data.macro_protein_g ?? fallbackGoal.protein_g),
+          carbs_g: Number(tdeeRes.data.carbs_g ?? tdeeRes.data.macro_carbs_g ?? fallbackGoal.carbs_g),
+          fat_g: Number(tdeeRes.data.fat_g ?? tdeeRes.data.macro_fat_g ?? fallbackGoal.fat_g),
+        },
+      };
     },
     enabled: !!userId, staleTime: 1000*60*60,
   });

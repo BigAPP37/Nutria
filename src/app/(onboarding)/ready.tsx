@@ -101,7 +101,7 @@ export default function ReadyScreen() {
     store.setSubmitError(null);
 
     try {
-      await submitOnboarding(store, userId);
+      await submitOnboarding(store);
       // Stack.Protected detecta hasCompletedOnboarding = true
       // y redirige automáticamente a (tabs). No hacer router.replace().
     } catch (err: unknown) {

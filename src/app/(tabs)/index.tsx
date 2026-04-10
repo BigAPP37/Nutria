@@ -228,12 +228,8 @@ export default function DashboardScreen() {
     );
   }
 
-  const goalKcal = tdee?.goal_kcal ?? 2000;
-  const macroTargets = tdee?.macro_targets ?? {
-    protein_g: 150,
-    carbs_g: 200,
-    fat_g: 67,
-  };
+  const goalKcal = tdee?.goal_kcal ?? 0;
+  const macroTargets = tdee?.macro_targets ?? null;
 
   return (
     <ScrollView
@@ -305,6 +301,12 @@ export default function DashboardScreen() {
       <View className="items-center py-4">
         {tdeeLoading ? (
           <View className="w-[200px] h-[200px] rounded-full bg-neutral-100" />
+        ) : !tdee ? (
+          <View className="w-[200px] h-[200px] rounded-full bg-neutral-100 items-center justify-center px-8">
+            <Text className="text-center text-sm text-neutral-500">
+              Completa el onboarding para ver tu objetivo diario.
+            </Text>
+          </View>
         ) : (
           <MacroRing consumed={totals.calories} goal={goalKcal} />
         )}
@@ -312,13 +314,21 @@ export default function DashboardScreen() {
         {/* Consumido / Objetivo en texto debajo del anillo */}
         <Text className="text-sm text-neutral-500 mt-2">
           {Math.round(totals.calories).toLocaleString("es")} /{" "}
-          {goalKcal.toLocaleString("es")} kcal
+          {tdee ? `${goalKcal.toLocaleString("es")} kcal` : "objetivo pendiente"}
         </Text>
       </View>
 
       {/* ═══ 3. MINI BARRAS DE MACROS ═══ */}
       <View className="px-6 mb-5">
-        <MacroBars consumed={totals} targets={macroTargets} />
+        {macroTargets ? (
+          <MacroBars consumed={totals} targets={macroTargets} />
+        ) : (
+          <View className="rounded-2xl border border-neutral-100 bg-white px-4 py-4">
+            <Text className="text-sm text-neutral-500">
+              Tus objetivos de macros aparecerán cuando el plan esté configurado.
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* ═══ 4. AGUA ═══ */}

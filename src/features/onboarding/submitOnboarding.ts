@@ -1,18 +1,28 @@
 // src/features/onboarding/submitOnboarding.ts
-// Escribe TODOS los datos del onboarding a Supabase en un solo flujo.
-// Se ejecuta al final del onboarding (paso 7, ready.tsx).
-// Si falla cualquier paso, propaga el error sin dejar datos parciales.
+// Usa la misma RPC atómica que la web para que ambas plataformas escriban
+// exactamente la misma forma de datos en user_profiles, user_context y user_tdee_state.
 
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/stores/authStore";
 import { calculateInitialTdee } from "@/features/tdee/algorithm";
-import type { OnboardingState } from "@/stores/onboardingStore";
+import type { OnboardingState, TcaScreeningAnswer } from "@/stores/onboardingStore";
+
+type WebTcaAnswer = "yes" | "no" | "prefer_not_to_say" | null;
+
+function mapTcaAnswer(answer: TcaScreeningAnswer | null): WebTcaAnswer {
+  if (!answer) return null;
+  if (answer === "prefer_not_to_say") return "prefer_not_to_say";
+  if (answer === "complicated") return "yes";
+  return "no";
+}
+
+function isTcaFlagged(answer: TcaScreeningAnswer | null) {
+  return answer === "complicated";
+}
 
 export async function submitOnboarding(
-  data: OnboardingState,
-  userId: string
+  data: OnboardingState
 ): Promise<void> {
-  // Validar que tenemos todos los datos necesarios
   if (
     !data.weightKg ||
     !data.heightCm ||
@@ -24,12 +34,9 @@ export async function submitOnboarding(
     throw new Error("Faltan datos obligatorios del onboarding");
   }
 
-  // 1. El peso ya está en kg (la conversión se hizo en body-profile.tsx)
   const weightKg = data.weightKg;
   const heightCm = data.heightCm;
-
-  // 2. Calcular TDEE inicial
-  const { bmr, tdee } = calculateInitialTdee(
+  const { tdee, calorie_goal } = calculateInitialTdee(
     {
       biological_sex: data.biologicalSex,
       date_of_birth: data.dateOfBirth,
@@ -40,60 +47,54 @@ export async function submitOnboarding(
     weightKg
   );
 
-  // 3. Insertar peso inicial en weight_entries
-  const { error: weightError } = await supabase
-    .from("weight_entries")
-    .insert({
-      user_id: userId,
-      weight_kg: weightKg,
-    });
+  const tcaAnswer = mapTcaAnswer(data.tcaScreening);
 
-  if (weightError) {
-    throw new Error(`Error guardando peso inicial: ${weightError.message}`);
+  const { error: onboardingError } = await supabase.rpc("complete_onboarding_atomic", {
+    p_display_name: data.displayName || "Usuario",
+    p_height_cm: heightCm,
+    p_date_of_birth: data.dateOfBirth,
+    p_biological_sex: data.biologicalSex,
+    p_goal: data.goal,
+    p_activity_level: data.activityLevel,
+    p_country_code: data.countryCode,
+    p_unit_weight: data.unitWeight,
+    p_unit_energy: data.unitEnergy,
+    p_timezone: data.timezone,
+    p_weight_kg: weightKg,
+    p_weight_loss_experience: null,
+    p_past_diets: null,
+    p_biggest_challenges: null,
+    p_eating_triggers: null,
+    p_emotional_eating_frequency: null,
+    p_food_relationship: null,
+    p_meals_per_day: null,
+    p_snacking_frequency: null,
+    p_cooking_frequency: null,
+    p_eats_out_frequency: null,
+    p_water_intake: null,
+    p_sleep_quality: null,
+    p_stress_level: null,
+    p_diet_restrictions: null,
+    p_allergies: null,
+    p_secondary_goals: null,
+    p_commitment_time: null,
+    p_progress_tracking: null,
+    p_living_situation: null,
+    p_household_support: null,
+    p_ai_tone_preference: null,
+    p_wants_daily_tips: true,
+    p_tca_answer: tcaAnswer,
+    p_tca_flagged: isTcaFlagged(data.tcaScreening),
+    p_tdee: tdee,
+    p_goal_kcal: calorie_goal.goal_kcal,
+    p_protein_g: calorie_goal.protein_g,
+    p_carbs_g: calorie_goal.carbs_g,
+    p_fat_g: calorie_goal.fat_g,
+  });
+
+  if (onboardingError) {
+    throw new Error(`Error guardando onboarding: ${onboardingError.message}`);
   }
 
-  // 4. Upsert en user_profiles (upsert por si hay re-intento tras error)
-  const { error: profileError } = await supabase
-    .from("user_profiles")
-    .upsert({
-      id: userId,
-      display_name: data.displayName || null,
-      date_of_birth: data.dateOfBirth,
-      biological_sex: data.biologicalSex,
-      height_cm: heightCm,
-      goal: data.goal,
-      activity_level: data.activityLevel,
-      tca_screening: data.tcaScreening, // puede ser null
-      unit_weight: data.unitWeight,
-      unit_energy: data.unitEnergy,
-      country_code: data.countryCode,
-      timezone: data.timezone,
-      onboarding_completed: true,
-    });
-
-  if (profileError) {
-    throw new Error(`Error guardando perfil: ${profileError.message}`);
-  }
-
-  // 5. Insertar estado TDEE inicial (upsert por idempotencia)
-  const { error: tdeeError } = await supabase
-    .from("user_tdee_state")
-    .upsert({
-      user_id: userId,
-      current_tdee_kcal: tdee,
-      current_bmr_kcal: bmr,
-      initial_tdee_kcal: tdee,
-      confidence_level: 0.3,
-      weeks_of_data: 0,
-    });
-
-  if (tdeeError) {
-    throw new Error(`Error guardando TDEE inicial: ${tdeeError.message}`);
-  }
-
-  // 6. Actualizar authStore — esto dispara el guard de Stack.Protected
-  //    que redirige automáticamente a (tabs)
   useAuthStore.getState().setOnboardingCompleted(true);
-
-  // No hacer router.replace() — Stack.Protected lo maneja
 }
