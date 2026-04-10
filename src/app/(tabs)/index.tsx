@@ -4,14 +4,16 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/cn";
+import { isTodayDateKey, parseDateKey, shiftDateKey } from "@/lib/date";
+import { queryKeys } from "@/lib/constants";
 
 // Queries y mutations
 import { useDailyLog } from "@/features/dashboard/useDailyLog";
 import { useMarkDayComplete } from "@/features/dashboard/useMarkDayComplete";
-import { useWaterLog } from "@/features/dashboard/useWaterLog";
+import { useWaterLog, useAddWater, useRemoveWater } from "@/features/dashboard/useWaterLog";
 import { useDeleteLogEntry } from "@/features/logging/useDeleteLogEntry";
 import { useTdeeState } from "@/features/tdee/useTdeeState";
 
@@ -41,13 +43,9 @@ function getGreeting(): string {
   return "Buenas noches";
 }
 
-function isToday(dateStr: string): boolean {
-  return dateStr === new Date().toISOString().split("T")[0];
-}
-
 function formatDateLabel(dateStr: string): string {
-  if (isToday(dateStr)) return "Hoy";
-  const d = new Date(dateStr);
+  if (isTodayDateKey(dateStr)) return "Hoy";
+  const d = parseDateKey(dateStr);
   const months = [
     "Ene", "Feb", "Mar", "Abr", "May", "Jun",
     "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
@@ -56,25 +54,18 @@ function formatDateLabel(dateStr: string): string {
   return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
 }
 
-function shiftDate(dateStr: string, days: number): string {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split("T")[0];
-}
-
 // ─── Componente Principal ────────────────────────────────────
 
 export default function DashboardScreen() {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
 
   // Stores
   const { selectedDate, setSelectedDate, goToToday, hapticFeedback } =
     useUiStore();
   const user = useAuthStore((s) => s.user);
 
-  const todayStr = new Date().toISOString().split("T")[0];
-  const isTodaySelected = isToday(selectedDate);
+  const isTodaySelected = isTodayDateKey(selectedDate);
 
   // Queries
   const { data: entries = [], isLoading: logLoading, error: logError } =
@@ -85,6 +76,8 @@ export default function DashboardScreen() {
   // Mutations
   const deleteEntry = useDeleteLogEntry();
   const markComplete = useMarkDayComplete();
+  const addWater = useAddWater();
+  const removeWater = useRemoveWater();
 
   // Nombre del usuario
   const userName =
@@ -121,38 +114,44 @@ export default function DashboardScreen() {
   }, [entries]);
 
   // Estado de expansión de meals (local)
-  const [expandedMeals, setExpandedMeals] = useState<Record<string, boolean>>({
-    breakfast: true,
-    lunch: true,
-    dinner: true,
-    snack: false,
-  });
+  const [mealVisibilityOverrides, setMealVisibilityOverrides] = useState<
+    Partial<Record<MealType, boolean>>
+  >({});
 
-  // Actualizar expansión cuando llegan datos: expandir los que tienen entradas
-  useMemo(() => {
-    const newState: Record<string, boolean> = {};
+  const expandedMeals = useMemo(() => {
+    const state: Record<MealType, boolean> = {
+      breakfast: false,
+      lunch: false,
+      dinner: false,
+      snack: false,
+    };
+
     for (const meal of MEAL_ORDER) {
       const mealEntries = groupedMeals.get(meal) ?? [];
-      newState[meal] = mealEntries.length > 0;
+      state[meal] = mealVisibilityOverrides[meal] ?? mealEntries.length > 0;
     }
-    setExpandedMeals(newState);
-  }, [entries.length]); // solo re-calcular cuando cambia el número de entradas
+
+    return state;
+  }, [groupedMeals, mealVisibilityOverrides]);
 
   const toggleMeal = useCallback((meal: string) => {
     hapticFeedback("light");
-    setExpandedMeals((prev) => ({ ...prev, [meal]: !prev[meal] }));
-  }, []);
+    setMealVisibilityOverrides((prev) => ({
+      ...prev,
+      [meal]: !expandedMeals[meal as MealType],
+    }));
+  }, [expandedMeals, hapticFeedback]);
 
   // ─── Handlers ────────────────────────────────────────────
 
   const handleDatePrev = () => {
-    setSelectedDate(shiftDate(selectedDate, -1));
+    setSelectedDate(shiftDateKey(selectedDate, -1));
   };
 
   const handleDateNext = () => {
     // No permitir fechas futuras
     if (!isTodaySelected) {
-      setSelectedDate(shiftDate(selectedDate, 1));
+      setSelectedDate(shiftDateKey(selectedDate, 1));
     }
   };
 
@@ -167,12 +166,12 @@ export default function DashboardScreen() {
   };
 
   const handleAddWater = (ml: number) => {
-    // Delegar a la mutation de water (ya implementada en useWaterLog)
-    // Aquí simplificamos: la query se invalida automáticamente
+    addWater.mutate({ date: selectedDate, ml });
   };
 
   const handleRemoveWater = (ml: number) => {
-    // Idem
+    if ((waterData?.amount_ml ?? 0) <= 0) return;
+    removeWater.mutate({ date: selectedDate, ml });
   };
 
   // ─── Render ──────────────────────────────────────────────
@@ -212,7 +211,13 @@ export default function DashboardScreen() {
           No pudimos cargar tus datos.{"\n"}Comprueba tu conexión.
         </Text>
         <Pressable
-          onPress={() => {}}
+          onPress={() => {
+            deleteEntry.reset();
+            markComplete.reset();
+            queryClient.invalidateQueries({ queryKey: queryKeys.dailyLog(selectedDate) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.waterLog(selectedDate) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.tdeeState() });
+          }}
           className="bg-primary-500 px-6 py-3 rounded-xl"
           accessibilityLabel="Reintentar carga de datos"
           accessibilityRole="button"

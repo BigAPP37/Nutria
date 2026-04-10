@@ -49,7 +49,7 @@ export function FoodSearchBar({ countryCode, onSelectFood }: FoodSearchBarProps)
       {showNoResults && (
         <View className="items-center py-8">
           <Text className="text-neutral-500 text-center">
-            Sin resultados para "{query}"
+            Sin resultados para &quot;{query}&quot;
           </Text>
           <Text className="text-neutral-400 text-sm text-center mt-1">
             Prueba con otro nombre o usa el registro por texto

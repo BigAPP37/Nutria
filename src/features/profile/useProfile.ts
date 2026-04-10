@@ -13,6 +13,7 @@ export interface UserProfile {
   unit_energy: "kcal" | "kJ";
   country_code: string;
   display_name: string | null;
+  avatar_url: string | null;
   height_cm: number;
 }
 
@@ -20,7 +21,7 @@ async function fetchProfile(userId: string): Promise<UserProfile> {
   const { data, error } = await supabase
     .from("user_profiles")
     .select(
-      "goal, biological_sex, unit_weight, unit_energy, country_code, display_name, height_cm"
+      "goal, biological_sex, unit_weight, unit_energy, country_code, display_name, avatar_url, height_cm"
     )
     .eq("id", userId)
     .single();

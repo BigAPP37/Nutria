@@ -50,19 +50,21 @@ function MacroRingComponent({
 
   useEffect(() => {
     // Al montar: animar desde 0
+    // eslint-disable-next-line react-hooks/immutability
     progress.value = withTiming(visualRatio, {
       duration: 800,
       easing: Easing.out(Easing.cubic),
     });
-  }, []);
+  }, [progress, visualRatio]);
 
   useEffect(() => {
     // Al cambiar consumed: animar al nuevo valor
+    // eslint-disable-next-line react-hooks/immutability
     progress.value = withTiming(visualRatio, {
       duration: 600,
       easing: Easing.out(Easing.cubic),
     });
-  }, [consumed, goal]);
+  }, [progress, visualRatio]);
 
   // Props animadas del círculo de progreso
   const animatedProps = useAnimatedProps(() => ({

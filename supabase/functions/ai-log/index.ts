@@ -98,6 +98,13 @@ const CLAUDE_MODEL = "claude-haiku-4-5-20250514";
 const MATCH_THRESHOLD = 0.6;
 const MAX_TOKENS_PHOTO = 1200;
 const MAX_TOKENS_TEXT = 800;
+const MAX_FREE_PHOTO_LOGS_PER_DAY = 3;
+
+interface PremiumProfile {
+  is_premium: boolean | null;
+  premium_expires_at?: string | null;
+  subscription_status?: string | null;
+}
 
 // =============================================================================
 // PROMPT PARA CLAUDE (español, con few-shot)
@@ -506,6 +513,65 @@ async function insertLogEntries(
   return data.map((d: any) => d.id);
 }
 
+function hasPremiumAccess(profile: PremiumProfile | null): boolean {
+  if (!profile?.is_premium) return false;
+  if (
+    profile.subscription_status === "past_due" ||
+    profile.subscription_status === "canceled"
+  ) {
+    return false;
+  }
+  if (!profile.premium_expires_at) return true;
+  return new Date(profile.premium_expires_at) > new Date();
+}
+
+async function enforcePhotoQuota(supabase: any, userId: string): Promise<void> {
+  const { data: profile, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("is_premium, premium_expires_at, subscription_status")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profileError) {
+    throw new Error(
+      `No se pudo leer el estado premium del usuario ${userId}: ${profileError.message}`
+    );
+  }
+
+  if (hasPremiumAccess(profile as PremiumProfile | null)) {
+    return;
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  const { data: entries, error: entriesError } = await supabase
+    .from("food_log_entries")
+    .select("photo_storage_path")
+    .eq("user_id", userId)
+    .eq("log_date", today)
+    .eq("logging_method", "photo")
+    .is("deleted_at", null);
+
+  if (entriesError) {
+    throw new Error(
+      `No se pudo comprobar la cuota diaria de fotos: ${entriesError.message}`
+    );
+  }
+
+  const uniquePhotoLogs = new Set(
+    (entries ?? [])
+      .map((entry: { photo_storage_path: string | null }) => entry.photo_storage_path)
+      .filter((path: string | null): path is string => Boolean(path))
+  );
+
+  if (uniquePhotoLogs.size >= MAX_FREE_PHOTO_LOGS_PER_DAY) {
+    const quotaError = new Error(
+      "Has alcanzado el límite diario de fotos del plan gratuito. Actualiza a Premium para seguir usando análisis por foto."
+    ) as Error & { status?: number };
+    quotaError.status = 403;
+    throw quotaError;
+  }
+}
+
 // =============================================================================
 // HELPERS
 // =============================================================================
@@ -596,6 +662,10 @@ serve(async (req: Request) => {
 
     // Cliente Supabase con service_role para bypass RLS en escritura
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    if (method === "photo") {
+      await enforcePhotoQuota(supabase, user_id);
+    }
 
     // ---------------------------------------------------------------
     // 2. CASO BARCODE — lookup directo sin IA
@@ -729,7 +799,7 @@ serve(async (req: Request) => {
         error: err.message || "Error interno del pipeline",
         processing_ms: Date.now() - startTime,
       },
-      500
+      typeof err.status === "number" ? err.status : 500
     );
   }
 });

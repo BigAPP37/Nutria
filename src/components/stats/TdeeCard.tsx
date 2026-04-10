@@ -48,11 +48,12 @@ function TdeeCardComponent({ tdeeState }: TdeeCardProps) {
   const barWidth = useSharedValue(0);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     barWidth.value = withTiming(confidence_level * 100, {
       duration: 800,
       easing: Easing.out(Easing.cubic),
     });
-  }, [confidence_level]);
+  }, [barWidth, confidence_level]);
 
   const barStyle = useAnimatedStyle(() => ({
     width: `${barWidth.value}%`,

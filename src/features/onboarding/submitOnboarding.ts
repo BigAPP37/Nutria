@@ -29,7 +29,7 @@ export async function submitOnboarding(
   const heightCm = data.heightCm;
 
   // 2. Calcular TDEE inicial
-  const { bmr, tdee, calorie_goal } = calculateInitialTdee(
+  const { bmr, tdee } = calculateInitialTdee(
     {
       biological_sex: data.biologicalSex,
       date_of_birth: data.dateOfBirth,

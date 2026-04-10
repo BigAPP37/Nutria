@@ -5,7 +5,6 @@
 import { useState } from "react";
 import { View, Text, Pressable, TextInput, ScrollView, Alert } from "react-native";
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,11 +12,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { cn } from "@/lib/cn";
 import { useOnboardingStore } from "@/stores/onboardingStore";
-import type { BiologicalSex } from "@/stores/onboardingStore";
+import { routes } from "@/types/navigation";
 
 export default function BodyProfileScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const {
     displayName,
     weightKg,
@@ -94,7 +92,7 @@ export default function BodyProfileScreen() {
     setField("dateOfBirth", dob);
 
     nextStep();
-    router.push("/(onboarding)/goal");
+    router.push(routes.onboarding.goal);
   };
 
   const handleBack = () => {
@@ -272,6 +270,8 @@ function SexCard({
   }));
 
   const handlePress = () => {
+    // Reanimated shared values are mutated imperatively by design.
+    // eslint-disable-next-line react-hooks/immutability
     scale.value = withSpring(0.94, { damping: 15, stiffness: 300 }, () => {
       scale.value = withSpring(1, { damping: 12, stiffness: 200 });
     });

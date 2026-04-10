@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { cn } from "@/lib/cn";
 import { useOnboardingStore } from "@/stores/onboardingStore";
+import { routes } from "@/types/navigation";
 
 // Países hispanos primero, luego otros
 const COUNTRIES = [
@@ -73,7 +74,7 @@ export default function PreferencesScreen() {
 
   const handleNext = () => {
     nextStep();
-    router.push("/(onboarding)/ready");
+    router.push(routes.onboarding.ready);
   };
 
   const handleBack = () => {

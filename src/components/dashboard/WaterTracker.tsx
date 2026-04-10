@@ -39,10 +39,11 @@ function WaterGlass({
   const opacity = useSharedValue(isFull || isPartial ? 1 : 0.3);
 
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     opacity.value = withTiming(isFull ? 1 : isPartial ? 0.6 : 0.3, {
       duration: 300,
     });
-  }, [isFull, isPartial]);
+  }, [isFull, isPartial, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

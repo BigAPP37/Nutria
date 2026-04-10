@@ -38,7 +38,7 @@ export const useLogSessionStore = create<LogSessionState>((set, get) => ({
   startManualSearch: (mt) => set({ ...init, step:"idle", method:"manual", mealType:mt }),
   startBarcodeScan: (mt) => set({ ...init, step:"capturing", method:"barcode", mealType:mt }),
   setStep: (s) => set({ step: s }),
-  setField: (key, value) => set({ [key]: value } as any),
+  setField: (key, value) => set({ [key]: value } as Pick<LogSessionState, typeof key>),
   setPhotoUri: (uri) => set({ photoUri: uri }),
   setPhotoStoragePath: (path) => set({ photoStoragePath: path }),
   setTextInput: (text) => set({ textInput: text }),

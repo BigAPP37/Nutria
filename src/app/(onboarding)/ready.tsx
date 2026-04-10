@@ -14,6 +14,7 @@ import Animated, {
   withDelay,
   Easing,
 } from "react-native-reanimated";
+import { cn } from "@/lib/cn";
 import { useAuthStore } from "@/stores/authStore";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 import { calculateInitialTdee } from "@/features/tdee/algorithm";
@@ -64,12 +65,18 @@ export default function ReadyScreen() {
   const buttonOpacity = useSharedValue(0);
 
   useEffect(() => {
+    // Reanimated shared values are mutated imperatively by design.
+    // eslint-disable-next-line react-hooks/immutability
     titleOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) });
+    // eslint-disable-next-line react-hooks/immutability
     numberOpacity.value = withDelay(200, withTiming(1, { duration: 500 }));
+    // eslint-disable-next-line react-hooks/immutability
     numberScale.value = withDelay(200, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
+    // eslint-disable-next-line react-hooks/immutability
     macrosOpacity.value = withDelay(500, withTiming(1, { duration: 400 }));
+    // eslint-disable-next-line react-hooks/immutability
     buttonOpacity.value = withDelay(800, withTiming(1, { duration: 400 }));
-  }, []);
+  }, [buttonOpacity, macrosOpacity, numberOpacity, numberScale, titleOpacity]);
 
   const titleStyle = useAnimatedStyle(() => ({ opacity: titleOpacity.value }));
   const numberStyle = useAnimatedStyle(() => ({
@@ -97,9 +104,13 @@ export default function ReadyScreen() {
       await submitOnboarding(store, userId);
       // Stack.Protected detecta hasCompletedOnboarding = true
       // y redirige automáticamente a (tabs). No hacer router.replace().
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Hubo un error al guardar. Inténtalo de nuevo.";
       store.setSubmitError(
-        err.message || "Hubo un error al guardar. Inténtalo de nuevo."
+        message
       );
       store.setSubmitting(false);
     }
@@ -117,7 +128,7 @@ export default function ReadyScreen() {
 
   return (
     <View
-      className="flex-1 bg-neutral-50 px-6 justify-between"
+      className="flex-1 justify-between bg-neutral-50 px-6"
       style={{ paddingTop: 24, paddingBottom: insets.bottom + 24 }}
     >
       {/* Contenido principal */}
@@ -133,8 +144,8 @@ export default function ReadyScreen() {
         </Animated.View>
 
         {/* Número grande del objetivo calórico */}
-        <Animated.View style={numberStyle} className="items-center mb-8">
-          <Text className="text-neutral-500 text-sm mb-1">
+        <Animated.View style={numberStyle} className="mb-8 items-center rounded-[36px] bg-white px-8 py-8 shadow-lg shadow-black/5">
+          <Text className="mb-1 text-sm text-neutral-500">
             Tu objetivo diario
           </Text>
           <Text className="font-display text-6xl text-primary-600">
@@ -146,7 +157,7 @@ export default function ReadyScreen() {
         </Animated.View>
 
         {/* Desglose de macros */}
-        <Animated.View style={macrosStyle} className="flex-row gap-4 mb-6">
+        <Animated.View style={macrosStyle} className="mb-6 flex-row gap-4">
           <MacroBox
             label="Proteína"
             value={calorie_goal.protein_g}
@@ -188,19 +199,19 @@ export default function ReadyScreen() {
       )}
 
       {/* Botón de empezar */}
-      <Animated.View style={buttonStyle}>
-        <Pressable
-          onPress={handleStart}
-          disabled={store.isSubmitting}
-          accessibilityLabel="Empezar a usar Nutria"
-          accessibilityRole="button"
-          className={cn(
-            "py-4 rounded-2xl items-center",
+        <Animated.View style={buttonStyle}>
+          <Pressable
+            onPress={handleStart}
+            disabled={store.isSubmitting}
+            accessibilityLabel="Empezar a usar Nutria"
+            accessibilityRole="button"
+            className={cn(
+            "items-center rounded-[28px] py-5",
             store.isSubmitting
               ? "bg-primary-300"
               : "bg-primary-500 active:bg-primary-600"
-          )}
-        >
+            )}
+          >
           {store.isSubmitting ? (
             <ActivityIndicator color="white" />
           ) : (

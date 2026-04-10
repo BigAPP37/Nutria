@@ -2,28 +2,25 @@
 // Hub principal de logging — orquesta foto, texto, búsqueda manual.
 // Lee step y method de logSessionStore y renderiza el componente correcto.
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withRepeat,
-  withSequence,
-  Easing,
-} from "react-native-reanimated";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/cn";
+import { queryKeys } from "@/lib/constants";
+import { supabase } from "@/lib/supabase";
 import { useLogSessionStore } from "@/stores/logSessionStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useUiStore } from "@/stores/uiStore";
 import { useAiLog } from "@/features/logging/useAiLog";
 import { useDailyLog } from "@/features/dashboard/useDailyLog";
+import { useProfile } from "@/features/profile/useProfile";
 import { TextLogInput } from "@/components/logging/TextLogInput";
 import { FoodSearchBar } from "@/components/logging/FoodSearchBar";
 import { AiConfirmSheet } from "@/components/logging/AiConfirmSheet";
 import type { FoodSearchResult } from "@/features/logging/useFoodSearch";
+import { foodDetailRoute, routes } from "@/types/navigation";
 
 // ─── Constantes ──────────────────────────────────────────────
 
@@ -56,11 +53,13 @@ function inferMealType(): MealType {
 export default function LogScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ mealType?: string }>();
 
   const userId = useAuthStore((s) => s.user?.id);
   const { selectedDate, hapticFeedback } = useUiStore();
   const aiLog = useAiLog();
+  const { data: profile } = useProfile();
 
   const {
     step,
@@ -96,13 +95,14 @@ export default function LogScreen() {
     if (step === "idle" && effectiveMealType !== mealType) {
       setField("mealType", effectiveMealType);
     }
-  }, [effectiveMealType]);
+  }, [effectiveMealType, mealType, setField, step]);
 
   // ─── Timeout de 25s para análisis IA ──────────────────────
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longWaitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showLongWait, setShowLongWait] = useState(false);
   const [analyzingTextIndex, setAnalyzingTextIndex] = useState(0);
+  const [isDiscarding, setIsDiscarding] = useState(false);
 
   useEffect(() => {
     if (step === "analyzing") {
@@ -127,7 +127,7 @@ export default function LogScreen() {
         setAnalyzingTextIndex(0);
       };
     }
-  }, [step]);
+  }, [setError, step]);
 
   // ─── Handlers ─────────────────────────────────────────────
 
@@ -138,7 +138,7 @@ export default function LogScreen() {
 
   const handlePhotoCapture = () => {
     startPhotoCapture(effectiveMealType);
-    router.push("/(modals)/camera");
+    router.push(routes.modals.camera);
   };
 
   const handleTextSubmit = (text: string) => {
@@ -148,15 +148,12 @@ export default function LogScreen() {
       payload: text,
       user_id: userId,
       meal_type: effectiveMealType,
-      country_code: "ES", // TODO: leer del perfil
+      country_code: profile?.country_code ?? "ES",
     });
   };
 
   const handleFoodSelect = (food: FoodSearchResult) => {
-    router.push({
-      pathname: "/(modals)/food-detail",
-      params: { foodId: food.food_id, mealType: effectiveMealType },
-    });
+    router.push(foodDetailRoute(food.food_id, effectiveMealType));
   };
 
   const handleConfirm = () => {
@@ -169,8 +166,29 @@ export default function LogScreen() {
   };
 
   const handleDismiss = () => {
-    // TODO: eliminar las entradas que ai-log insertó (log_entry_ids)
-    reset();
+    const logEntryIds = aiResult?.log_entry_ids ?? [];
+
+    if (logEntryIds.length === 0) {
+      reset();
+      return;
+    }
+
+    setIsDiscarding(true);
+    supabase
+      .from("food_log_entries")
+      .delete()
+      .in("id", logEntryIds)
+      .then(({ error }) => {
+        if (error) {
+          setIsDiscarding(false);
+          setError("No pudimos descartar la entrada. Inténtalo de nuevo.");
+          return;
+        }
+
+        queryClient.invalidateQueries({ queryKey: queryKeys.dailyLog(selectedDate) });
+        setIsDiscarding(false);
+        reset();
+      });
   };
 
   const handleRetry = () => {
@@ -311,7 +329,7 @@ export default function LogScreen() {
             </Text>
           </View>
           <FoodSearchBar
-            countryCode="ES"
+            countryCode={profile?.country_code ?? "ES"}
             onSelectFood={handleFoodSelect}
           />
         </View>
@@ -346,6 +364,15 @@ export default function LogScreen() {
           onRemoveAlimento={removeAlimento}
           onDismiss={handleDismiss}
         />
+      )}
+
+      {isDiscarding && (
+        <View className="absolute inset-0 items-center justify-center bg-neutral-50/80">
+          <ActivityIndicator size="large" color="#F97316" />
+          <Text className="mt-4 text-sm text-neutral-600">
+            Descartando registro...
+          </Text>
+        </View>
       )}
 
       {/* ═══ ERROR ═══ */}

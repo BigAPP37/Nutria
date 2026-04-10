@@ -3,7 +3,6 @@
 // Muestra: nombre, marca, kcal/100g, badge verificado, bandera de país.
 
 import { View, Text, Pressable } from "react-native";
-import { cn } from "@/lib/cn";
 import type { FoodSearchResult } from "@/features/logging/useFoodSearch";
 
 // Banderas emoji por código de país

@@ -34,7 +34,7 @@ export function getConfidenceLabel(l: number): string {
 
 export function getCalorieGoal(tdee: number, goal: UserGoal, sex: BiologicalSex, conf: number): CalorieGoal {
   const minKcal = sex==="male"?1500:1200;
-  let gk = Math.max(Math.round(tdee + OFFSETS[goal]), minKcal);
+  const gk = Math.max(Math.round(tdee + OFFSETS[goal]), minKcal);
   const r = MACROS[goal];
   return { tdee_kcal:tdee, goal_kcal:gk, deficit_or_surplus:gk-tdee, protein_g:Math.round(gk*r.protein/4), carbs_g:Math.round(gk*r.carbs/4), fat_g:Math.round(gk*r.fat/9), confidence_level:conf, confidence_label:getConfidenceLabel(conf) };
 }

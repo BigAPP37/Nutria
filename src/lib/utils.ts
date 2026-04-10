@@ -1,10 +1,12 @@
 // src/lib/utils.ts
 // Utilidades de formateo para Nutria.
 
+import { parseDateKey } from "@/lib/date";
+
 export function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
+  const d = parseDateKey(dateStr);
   const months = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-  return \`\${d.getDate()} \${months[d.getMonth()]} \${d.getFullYear()}\`;
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 export function formatWeight(kg: number, unit: "kg" | "lb"): string {

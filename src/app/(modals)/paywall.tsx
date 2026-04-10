@@ -7,7 +7,6 @@ import { useState, useEffect } from "react";
 import { View, Text, Pressable, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { BlurView } from "expo-blur";
 import { cn } from "@/lib/cn";
 import { useAuthStore } from "@/stores/authStore";
 import { usePremiumStore } from "@/stores/premiumStore";
@@ -17,7 +16,6 @@ import {
   restorePurchases,
 } from "@/lib/purchases";
 import type { PurchasesPackage } from "react-native-purchases";
-import type { PaywallTrigger } from "@/hooks/usePremiumGate";
 
 const FEATURES = [
   { emoji: "📷", text: "Fotos ilimitadas al día" },
@@ -32,7 +30,7 @@ export default function PaywallModal() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ trigger?: string }>();
-  const trigger = (params.trigger as PaywallTrigger) ?? "stats";
+  void params;
 
   const userId = useAuthStore((s) => s.user?.id);
   const { setPremium } = usePremiumStore();

@@ -16,6 +16,7 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/stores/authStore";
 import { useOnboardingStore } from "@/stores/onboardingStore";
+import { routes } from "@/types/navigation";
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -34,15 +35,18 @@ export default function WelcomeScreen() {
   const translateY = useSharedValue(30);
 
   useEffect(() => {
+    // Reanimated shared values are mutated imperatively by design.
+    // eslint-disable-next-line react-hooks/immutability
     opacity.value = withTiming(1, {
       duration: 600,
       easing: Easing.out(Easing.cubic),
     });
+    // eslint-disable-next-line react-hooks/immutability
     translateY.value = withTiming(0, {
       duration: 600,
       easing: Easing.out(Easing.cubic),
     });
-  }, []);
+  }, [opacity, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -55,32 +59,35 @@ export default function WelcomeScreen() {
       setField("displayName", userName);
     }
     nextStep();
-    router.push("/(onboarding)/body-profile");
+    router.push(routes.onboarding.bodyProfile);
   };
 
   return (
     <View
-      className="flex-1 bg-neutral-50 px-6 justify-between"
+      className="flex-1 justify-between bg-neutral-50 px-6"
       style={{ paddingTop: insets.top + 40, paddingBottom: insets.bottom + 24 }}
     >
       <Animated.View style={animatedStyle} className="items-center flex-1 justify-center">
-        {/* Ilustración hero */}
-        <Image
-          source={require("@/../../assets/images/onboarding-hero.png")}
-          style={{ width: 240, height: 240 }}
-          contentFit="contain"
-          accessibilityLabel="Ilustración de bienvenida a Nutria"
-        />
+        <View className="mb-8 h-[260px] w-full max-w-[320px] items-center justify-center rounded-[40px] bg-white shadow-lg shadow-black/5">
+          <View className="absolute left-6 top-6 h-10 w-10 rounded-2xl bg-secondary-100" />
+          <View className="absolute bottom-8 right-8 h-16 w-16 rounded-[28px] bg-primary-100" />
+          <Image
+            source="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=800&q=80"
+            alt="Bodegón de comida saludable"
+            style={{ width: 240, height: 240, borderRadius: 28 }}
+            contentFit="cover"
+            accessibilityLabel="Imagen de bienvenida de Nutria"
+          />
+        </View>
 
         {/* Saludo */}
-        <Text className="font-display text-3xl text-neutral-900 text-center mt-8 mb-3">
+        <Text className="font-display mt-2 text-center text-4xl text-neutral-900">
           {userName ? `Hola, ${userName} 👋` : "¡Bienvenido a Nutria! 👋"}
         </Text>
 
         {/* Propuesta de valor */}
-        <Text className="text-base text-neutral-500 text-center leading-6 px-4">
-          Tu compañero de nutrición inteligente.{"\n"}
-          Aprende de ti para ayudarte a comer mejor, sin presiones.
+        <Text className="mt-4 px-4 text-center text-base leading-7 text-neutral-600">
+          Seguimiento claro, decisiones más tranquilas y una interfaz hecha para volver varias veces al día sin fatiga.
         </Text>
       </Animated.View>
 
@@ -90,7 +97,7 @@ export default function WelcomeScreen() {
           onPress={handleStart}
           accessibilityLabel="Empezar configuración"
           accessibilityRole="button"
-          className="bg-primary-500 py-4 rounded-2xl items-center active:bg-primary-600"
+          className="items-center rounded-[28px] bg-primary-500 py-5 active:bg-primary-600"
         >
           <Text className="text-white font-semibold text-base">Empezar</Text>
         </Pressable>

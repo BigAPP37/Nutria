@@ -120,7 +120,7 @@ export function PaywallSheet({
         onDismiss();
         onPurchaseComplete?.();
       }
-    } catch (err: any) {
+    } catch {
       setError("No se pudo completar la compra. Inténtalo de nuevo.");
     } finally {
       setIsPurchasing(false);

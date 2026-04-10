@@ -69,6 +69,7 @@ function ActivityCard({
   }));
 
   const handlePress = () => {
+    // eslint-disable-next-line react-hooks/immutability
     scale.value = withSpring(0.96, { damping: 15, stiffness: 300 }, () => {
       scale.value = withSpring(1, { damping: 12, stiffness: 200 });
     });
@@ -83,13 +84,18 @@ function ActivityCard({
         accessibilityRole="button"
         accessibilityState={{ selected: isSelected }}
         className={cn(
-          "flex-row items-center px-4 py-3.5 rounded-xl mb-2.5 border-2",
+          "mb-2.5 flex-row items-center rounded-[24px] border px-4 py-4",
           isSelected
             ? "border-primary-500 bg-primary-50"
             : "border-neutral-200 bg-white"
         )}
       >
-        <Text className="text-2xl mr-3">{level.emoji}</Text>
+        <View className={cn(
+          "mr-3 h-12 w-12 items-center justify-center rounded-2xl",
+          isSelected ? "bg-white" : "bg-neutral-100"
+        )}>
+          <Text className="text-2xl">{level.emoji}</Text>
+        </View>
         <View className="flex-1">
           <Text
             className={cn(
@@ -108,6 +114,7 @@ function ActivityCard({
             {level.description}
           </Text>
         </View>
+        {isSelected ? <Text className="text-base text-primary-600">●</Text> : null}
       </Pressable>
     </Animated.View>
   );

@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-neutral-50 text-neutral-900;
+  }
+}
+
+@layer components {
+  .surface-card {
+    @apply rounded-[28px] border border-neutral-200 bg-white;
+  }
+
+  .surface-muted {
+    @apply rounded-[24px] border border-white/60 bg-neutral-100;
+  }
+}

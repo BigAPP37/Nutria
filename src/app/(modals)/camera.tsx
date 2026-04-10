@@ -13,6 +13,8 @@ import { useLogSessionStore } from "@/stores/logSessionStore";
 import { useAuthStore } from "@/stores/authStore";
 import { uploadMealPhoto } from "@/features/logging/photoUpload";
 import { useAiLog } from "@/features/logging/useAiLog";
+import { useProfile } from "@/features/profile/useProfile";
+import type { MealType } from "@/types/navigation";
 
 export default function CameraModal() {
   const router = useRouter();
@@ -24,6 +26,7 @@ export default function CameraModal() {
   const [permission, requestPermission] = useCameraPermissions();
 
   const userId = useAuthStore((s) => s.user?.id);
+  const { data: profile } = useProfile();
   const {
     mealType,
     step,
@@ -34,7 +37,10 @@ export default function CameraModal() {
   } = useLogSessionStore();
   const aiLog = useAiLog();
 
-  const effectiveMealType = (params.mealType as string) || mealType || "lunch";
+  const effectiveMealType = ((params.mealType as MealType | undefined) ||
+    mealType ||
+    "lunch") as MealType;
+  const countryCode = profile?.country_code ?? "ES";
   const isProcessing = step === "uploading" || step === "analyzing";
 
   // ─── Sin permisos ────────────────────────────────────────
@@ -105,15 +111,17 @@ export default function CameraModal() {
         method: "photo",
         payload: base64,
         user_id: userId,
-        meal_type: effectiveMealType as any,
-        country_code: "ES", // TODO: leer del perfil
+        meal_type: effectiveMealType,
+        country_code: countryCode,
         photo_storage_path: path,
       });
 
       // 4. Volver al tab de logging (el AiConfirmSheet se muestra ahí)
       router.back();
-    } catch (err: any) {
-      setError(err.message || "Error al procesar la foto");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Error al procesar la foto"
+      );
     }
   };
 

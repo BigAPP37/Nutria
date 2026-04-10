@@ -40,11 +40,12 @@ function MacroBar({
   const width = useSharedValue(0);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     width.value = withTiming(clamped * 100, {
       duration: 600,
       easing: Easing.out(Easing.cubic),
     });
-  }, [consumed, target]);
+  }, [clamped, width]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     width: `${width.value}%`,

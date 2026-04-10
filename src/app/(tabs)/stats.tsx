@@ -3,8 +3,9 @@
 // Secciones: resumen rápido, TDEE card, gráfico peso, gráfico calorías,
 // macros promedio, historial de snapshots.
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import {
+  Alert,
   View,
   Text,
   ScrollView,
@@ -14,14 +15,24 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { queryKeys } from "@/lib/constants";
+import { getTodayDateKey } from "@/lib/date";
+import { routes } from "@/types/navigation";
 
 // Queries
 import { useTdeeState } from "@/features/tdee/useTdeeState";
 import { useWeeklySnapshots } from "@/features/tdee/useWeeklySnapshots";
 import { useWeightHistory } from "@/features/profile/useWeightHistory";
 import { useProfile } from "@/features/profile/useProfile";
+import { useUpdateProfile } from "@/features/profile/useUpdateProfile";
+import {
+  removeProfileAvatar,
+  uploadProfileAvatar,
+} from "@/features/profile/avatarUpload";
 import { useDailyLog } from "@/features/dashboard/useDailyLog";
+import { useAuthStore } from "@/stores/authStore";
 
 // Componentes
 import { TdeeCard } from "@/components/stats/TdeeCard";
@@ -33,6 +44,9 @@ export default function StatsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+  const updateProfile = useUpdateProfile();
+  const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
 
   // Queries
   const { data: tdee, isLoading: tdeeLoading } = useTdeeState();
@@ -41,7 +55,7 @@ export default function StatsScreen() {
   const { data: profile } = useProfile();
 
   // Datos de la última semana para macros promedio
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = getTodayDateKey();
   const { data: todayEntries = [] } = useDailyLog(todayStr);
 
   const isLoading = tdeeLoading || snapshotsLoading || weightLoading;
@@ -85,7 +99,80 @@ export default function StatsScreen() {
     qc.invalidateQueries({ queryKey: queryKeys.weeklySnapshots() });
     qc.invalidateQueries({ queryKey: queryKeys.weightHistory() });
     qc.invalidateQueries({ queryKey: queryKeys.profile() });
-  }, []);
+  }, [qc]);
+
+  const userName =
+    profile?.display_name ||
+    user?.user_metadata?.display_name ||
+    user?.email?.split("@")[0] ||
+    "";
+
+  const handlePickAvatar = useCallback(async () => {
+    if (!user?.id || isUpdatingAvatar) return;
+
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          "Permiso necesario",
+          "Necesitamos acceso a tu galería para actualizar la foto de perfil."
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.9,
+      });
+
+      if (result.canceled || !result.assets[0]?.uri) return;
+
+      setIsUpdatingAvatar(true);
+      const previousAvatarUrl = profile?.avatar_url;
+      const publicUrl = await uploadProfileAvatar(result.assets[0].uri, user.id);
+      await updateProfile.mutateAsync({ avatar_url: publicUrl });
+      if (previousAvatarUrl) {
+        await removeProfileAvatar(previousAvatarUrl);
+      }
+      qc.invalidateQueries({ queryKey: queryKeys.profile() });
+    } catch (error) {
+      Alert.alert(
+        "No se pudo actualizar la foto",
+        error instanceof Error ? error.message : "Inténtalo de nuevo."
+      );
+    } finally {
+      setIsUpdatingAvatar(false);
+    }
+  }, [isUpdatingAvatar, profile?.avatar_url, qc, updateProfile, user?.id]);
+
+  const handleRemoveAvatar = useCallback(() => {
+    if (!profile?.avatar_url || isUpdatingAvatar) return;
+
+    Alert.alert("Quitar foto", "Se eliminará tu foto actual del perfil.", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Quitar",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            setIsUpdatingAvatar(true);
+            await updateProfile.mutateAsync({ avatar_url: null });
+            await removeProfileAvatar(profile.avatar_url);
+            qc.invalidateQueries({ queryKey: queryKeys.profile() });
+          } catch (error) {
+            Alert.alert(
+              "No se pudo quitar la foto",
+              error instanceof Error ? error.message : "Inténtalo de nuevo."
+            );
+          } finally {
+            setIsUpdatingAvatar(false);
+          }
+        },
+      },
+    ]);
+  }, [isUpdatingAvatar, profile?.avatar_url, qc, updateProfile]);
 
   // ─── Render ──────────────────────────────────────────────
 
@@ -104,7 +191,7 @@ export default function StatsScreen() {
           Empieza registrando tus comidas y peso para que tu plan se ajuste a ti.
         </Text>
         <Pressable
-          onPress={() => router.push("/(tabs)/log")}
+          onPress={() => router.push(routes.tabs.log)}
           accessibilityLabel="Ir a registrar"
           accessibilityRole="button"
           className="bg-primary-500 px-8 py-4 rounded-2xl active:bg-primary-600"
@@ -129,6 +216,66 @@ export default function StatsScreen() {
     >
       {/* Header */}
       <View className="px-6 mb-5">
+        <View className="mb-4 flex-row items-center gap-4 rounded-3xl bg-white px-4 py-4">
+          <Pressable
+            onPress={handlePickAvatar}
+            accessibilityLabel="Cambiar foto de perfil"
+            accessibilityRole="button"
+            disabled={isUpdatingAvatar}
+            className="h-16 w-16 items-center justify-center overflow-hidden rounded-[1.5rem] bg-neutral-100"
+          >
+            {profile?.avatar_url ? (
+              <Image
+                source={{ uri: profile.avatar_url }}
+                alt="Foto de perfil"
+                contentFit="cover"
+                style={{ width: "100%", height: "100%" }}
+              />
+            ) : (
+              <Text className="font-display text-2xl text-neutral-500">
+                {(userName || "N").slice(0, 1).toUpperCase()}
+              </Text>
+            )}
+          </Pressable>
+          <View className="min-w-0 flex-1">
+            <Text className="font-display text-lg text-neutral-900">
+              {userName || "Tu perfil"}
+            </Text>
+            <Text className="mt-1 text-sm text-neutral-500">
+              Toca la foto para subir una imagen de perfil.
+            </Text>
+            <View className="mt-3 flex-row gap-2">
+              <Pressable
+                onPress={handlePickAvatar}
+                accessibilityLabel="Subir foto de perfil"
+                accessibilityRole="button"
+                disabled={isUpdatingAvatar}
+                className="rounded-xl bg-primary-50 px-3 py-2 active:bg-primary-100"
+              >
+                <Text className="text-xs font-semibold text-primary-600">
+                  {isUpdatingAvatar
+                    ? "Guardando..."
+                    : profile?.avatar_url
+                      ? "Cambiar foto"
+                      : "Subir foto"}
+                </Text>
+              </Pressable>
+              {profile?.avatar_url ? (
+                <Pressable
+                  onPress={handleRemoveAvatar}
+                  accessibilityLabel="Quitar foto de perfil"
+                  accessibilityRole="button"
+                  disabled={isUpdatingAvatar}
+                  className="rounded-xl bg-neutral-100 px-3 py-2 active:bg-neutral-200"
+                >
+                  <Text className="text-xs font-semibold text-neutral-700">
+                    Quitar
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+          </View>
+        </View>
         <Text className="font-display text-2xl text-neutral-900">
           Tu progreso
         </Text>
@@ -175,7 +322,7 @@ export default function StatsScreen() {
             Peso
           </Text>
           <Pressable
-            onPress={() => router.push("/(modals)/weight-log")}
+            onPress={() => router.push(routes.modals.weightLog)}
             accessibilityLabel="Registrar peso"
             accessibilityRole="button"
             className="bg-primary-50 rounded-lg px-3 py-1.5 active:bg-primary-100"

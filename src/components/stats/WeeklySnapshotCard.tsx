@@ -5,7 +5,6 @@
 
 import React from "react";
 import { View, Text } from "react-native";
-import { cn } from "@/lib/cn";
 import type { WeeklySnapshotDisplay } from "@/types/tdee";
 
 interface WeeklySnapshotCardProps {
@@ -15,7 +14,6 @@ interface WeeklySnapshotCardProps {
 function WeeklySnapshotCardComponent({ snapshot }: WeeklySnapshotCardProps) {
   const {
     week_label,
-    avg_weight_kg,
     weight_delta_kg,
     avg_calories_day,
     complete_days,

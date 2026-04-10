@@ -32,11 +32,13 @@ export function StepProgressBar({
   const progress = useSharedValue(0);
 
   useEffect(() => {
+    // Reanimated shared values are mutated imperatively by design.
+    // eslint-disable-next-line react-hooks/immutability
     progress.value = withTiming(targetProgress, {
       duration: 350,
       easing: Easing.out(Easing.cubic),
     });
-  }, [targetProgress]);
+  }, [targetProgress, progress]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     width: `${progress.value * 100}%`,
@@ -47,8 +49,7 @@ export function StepProgressBar({
       className="px-6 pb-2"
       style={{ paddingTop: insets.top + 8 }}
     >
-      {/* Fondo de la barra */}
-      <View className="h-1 w-full rounded-full bg-neutral-200 overflow-hidden">
+      <View className="h-2 w-full overflow-hidden rounded-full bg-neutral-200">
         {/* Relleno animado */}
         <Animated.View
           className="h-full rounded-full bg-primary-500"

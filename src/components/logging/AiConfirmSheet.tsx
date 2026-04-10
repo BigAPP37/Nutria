@@ -51,12 +51,10 @@ function AmbiguityBanner({ ambiguedades }: { ambiguedades: string[] }) {
 // Fila editable de un alimento
 function AlimentoRow({
   alimento,
-  index,
   onUpdate,
   onRemove,
 }: {
   alimento: AlimentoDetectado;
-  index: number;
   onUpdate: (updates: Partial<AlimentoDetectado>) => void;
   onRemove: () => void;
 }) {
@@ -156,6 +154,7 @@ export function AiConfirmSheet({
             {photoUri && (
               <Image
                 source={{ uri: photoUri }}
+                alt="Foto analizada"
                 style={{ width: 56, height: 56, borderRadius: 12 }}
                 contentFit="cover"
                 className="mr-3"
@@ -186,7 +185,6 @@ export function AiConfirmSheet({
             <AlimentoRow
               key={`${alimento.nombre}-${index}`}
               alimento={alimento}
-              index={index}
               onUpdate={(updates) => onUpdateAlimento(index, updates)}
               onRemove={() => onRemoveAlimento(index)}
             />

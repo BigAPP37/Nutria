@@ -3,7 +3,7 @@
 // Header tap expande/colapsa. Entries con badge de estimación IA.
 // Long press en entrada → confirmación de eliminar (soft delete).
 
-import React, { useCallback, useState } from "react";
+import React from "react";
 import { View, Text, Pressable, Alert } from "react-native";
 import Animated, {
   useSharedValue,
@@ -11,7 +11,6 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
-import { cn } from "@/lib/cn";
 import type { DailyLogEntry } from "@/features/dashboard/useDailyLog";
 
 interface MealCardProps {
@@ -112,11 +111,12 @@ export function MealCard({
   const bodyHeight = useSharedValue(isExpanded ? 1 : 0);
 
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     bodyHeight.value = withTiming(isExpanded ? 1 : 0, {
       duration: 250,
       easing: Easing.out(Easing.cubic),
     });
-  }, [isExpanded]);
+  }, [bodyHeight, isExpanded]);
 
   const bodyStyle = useAnimatedStyle(() => ({
     opacity: bodyHeight.value,
@@ -128,8 +128,9 @@ export function MealCard({
   const chevronRotation = useSharedValue(isExpanded ? 1 : 0);
 
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     chevronRotation.value = withTiming(isExpanded ? 1 : 0, { duration: 250 });
-  }, [isExpanded]);
+  }, [chevronRotation, isExpanded]);
 
   const chevronStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${chevronRotation.value * 180}deg` }],

@@ -38,7 +38,7 @@ export function usePremiumGate() {
     if (canUsePhotoLog()) return true;
     showPaywall("photo_limit");
     return false;
-  }, [canUsePhotoLog]);
+  }, [canUsePhotoLog, showPaywall]);
 
   // Gate para historial
   const checkHistory = useCallback(
@@ -47,7 +47,7 @@ export function usePremiumGate() {
       showPaywall("history");
       return false;
     },
-    [canViewHistory]
+    [canViewHistory, showPaywall]
   );
 
   // Gate para estadísticas
@@ -55,14 +55,14 @@ export function usePremiumGate() {
     if (canViewStats()) return true;
     showPaywall("stats");
     return false;
-  }, [canViewStats]);
+  }, [canViewStats, showPaywall]);
 
   // Gate para TDEE adaptativo
   const checkAdaptiveTdee = useCallback((): boolean => {
     if (canUseAdaptiveTdee()) return true;
     showPaywall("adaptive_tdee");
     return false;
-  }, [canUseAdaptiveTdee]);
+  }, [canUseAdaptiveTdee, showPaywall]);
 
   return {
     // Gates (retornan boolean, muestran paywall si false)

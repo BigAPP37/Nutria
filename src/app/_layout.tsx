@@ -1,5 +1,5 @@
 // src/app/_layout.tsx
-// Root layout: providers + Stack.Protected guards
+// Root layout: providers + auth-aware route groups
 import "../global.css";
 import { View, ActivityIndicator } from "react-native";
 import { Stack } from "expo-router";
@@ -12,8 +12,10 @@ import { useAuthListener } from "@/features/auth/useAuthListener";
 
 function SplashLoading() {
   return (
-    <View className="flex-1 bg-neutral-50 items-center justify-center">
-      <ActivityIndicator size="large" color="#F97316" />
+    <View className="flex-1 items-center justify-center bg-neutral-50">
+      <View className="mb-5 h-20 w-20 items-center justify-center rounded-[28px] bg-primary-500 shadow-lg shadow-black/5">
+        <ActivityIndicator size="large" color="white" />
+      </View>
     </View>
   );
 }
@@ -25,21 +27,28 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <StatusBar style="dark" />
+        <StatusBar style="dark" backgroundColor="#F6F4EF" />
         {isLoading ? (
           <SplashLoading />
         ) : (
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Protected guard={!!session && hasCompletedOnboarding}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="(modals)" />
-            </Stack.Protected>
-            <Stack.Protected guard={!!session && !hasCompletedOnboarding}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: "#F6F4EF" },
+            }}
+          >
+            {!!session && hasCompletedOnboarding ? (
+              <>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="(modals)" />
+              </>
+            ) : null}
+            {!!session && !hasCompletedOnboarding ? (
               <Stack.Screen name="(onboarding)" />
-            </Stack.Protected>
-            <Stack.Protected guard={!session}>
+            ) : null}
+            {!session ? (
               <Stack.Screen name="(auth)" />
-            </Stack.Protected>
+            ) : null}
           </Stack>
         )}
       </GestureHandlerRootView>

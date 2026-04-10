@@ -5,6 +5,7 @@
 
 import { create } from "zustand";
 import { checkPremiumStatus } from "@/lib/purchases";
+import { getTodayDateKey } from "@/lib/date";
 
 const FREE_PHOTO_LIMIT = 5;
 const FREE_HISTORY_DAYS = 7;
@@ -33,7 +34,7 @@ export const usePremiumStore = create<PremiumState>((set, get) => ({
   isPremium: false,
   isLoading: true,
   photoLogsToday: 0,
-  lastPhotoResetDate: new Date().toISOString().split("T")[0],
+  lastPhotoResetDate: getTodayDateKey(),
 
   checkPremium: async (userId?: string) => {
     set({ isLoading: true });
@@ -46,7 +47,7 @@ export const usePremiumStore = create<PremiumState>((set, get) => ({
   },
 
   incrementPhotoLogs: () => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayDateKey();
     const state = get();
 
     // Auto-reset si cambió el día
@@ -60,7 +61,7 @@ export const usePremiumStore = create<PremiumState>((set, get) => ({
   resetPhotoLogs: () => {
     set({
       photoLogsToday: 0,
-      lastPhotoResetDate: new Date().toISOString().split("T")[0],
+      lastPhotoResetDate: getTodayDateKey(),
     });
   },
 
@@ -73,7 +74,7 @@ export const usePremiumStore = create<PremiumState>((set, get) => ({
     if (isPremium) return true;
 
     // Auto-reset si cambió el día
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayDateKey();
     if (lastPhotoResetDate !== today) {
       set({ photoLogsToday: 0, lastPhotoResetDate: today });
       return true;

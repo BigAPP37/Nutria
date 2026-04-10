@@ -1,6 +1,7 @@
 // src/stores/uiStore.ts
 import { create } from "zustand";
 import * as Haptics from "expo-haptics";
+import { getTodayDateKey } from "@/lib/date";
 
 interface UiState {
   selectedDate: string;
@@ -12,10 +13,10 @@ interface UiState {
 }
 
 export const useUiStore = create<UiState>((set, get) => ({
-  selectedDate: new Date().toISOString().split("T")[0],
+  selectedDate: getTodayDateKey(),
   hapticsEnabled: true,
   setSelectedDate: (date) => set({ selectedDate: date }),
-  goToToday: () => set({ selectedDate: new Date().toISOString().split("T")[0] }),
+  goToToday: () => set({ selectedDate: getTodayDateKey() }),
   toggleHaptics: () => set((s) => ({ hapticsEnabled: !s.hapticsEnabled })),
   hapticFeedback: (type = "light") => {
     if (!get().hapticsEnabled) return;

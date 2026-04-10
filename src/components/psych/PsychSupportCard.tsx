@@ -9,9 +9,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withDelay,
   Easing,
-  runOnJS,
 } from "react-native-reanimated";
 import { useUiStore } from "@/stores/uiStore";
 
@@ -24,8 +22,6 @@ interface PsychSupportCardProps {
 }
 
 export function PsychSupportCard({
-  flagId,
-  messageKey,
   messageContent,
   onDismiss,
   onFeedback,
@@ -36,31 +32,28 @@ export function PsychSupportCard({
   const [isDismissed, setIsDismissed] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
 
   // Animaciones
   const cardOpacity = useSharedValue(0);
   const cardTranslateY = useSharedValue(-20);
-  const feedbackOpacity = useSharedValue(0);
-
   // Animación de entrada: slide down + fade
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     cardOpacity.value = withTiming(1, {
       duration: 500,
       easing: Easing.out(Easing.cubic),
     });
+    // eslint-disable-next-line react-hooks/immutability
     cardTranslateY.value = withTiming(0, {
       duration: 500,
       easing: Easing.out(Easing.cubic),
     });
-  }, []);
+  }, [cardOpacity, cardTranslateY]);
 
   const cardStyle = useAnimatedStyle(() => ({
     opacity: cardOpacity.value,
     transform: [{ translateY: cardTranslateY.value }],
-  }));
-
-  const feedbackStyle = useAnimatedStyle(() => ({
-    opacity: feedbackOpacity.value,
   }));
 
   // Handler: dismiss
@@ -71,17 +64,12 @@ export function PsychSupportCard({
       const id = await onDismiss();
       setResponseId(id);
       setIsDismissed(true);
-
-      // Mostrar botones de feedback con fade
-      feedbackOpacity.value = withDelay(
-        200,
-        withTiming(1, { duration: 300 })
-      );
+      setIsFeedbackVisible(true);
 
       // Auto-ocultar feedback tras 5s
       setTimeout(() => {
         if (!feedbackGiven) {
-          feedbackOpacity.value = withTiming(0, { duration: 300 });
+          setIsFeedbackVisible(false);
         }
       }, 5000);
     } catch {
@@ -129,8 +117,8 @@ export function PsychSupportCard({
         )}
 
         {/* Feedback tras dismiss */}
-        {isDismissed && !feedbackGiven && (
-          <Animated.View style={feedbackStyle}>
+        {isDismissed && !feedbackGiven && isFeedbackVisible && (
+          <View>
             <Text className="text-sm text-warm-600 text-center mb-3">
               ¿Te fue útil este mensaje?
             </Text>
@@ -152,16 +140,16 @@ export function PsychSupportCard({
                 <Text className="text-warm-700 text-sm">No 👎</Text>
               </Pressable>
             </View>
-          </Animated.View>
+          </View>
         )}
 
         {/* Agradecimiento tras feedback */}
         {feedbackGiven && (
-          <Animated.View style={feedbackStyle}>
+          <View>
             <Text className="text-sm text-warm-600 text-center">
               Gracias por tu respuesta 💛
             </Text>
-          </Animated.View>
+          </View>
         )}
       </View>
     </Animated.View>

@@ -58,6 +58,7 @@ function GoalCard({
   }));
 
   const handlePress = () => {
+    // eslint-disable-next-line react-hooks/immutability
     scale.value = withSpring(0.95, { damping: 15, stiffness: 300 }, () => {
       scale.value = withSpring(1, { damping: 12, stiffness: 200 });
     });
@@ -72,13 +73,18 @@ function GoalCard({
         accessibilityRole="button"
         accessibilityState={{ selected: isSelected }}
         className={cn(
-          "flex-row items-center p-5 rounded-2xl mb-3 border-2",
+          "mb-3 flex-row items-center rounded-[26px] border p-5",
           isSelected
             ? "border-primary-500 bg-primary-50"
             : "border-neutral-200 bg-white"
         )}
       >
-        <Text className="text-3xl mr-4">{goal.emoji}</Text>
+        <View className={cn(
+          "mr-4 h-14 w-14 items-center justify-center rounded-[18px]",
+          isSelected ? "bg-white" : "bg-neutral-100"
+        )}>
+          <Text className="text-3xl">{goal.emoji}</Text>
+        </View>
         <View className="flex-1">
           <Text
             className={cn(
@@ -97,6 +103,7 @@ function GoalCard({
             {goal.description}
           </Text>
         </View>
+        {isSelected ? <Text className="text-lg text-primary-600">●</Text> : null}
       </Pressable>
     </Animated.View>
   );

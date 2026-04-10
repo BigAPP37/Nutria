@@ -14,12 +14,22 @@ export interface DailyLogEntry {
   deleted_at: string | null;
 }
 
+interface DailyLogRow extends Omit<DailyLogEntry, "food_name" | "food_brand" | "serving_name"> {
+  foods: { name: string | null; brand: string | null }[] | null;
+  food_servings: { serving_name: string | null }[] | null;
+}
+
 async function fetchDailyLog(userId: string, date: string): Promise<DailyLogEntry[]> {
   const { data, error } = await supabase.from("food_log_entries")
-    .select("id,meal_type,logged_at,quantity_grams,serving_quantity,calories_kcal,protein_g,carbs_g,fat_g,fiber_g,logging_method,ai_confidence,photo_storage_path,custom_description,foods(name,brand),food_servings(serving_name)")
+    .select("id,meal_type,logged_at,quantity_grams,serving_quantity,calories_kcal,protein_g,carbs_g,fat_g,fiber_g,logging_method,ai_confidence,photo_storage_path,custom_description,deleted_at,foods(name,brand),food_servings(serving_name)")
     .eq("user_id", userId).eq("log_date", date).is("deleted_at", null).order("logged_at", { ascending: true });
   if (error) throw error;
-  return (data ?? []).map((r: any) => ({ ...r, food_name: r.foods?.name??null, food_brand: r.foods?.brand??null, serving_name: r.food_servings?.serving_name??null }));
+  return ((data ?? []) as unknown as DailyLogRow[]).map(({ foods, food_servings, ...row }) => ({
+    ...row,
+    food_name: foods?.[0]?.name ?? null,
+    food_brand: foods?.[0]?.brand ?? null,
+    serving_name: food_servings?.[0]?.serving_name ?? null,
+  }));
 }
 
 export function useDailyLog(date: string) {

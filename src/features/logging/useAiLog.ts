@@ -1,7 +1,6 @@
 // src/features/logging/useAiLog.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { queryKeys } from "@/lib/constants";
 import { useLogSessionStore } from "@/stores/logSessionStore";
 import type { AiLogRequest, AiLogResponse } from "@/types/ai-log";
 
@@ -18,8 +17,7 @@ export function useAiLog() {
     onMutate: () => { setStep("analyzing"); },
     onSuccess: (data) => {
       setAiResult(data);
-      const today = new Date().toISOString().split("T")[0];
-      qc.invalidateQueries({ queryKey: queryKeys.dailyLog(today) });
+      qc.invalidateQueries({ queryKey: ["daily-log"] });
     },
     onError: (error: Error) => { setError(error.message); },
   });

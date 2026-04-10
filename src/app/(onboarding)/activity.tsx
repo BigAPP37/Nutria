@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { cn } from "@/lib/cn";
 import { useOnboardingStore } from "@/stores/onboardingStore";
+import { routes } from "@/types/navigation";
 import { ActivitySelector } from "@/components/onboarding/ActivitySelector";
 
 export default function ActivityScreen() {
@@ -16,7 +17,7 @@ export default function ActivityScreen() {
   const handleNext = () => {
     if (!activityLevel) return;
     nextStep();
-    router.push("/(onboarding)/tca-screening");
+    router.push(routes.onboarding.tcaScreening);
   };
 
   const handleBack = () => {

@@ -16,6 +16,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { cn } from "@/lib/cn";
 import { useOnboardingStore } from "@/stores/onboardingStore";
+import { routes } from "@/types/navigation";
 import type { TcaScreeningAnswer } from "@/stores/onboardingStore";
 
 const OPTIONS: Array<{
@@ -66,6 +67,8 @@ function OptionCard({
   }));
 
   const handlePress = () => {
+    // Reanimated shared values are mutated imperatively by design.
+    // eslint-disable-next-line react-hooks/immutability
     scale.value = withSpring(0.96, { damping: 15, stiffness: 300 }, () => {
       scale.value = withSpring(1, { damping: 12, stiffness: 200 });
     });
@@ -118,7 +121,10 @@ export default function TcaScreeningScreen() {
   const handleSelect = (key: TcaScreeningAnswer) => {
     setField("tcaScreening", key);
     if (key === "complicated") {
+      // Reanimated shared values are mutated imperatively by design.
+      // eslint-disable-next-line react-hooks/immutability
       supportOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) });
+      // eslint-disable-next-line react-hooks/immutability
       supportHeight.value = withTiming(160, { duration: 400, easing: Easing.out(Easing.cubic) });
     } else {
       supportOpacity.value = withTiming(0, { duration: 200 });
@@ -129,7 +135,7 @@ export default function TcaScreeningScreen() {
   const handleNext = () => {
     // No requiere selección — guardar null si no eligió nada
     nextStep();
-    router.push("/(onboarding)/preferences");
+    router.push(routes.onboarding.preferences);
   };
 
   const handleBack = () => {

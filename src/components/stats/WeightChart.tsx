@@ -5,8 +5,9 @@
 import React, { useMemo } from "react";
 import { View, Text } from "react-native";
 import { CartesianChart, Line, useChartPressState } from "victory-native";
-import { Circle, useFont } from "@shopify/react-native-skia";
+import { Circle } from "@shopify/react-native-skia";
 import { colors } from "@/lib/constants";
+import { parseDateKey } from "@/lib/date";
 import type { WeightPoint } from "@/features/profile/useWeightHistory";
 
 interface WeightChartProps {
@@ -55,17 +56,6 @@ function WeightChartComponent({ data, unit }: WeightChartProps) {
   const minY = Math.floor(Math.min(...weights) - 2);
   const maxY = Math.ceil(Math.max(...weights) + 2);
 
-  // Etiquetas del eje X: cada ~2 semanas
-  const xLabels = useMemo(() => {
-    const step = Math.max(1, Math.floor(data.length / 5));
-    return chartData
-      .filter((_, i) => i % step === 0 || i === chartData.length - 1)
-      .map((d) => {
-        const date = new Date(data[d.x].date);
-        return `${date.getDate()}/${date.getMonth() + 1}`;
-      });
-  }, [data]);
-
   // Tooltip activo
   const activeIndex = isActive ? Math.round(state.x.value.value) : -1;
   const activePoint =
@@ -102,7 +92,7 @@ function WeightChartComponent({ data, unit }: WeightChartProps) {
             formatXLabel: (val) => {
               const idx = Math.round(val as number);
               if (idx >= 0 && idx < data.length) {
-                const d = new Date(data[idx].date);
+                const d = parseDateKey(data[idx].date);
                 return `${d.getDate()}/${d.getMonth() + 1}`;
               }
               return "";
@@ -176,7 +166,7 @@ function formatDelta(deltaKg: number, unit: "kg" | "lb"): string {
 }
 
 function formatDateShort(dateStr: string): string {
-  const d = new Date(dateStr);
+  const d = parseDateKey(dateStr);
   return `${d.getDate()}/${d.getMonth() + 1}`;
 }
 

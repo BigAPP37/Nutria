@@ -25,6 +25,10 @@ const PREMIUM_ENTITLEMENT = "premium";
 
 let isConfigured = false;
 
+function isUserCancelledError(error: unknown): error is { userCancelled: boolean } {
+  return typeof error === "object" && error !== null && "userCancelled" in error;
+}
+
 /**
  * Inicializa RevenueCat. Llamar una vez al montar la app.
  * Si ya está configurado, no hace nada (idempotente).
@@ -164,9 +168,9 @@ export async function purchasePackage(
     }
 
     return { success: isPremium, customerInfo };
-  } catch (err: any) {
+  } catch (err: unknown) {
     // El usuario canceló la compra — no es un error real
-    if (err.userCancelled) {
+    if (isUserCancelledError(err) && err.userCancelled) {
       return { success: false };
     }
     console.error("Error en compra:", err);

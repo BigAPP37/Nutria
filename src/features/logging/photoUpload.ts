@@ -4,9 +4,9 @@
 // Path: photos/{userId}/{fecha}/{timestamp}_{mealType}.jpg
 
 import * as ImageManipulator from "expo-image-manipulator";
-import * as FileSystem from "expo-file-system";
 import { supabase } from "@/lib/supabase";
 import { decode } from "base64-arraybuffer";
+import { getTodayDateKey } from "@/lib/date";
 
 const BUCKET = "meal-photos";
 const MAX_SIZE = 1024;
@@ -43,7 +43,7 @@ export async function uploadMealPhoto(
   }
 
   // 2. Construir path único
-  const date = new Date().toISOString().split("T")[0];
+  const date = getTodayDateKey();
   const timestamp = Date.now();
   const path = `photos/${userId}/${date}/${timestamp}_${mealType}.jpg`;
 
