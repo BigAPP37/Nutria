@@ -1,8 +1,7 @@
 # Estado de la auditoría — Nutria — 2026-04-11
 
 > Generado a partir de la auditoría original `AUDITORIA_COMPLETA_10_04_2026.md`.
-> Refleja el estado real del código en el repo raíz Next.js/Supabase a fecha 11/04/2026.
-> El repo móvil anidado (`Nutria/`) NO está incluido en este análisis.
+> Última actualización: 2026-04-11 — incluye verificación de código móvil (`Nutria/`).
 
 ---
 
@@ -22,11 +21,15 @@
 | SEC-13 | `log_date` validado con regex + ventana de últimos 7 días |
 | SEC-07 | `supabase/config.toml`: `minimum_password_length = 8` + `password_requirements = "lower_upper_letters_digits"` |
 | SEC-08 | `supabase/config.toml`: `enable_confirmations = true` |
-| ARQ-04 | `calculateCalorieGoal`: `male → 1500 kcal`, `female → 1200 kcal` en `calculations.ts` |
+| ARQ-01 | Onboarding móvil usa `complete_onboarding_atomic` RPC — misma que web |
+| ARQ-02 | Ambas plataformas leen `goal_kcal` de BD como fuente de verdad |
+| ARQ-03 | Schema alineado: RPC escribe `goal_kcal`, `macro_protein_g`, etc. en ambas plataformas |
+| ARQ-04 | `calculateCalorieGoal`: `male → 1500 kcal`, `female → 1200 kcal` en web y móvil |
 | ARQ-05 | Toggle día completo: revert correcto en caso de error en dashboard |
 | ARQ-06 | `currentDate` se recalcula en `visibilitychange` + intervalo de 60s |
 | ARQ-07 | `useFoodSearch` usa `profile?.country_code ?? 'ES'` — no hardcoded |
 | ARQ-09 | Quota de fotos enforced server-side (`enforcePhotoQuota`) en ambos endpoints |
+| ARQ-10 | Agua: ambas plataformas leen sumando todas las filas; modelos de escritura compatibles |
 | ARQ-12 | Settings invoca `supabase.functions.invoke('tdee-update')` tras guardar peso |
 | ARQ-15 | Dashboard usa objetivo de fibra por sexo (`male 38g`, resto 25g) |
 | ARQ-19 | `daily_log_status` persiste totales y `meal_count` al marcar día completo |
