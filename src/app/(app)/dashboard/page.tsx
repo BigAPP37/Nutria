@@ -10,6 +10,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useProfile } from '@/hooks/useProfile'
 import { useTdeeState } from '@/hooks/useTdeeState'
 import { useStreakDays } from '@/hooks/useStreakDays'
+import { useDashboardData } from '@/hooks/useDashboardData'
+import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { CalorieRing } from '@/components/dashboard/CalorieRing'
 import { MicronutrientRow } from '@/components/dashboard/MicronutrientRow'
@@ -42,11 +44,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const { data: profile, isLoading: profileLoading, error: profileError } = useProfile()
 
-  const [foodEntries, setFoodEntries] = useState<FoodLogEntry[]>([])
-  const [waterGlasses, setWaterGlasses] = useState(0)
   const [isLoggingComplete, setIsLoggingComplete] = useState(false)
-  const [isLoadingData, setIsLoadingData] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
   const [showTextLogger, setShowTextLogger] = useState(false)
   const [editingEntry, setEditingEntry] = useState<FoodLogEntry | null>(null)
   const [currentDate, setCurrentDate] = useState(() => new Date())
@@ -58,6 +56,23 @@ export default function DashboardPage() {
   const { data: tdeeState, isLoading: tdeeLoading } = useTdeeState(userId)
   const { data: streakData } = useStreakDays(userId)
   const { data: psychFlag } = usePsychFlag(userId)
+  const queryClient = useQueryClient()
+  const {
+    data: dashboardData,
+    isLoading: isLoadingData,
+    error: dashboardError,
+  } = useDashboardData(userId, today)
+
+  const foodEntries = dashboardData?.foodEntries ?? []
+  const waterGlasses = dashboardData?.waterGlasses ?? 0
+  const loadError = dashboardError?.message ?? null
+
+  // Sync isLoggingComplete desde el hook cuando cambia el día o los datos cargan
+  useEffect(() => {
+    if (dashboardData !== undefined) {
+      setIsLoggingComplete(dashboardData.isLoggingComplete)
+    }
+  }, [dashboardData?.isLoggingComplete])
 
   useEffect(() => {
     if (profileLoading) return
@@ -83,65 +98,6 @@ export default function DashboardPage() {
     }
   }, [])
 
-  // Cargar datos del día
-  useEffect(() => {
-    if (!userId) return
-
-    async function loadDailyData() {
-      const supabase = createClient()
-      setIsLoadingData(true)
-      setLoadError(null)
-
-      const [
-        { data: entries, error: entriesError },
-        { data: status, error: statusError },
-        { data: waterRows, error: waterError },
-      ] = await Promise.all([
-        supabase
-          .from('food_log_entries')
-          .select('*, foods(name)')
-          .eq('user_id', userId)
-          .eq('log_date', today)
-          .is('deleted_at', null)
-          .order('id', { ascending: true }),
-        supabase
-          .from('daily_log_status')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('log_date', today)
-          .maybeSingle(),
-        supabase
-          .from('water_log')
-          .select('amount_ml')
-          .eq('user_id', userId)
-          .eq('log_date', today)
-          .order('created_at', { ascending: false }),
-      ])
-
-      const errors = [entriesError, statusError, waterError].filter(Boolean)
-      if (errors.length > 0) {
-        console.error('[dashboard] Error cargando datos del día:', errors)
-        setFoodEntries([])
-        setWaterGlasses(0)
-        setIsLoggingComplete(false)
-        setLoadError('No se pudieron cargar todos los datos del día. Reintenta en unos segundos.')
-        setIsLoadingData(false)
-        return
-      }
-
-      setFoodEntries((entries as FoodLogEntry[]) || [])
-      setIsLoggingComplete(status?.is_day_complete || false)
-
-      const totalWaterMl = (waterRows ?? []).reduce(
-        (sum, row) => sum + Number(row.amount_ml ?? 0),
-        0
-      )
-      setWaterGlasses(Math.round(totalWaterMl / 250))
-      setIsLoadingData(false)
-    }
-
-    loadDailyData()
-  }, [userId, today])
 
   // Calcular totales del día
   const totals = foodEntries.reduce(
@@ -176,17 +132,8 @@ export default function DashboardPage() {
   }
 
   // Recargar entradas tras guardar o editar
-  async function reloadFoodEntries() {
-    if (!userId) return
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('food_log_entries')
-      .select('*, foods(name)')
-      .eq('user_id', userId)
-      .eq('log_date', today)
-      .is('deleted_at', null)
-      .order('id', { ascending: true })
-    setFoodEntries((data as FoodLogEntry[]) || [])
+  function reloadFoodEntries() {
+    queryClient.invalidateQueries({ queryKey: ['dashboardData', userId, today] })
   }
 
 
@@ -319,7 +266,7 @@ export default function DashboardPage() {
             userId={userId}
             date={today}
             initialGlasses={waterGlasses}
-            onUpdate={setWaterGlasses}
+            onUpdate={() => queryClient.invalidateQueries({ queryKey: ['dashboardData', userId, today] })}
           />
         )}
 
