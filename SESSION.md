@@ -684,3 +684,38 @@ Use this structure for each daily update:
   - `/Users/alex/Documents/GitHub/Nutria/Nutria/src/features/onboarding/submitOnboarding.ts`
   - `/Users/alex/Documents/GitHub/Nutria/Nutria/src/features/tdee/useTdeeState.ts`
   - `/Users/alex/Documents/GitHub/Nutria/Nutria/src/features/dashboard/useStreakDays.ts`
+
+### 2026-04-11 05:56 Europe/Madrid
+- Workspace Used: `/Users/alex/Documents/GitHub/Nutria`.
+- Current Goal: Rematar findings de seguridad pendientes en Stripe y `psych-detector` sin tocar el repo móvil divergente.
+- Completed Today:
+  - Stripe:
+    - `src/app/api/stripe/checkout/route.ts` y `src/app/api/stripe/portal/route.ts` ya usan `APP_URL`/`NEXT_PUBLIC_APP_URL` en vez del header `Origin`.
+    - `src/app/api/stripe/webhook/route.ts` ahora implementa idempotencia real sobre `event.id`:
+      - reclama el evento en `stripe_events`
+      - ignora duplicados ya `processing`/`processed`
+      - permite reintento controlado si un evento previo quedó en `failed`
+      - marca `processed` o `failed` al final del manejo
+    - se añadió la migración `supabase/migrations/20260411_add_stripe_events.sql`.
+  - `psych-detector`:
+    - `supabase/functions/psych-detector/index.ts` deja de aceptar `SUPABASE_SERVICE_ROLE_KEY` como bearer para cron.
+    - el modo cron pasa a depender de `CRON_SECRET` dedicado.
+    - CORS deja de estar abierto con `*` y pasa a limitarse a orígenes conocidos (`APP_URL`, `NEXT_PUBLIC_APP_URL`, `SUPABASE_SITE_URL`, localhost y Expo local).
+    - el cron deja de procesar usuarios 100% secuencialmente y ahora trabaja en lotes concurrentes (`CRON_BATCH_SIZE=10`) con `Promise.allSettled`.
+  - Config:
+    - `.env.example` actualizado con `CRON_SECRET`.
+- Validation:
+  - `npm run lint` OK
+  - `npm run build` OK
+- Decisions:
+  - No tocar el repo anidado `Nutria/Nutria` hasta planificar rescate manual; el trabajo válido sigue centralizado en el repo raíz.
+  - Para Stripe, la idempotencia se resuelve con tabla propia; no con memoria local ni headers temporales.
+  - Para cron interno, nunca reutilizar `SUPABASE_SERVICE_ROLE_KEY` como credencial HTTP.
+- Open Issues:
+  - Sigue pendiente aplicar en Supabase las migraciones nuevas (`20260410_add_profile_avatars.sql` y `20260411_add_stripe_events.sql`).
+  - `psych-detector` todavía tiene margen de optimización adicional en queries por usuario; lo crítico ya queda cubierto.
+  - El repo raíz tiene cambios locales sin commit de este bloque de Stripe/`psych-detector`.
+- Next Session:
+  - agrupar este bloque en commit limpio de seguridad
+  - aplicar migraciones en Supabase
+  - si se sigue con la auditoría, revisar `SEC-07` / `SEC-08` en `supabase/config.toml`

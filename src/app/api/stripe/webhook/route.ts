@@ -32,6 +32,78 @@ export async function POST(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  type StripeEventRow = {
+    stripe_event_id: string
+    status: 'processing' | 'processed' | 'failed'
+  }
+
+  async function claimEvent(eventId: string, eventType: string) {
+    const { data: existingEvent, error: existingEventError } = await supabase
+      .from('stripe_events')
+      .select('stripe_event_id, status')
+      .eq('stripe_event_id', eventId)
+      .maybeSingle<StripeEventRow>()
+
+    if (existingEventError) {
+      throw new Error(`No se pudo consultar stripe_events para ${eventId}: ${existingEventError.message}`)
+    }
+
+    if (!existingEvent) {
+      const { error: insertError } = await supabase
+        .from('stripe_events')
+        .insert({
+          stripe_event_id: eventId,
+          event_type: eventType,
+          status: 'processing',
+        })
+
+      if (insertError) {
+        throw new Error(`No se pudo registrar el evento ${eventId}: ${insertError.message}`)
+      }
+
+      return true
+    }
+
+    if (existingEvent.status === 'failed') {
+      const { error: retryError } = await supabase
+        .from('stripe_events')
+        .update({
+          event_type: eventType,
+          status: 'processing',
+          processed_at: null,
+          last_error: null,
+        })
+        .eq('stripe_event_id', eventId)
+
+      if (retryError) {
+        throw new Error(`No se pudo reintentar el evento ${eventId}: ${retryError.message}`)
+      }
+
+      return true
+    }
+
+    return false
+  }
+
+  async function markEventStatus(
+    eventId: string,
+    status: 'processed' | 'failed',
+    lastError?: string | null
+  ) {
+    const { error } = await supabase
+      .from('stripe_events')
+      .update({
+        status,
+        processed_at: status === 'processed' ? new Date().toISOString() : null,
+        last_error: lastError ?? null,
+      })
+      .eq('stripe_event_id', eventId)
+
+    if (error) {
+      throw new Error(`No se pudo actualizar stripe_events para ${eventId}: ${error.message}`)
+    }
+  }
+
   async function updateProfile(
     userId: string,
     updates: {
@@ -80,6 +152,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const shouldProcessEvent = await claimEvent(event.id, event.type)
+    if (!shouldProcessEvent) {
+      return NextResponse.json({ received: true, duplicate: true }, { status: 200 })
+    }
+
     switch (event.type) {
       // Pago completado — activar Premium
       case 'checkout.session.completed': {
@@ -211,12 +288,26 @@ export async function POST(request: NextRequest) {
         // Evento no gestionado — ignorar silenciosamente
         break
     }
+
+    await markEventStatus(event.id, 'processed')
   } catch (error) {
     console.error('[webhook] Error procesando evento:', {
       eventId: event.id,
       eventType: event.type,
       error,
     })
+
+    try {
+      const message = error instanceof Error ? error.message : 'Error procesando webhook'
+      await markEventStatus(event.id, 'failed', message)
+    } catch (markError) {
+      console.error('[webhook] Error marcando stripe_events como failed:', {
+        eventId: event.id,
+        eventType: event.type,
+        error: markError,
+      })
+    }
+
     return NextResponse.json({ error: 'Error procesando webhook' }, { status: 500 })
   }
 

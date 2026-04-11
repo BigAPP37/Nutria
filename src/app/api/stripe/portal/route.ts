@@ -3,9 +3,11 @@
 import Stripe from 'stripe'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-export async function POST(request: NextRequest) {
+const APP_URL = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+
+export async function POST() {
   try {
     // 1. Verificar autenticación — extraer usuario del JWT de la cookie de sesión
     const supabase = await createClient()
@@ -37,14 +39,9 @@ export async function POST(request: NextRequest) {
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
-    const origin =
-      request.headers.get('origin') ??
-      process.env.NEXT_PUBLIC_APP_URL ??
-      'http://localhost:3000'
-
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: profile.stripe_customer_id,
-      return_url: `${origin}/settings`,
+      return_url: `${APP_URL}/settings`,
     })
 
     return NextResponse.json({ url: portalSession.url })

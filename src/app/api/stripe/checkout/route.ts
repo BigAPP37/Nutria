@@ -9,6 +9,7 @@ const STRIPE_PRICES = {
   monthly: process.env.STRIPE_PRICE_MONTHLY_ID!,
   annual: process.env.STRIPE_PRICE_ANNUAL_ID!,
 } as const
+const APP_URL = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,14 +71,12 @@ export async function POST(request: NextRequest) {
       !profile?.subscription_status ||
       profile.subscription_status === 'free'
 
-    const origin = request.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-
     const session = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
       mode: 'subscription',
       line_items: [{ price: STRIPE_PRICES[plan], quantity: 1 }],
-      success_url: `${origin}/premium/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/settings`,
+      success_url: `${APP_URL}/premium/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${APP_URL}/settings`,
       metadata: { user_id: user.id, plan },
       subscription_data: {
         trial_period_days: isFirstTime ? 7 : undefined,

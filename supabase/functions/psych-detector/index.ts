@@ -7,6 +7,19 @@ import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const CRON_SECRET = Deno.env.get('CRON_SECRET')
+const CRON_BATCH_SIZE = 10
+const allowedOrigins = new Set(
+  [
+    Deno.env.get('NEXT_PUBLIC_APP_URL'),
+    Deno.env.get('APP_URL'),
+    Deno.env.get('SUPABASE_SITE_URL'),
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:8081',
+    'exp://127.0.0.1:8081',
+  ].filter((origin): origin is string => Boolean(origin))
+)
 
 // Palabras clave que indican lenguaje restrictivo en las descripciones de comida
 const RESTRICTIVE_KEYWORDS = [
@@ -312,23 +325,67 @@ async function detectFlagsForUser(
 }
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Vary': 'Origin',
+}
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('origin')
+  const allowOrigin = origin && allowedOrigins.has(origin) ? origin : null
+
+  return {
+    ...CORS_HEADERS,
+    'Access-Control-Allow-Origin': allowOrigin ?? 'null',
+  }
+}
+
+function json(req: Request, data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      ...getCorsHeaders(req),
+    },
+  })
+}
+
+async function processUserBatch(supabase: SupabaseClient, userIds: string[]) {
+  const results = await Promise.allSettled(
+    userIds.map(async (userId) => {
+      const { flagsCreated, skipped } = await detectFlagsForUser(supabase, userId)
+      return { flagsCreated, skipped }
+    })
+  )
+
+  let processed = 0
+  let totalFlagsCreated = 0
+  let totalSkipped = 0
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      processed++
+      totalFlagsCreated += result.value.flagsCreated
+      totalSkipped += result.value.skipped
+      return
+    }
+
+    console.error(`Unexpected error processing user ${userIds[index]}:`, result.reason)
+    totalSkipped++
+  })
+
+  return { processed, totalFlagsCreated, totalSkipped }
 }
 
 serve(async (req: Request) => {
   // Manejar preflight CORS
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: CORS_HEADERS })
+    return new Response(null, { status: 204, headers: getCorsHeaders(req) })
   }
 
   // Solo aceptar POST
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    })
+    return json(req, { error: 'Method not allowed' }, 405)
   }
 
   // Crear cliente con service role para acceso completo
@@ -339,27 +396,21 @@ serve(async (req: Request) => {
   // Verificar autenticación — se requiere siempre un Authorization header válido
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'No autorizado' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    })
+    return json(req, { error: 'No autorizado' }, 401)
   }
 
   const token = authHeader.slice(7)
   let requestUserId: string | null = null
   let isCronRequest = false
 
-  if (token === SUPABASE_SERVICE_ROLE_KEY) {
-    // Service role key → modo cron autorizado
+  if (CRON_SECRET && token === CRON_SECRET) {
+    // Secreto dedicado → modo cron autorizado
     isCronRequest = true
   } else {
     // Verificar como JWT de usuario autenticado
     const { data: userData } = await supabase.auth.getUser(token)
     if (!userData?.user) {
-      return new Response(JSON.stringify({ error: 'Token inválido o expirado' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      })
+      return json(req, { error: 'Token inválido o expirado' }, 401)
     }
     requestUserId = userData.user.id
   }
@@ -389,35 +440,24 @@ serve(async (req: Request) => {
       .is('deleted_at', null)
 
     if (usersError) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch active users', details: usersError.message }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } }
-      )
+      return json(req, { error: 'Failed to fetch active users', details: usersError.message }, 500)
     }
 
     // Deduplicar user_ids
     const uniqueUserIds = [...new Set((activeUsers || []).map((r: { user_id: string }) => r.user_id))]
 
-    for (const userId of uniqueUserIds) {
-      try {
-        const { flagsCreated, skipped } = await detectFlagsForUser(supabase, userId)
-        processed++
-        totalFlagsCreated += flagsCreated
-        totalSkipped += skipped
-      } catch (err) {
-        // Continuar con el siguiente usuario ante cualquier error
-        console.error(`Unexpected error processing user ${userId}:`, err)
-        totalSkipped++
-      }
+    for (let i = 0; i < uniqueUserIds.length; i += CRON_BATCH_SIZE) {
+      const batch = uniqueUserIds.slice(i, i + CRON_BATCH_SIZE)
+      const batchResult = await processUserBatch(supabase, batch)
+      processed += batchResult.processed
+      totalFlagsCreated += batchResult.totalFlagsCreated
+      totalSkipped += batchResult.totalSkipped
     }
   }
 
-  return new Response(
-    JSON.stringify({
-      processed,
-      flags_created: totalFlagsCreated,
-      skipped: totalSkipped,
-    }),
-    { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } }
-  )
+  return json(req, {
+    processed,
+    flags_created: totalFlagsCreated,
+    skipped: totalSkipped,
+  })
 })
