@@ -40,35 +40,31 @@ function getTodayISO(date: Date): string {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { data: profile } = useProfile()
+  const { data: profile, isLoading: profileLoading, error: profileError } = useProfile()
 
-  const [userId, setUserId] = useState<string | null>(null)
   const [foodEntries, setFoodEntries] = useState<FoodLogEntry[]>([])
   const [waterGlasses, setWaterGlasses] = useState(0)
   const [isLoggingComplete, setIsLoggingComplete] = useState(false)
   const [isLoadingData, setIsLoadingData] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [showTextLogger, setShowTextLogger] = useState(false)
   const [editingEntry, setEditingEntry] = useState<FoodLogEntry | null>(null)
   const [currentDate, setCurrentDate] = useState(() => new Date())
 
   const today = getTodayISO(currentDate)
   const formattedDate = getFormattedDate(currentDate)
+  const userId = profile?.id ?? null
 
   const { data: tdeeState, isLoading: tdeeLoading } = useTdeeState(userId)
   const { data: streakData } = useStreakDays(userId)
   const { data: psychFlag } = usePsychFlag(userId)
 
-  // Obtener el usuario actual
   useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUserId(user.id)
-      } else {
-        router.push('/login')
-      }
-    })
-  }, [router])
+    if (profileLoading) return
+    if (profileError || profile === null) {
+      router.push('/login')
+    }
+  }, [profile, profileError, profileLoading, router])
 
   useEffect(() => {
     const syncCurrentDate = () => setCurrentDate(new Date())
@@ -92,43 +88,55 @@ export default function DashboardPage() {
     if (!userId) return
 
     async function loadDailyData() {
-      if (!userId) return
       const supabase = createClient()
+      setIsLoadingData(true)
+      setLoadError(null)
 
-      // Cargar entradas de comida del día
-      const { data: entries } = await supabase
-        .from('food_log_entries')
-        .select('*, foods(name)')
-        .eq('user_id', userId)
-        .eq('log_date', today)
-        .is('deleted_at', null)
-        .order('id', { ascending: true })
+      const [
+        { data: entries, error: entriesError },
+        { data: status, error: statusError },
+        { data: waterRows, error: waterError },
+      ] = await Promise.all([
+        supabase
+          .from('food_log_entries')
+          .select('*, foods(name)')
+          .eq('user_id', userId)
+          .eq('log_date', today)
+          .is('deleted_at', null)
+          .order('id', { ascending: true }),
+        supabase
+          .from('daily_log_status')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('log_date', today)
+          .maybeSingle(),
+        supabase
+          .from('water_log')
+          .select('amount_ml')
+          .eq('user_id', userId)
+          .eq('log_date', today)
+          .order('created_at', { ascending: false }),
+      ])
 
-      setFoodEntries((entries as FoodLogEntry[]) || [])
-
-      // Cargar estado diario
-      const { data: status } = await supabase
-        .from('daily_log_status')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('log_date', today)
-        .maybeSingle()
-
-      if (status) {
-        setIsLoggingComplete(status.is_day_complete || false)
+      const errors = [entriesError, statusError, waterError].filter(Boolean)
+      if (errors.length > 0) {
+        console.error('[dashboard] Error cargando datos del día:', errors)
+        setFoodEntries([])
+        setWaterGlasses(0)
+        setIsLoggingComplete(false)
+        setLoadError('No se pudieron cargar todos los datos del día. Reintenta en unos segundos.')
+        setIsLoadingData(false)
+        return
       }
 
-      // Cargar agua del día
-      const { data: waterRows } = await supabase
-        .from('water_log')
-        .select('amount_ml')
-        .eq('user_id', userId)
-        .eq('log_date', today)
-        .order('created_at', { ascending: false })
+      setFoodEntries((entries as FoodLogEntry[]) || [])
+      setIsLoggingComplete(status?.is_day_complete || false)
 
-      const totalWaterMl = (waterRows ?? []).reduce((sum, row) => sum + Number(row.amount_ml ?? 0), 0)
+      const totalWaterMl = (waterRows ?? []).reduce(
+        (sum, row) => sum + Number(row.amount_ml ?? 0),
+        0
+      )
       setWaterGlasses(Math.round(totalWaterMl / 250))
-
       setIsLoadingData(false)
     }
 
@@ -283,6 +291,12 @@ export default function DashboardPage() {
 
       {/* ============ CONTENIDO ============ */}
       <div className="page-container -mt-3 space-y-4 pt-4">
+        {loadError && (
+          <div className="rounded-[1.2rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {loadError}
+          </div>
+        )}
+
         {/* Tarjeta de soporte psicológico (si hay un flag activo) */}
         {psychFlag && userId && (
           <PsychSupportCard
