@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { getTodayDateKey } from '@/lib/date'
 import { ChevronLeft, ChevronRight, Lock, Clock, Flame, Beef, Wheat, Droplets, CheckCircle2 } from 'lucide-react'
@@ -319,10 +320,16 @@ function MealCard({ meal, onPress }: { meal: Meal; onPress: () => void }) {
       style={{ border: '1px solid #F0EDE9' }}
     >
       {/* Imagen o emoji */}
-      <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center bg-stone-50">
+      <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center bg-stone-50">
         {recipe?.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={recipe.image_url} alt={recipe.title} className="w-full h-full object-cover" />
+          <Image
+            src={recipe.image_url}
+            alt={recipe.title}
+            fill
+            unoptimized
+            className="object-cover"
+            sizes="64px"
+          />
         ) : (
           <span className="text-2xl">{MEAL_EMOJI[meal.meal_type] || '🍽️'}</span>
         )}

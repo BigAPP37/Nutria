@@ -73,9 +73,8 @@ export function useManualLog() {
   return useMutation<FoodLogEntry, Error, ManualLogParams>({
     mutationFn: insertManualLog,
     onSuccess: () => {
-      // Invalida las queries del dashboard para refrescar los datos del día
-      queryClient.invalidateQueries({ queryKey: ['daily-log'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      // La UI consume los totales del día vía `todayTotals`.
+      queryClient.invalidateQueries({ queryKey: ['todayTotals'] })
     },
   })
 }

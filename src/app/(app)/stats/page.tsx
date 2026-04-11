@@ -1,6 +1,7 @@
 // Pantalla de Progreso — orquesta todos los componentes y hooks de estadísticas
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
@@ -15,8 +16,6 @@ import { useMacroAverages } from '@/hooks/useMacroAverages'
 // Componentes de la sección de estadísticas
 import { QuickStats } from '@/components/stats/QuickStats'
 import { TdeeCard } from '@/components/stats/TdeeCard'
-import { WeightChart } from '@/components/stats/WeightChart'
-import { CalorieChart } from '@/components/stats/CalorieChart'
 import { MacroAverages } from '@/components/stats/MacroAverages'
 import { WeeklySnapshotCard } from '@/components/stats/WeeklySnapshotCard'
 import { WeightLogModal } from '@/components/stats/WeightLogModal'
@@ -29,6 +28,16 @@ import { AppHero, AppPage, AppPanel, AppSectionHeader } from '@/components/ui/Ap
 // Monetización Premium
 import { usePremiumStore } from '@/stores/premiumStore'
 import { StatsPaywallOverlay } from '@/components/premium/StatsPaywallOverlay'
+
+const WeightChart = dynamic(
+  () => import('@/components/stats/WeightChart').then((mod) => mod.WeightChart),
+  { ssr: false }
+)
+
+const CalorieChart = dynamic(
+  () => import('@/components/stats/CalorieChart').then((mod) => mod.CalorieChart),
+  { ssr: false }
+)
 
 export default function StatsPage() {
   const [userId, setUserId] = useState<string | null>(null)

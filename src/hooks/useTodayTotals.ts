@@ -41,6 +41,5 @@ export function useTodayTotals(userId: string | null) {
     queryFn: () => fetchTodayTotals(userId!),
     enabled: !!userId,
     staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
   })
 }

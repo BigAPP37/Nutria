@@ -185,7 +185,8 @@ export default function DashboardPage() {
   const displayName = profile?.display_name || 'amigo'
   const streakDays = streakData?.streak ?? 0
 
-  const fiberPercent = totals.fiber > 0 ? Math.min(100, Math.round((totals.fiber / 25) * 100)) : 0
+  const fiberGoal = profile?.biological_sex === 'male' ? 38 : 25
+  const fiberPercent = totals.fiber > 0 ? Math.min(100, Math.round((totals.fiber / fiberGoal) * 100)) : 0
 
   return (
     <div className="min-h-screen">
@@ -354,7 +355,16 @@ export default function DashboardPage() {
             setIsLoggingComplete(newValue)
             const supabase = createClient()
             const { error } = await supabase.from('daily_log_status').upsert(
-              { user_id: userId, log_date: today, is_day_complete: newValue },
+              {
+                user_id: userId,
+                log_date: today,
+                is_day_complete: newValue,
+                total_calories: Math.round(totals.calories),
+                total_protein_g: totals.protein,
+                total_carbs_g: totals.carbs,
+                total_fat_g: totals.fat,
+                meal_count: foodEntries.length,
+              },
               { onConflict: 'user_id,log_date' }
             )
 
