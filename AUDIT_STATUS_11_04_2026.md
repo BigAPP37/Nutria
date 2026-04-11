@@ -1,7 +1,8 @@
 # Estado de la auditoría — Nutria — 2026-04-11
 
 > Generado a partir de la auditoría original `AUDITORIA_COMPLETA_10_04_2026.md`.
-> Última actualización: 2026-04-11 — incluye verificación de código móvil (`Nutria/`).
+> Última actualización: 2026-04-11.
+> Alcance: web Next.js + Supabase + código móvil anidado (`Nutria/`) para issues de compatibilidad cross-platform.
 
 ---
 
