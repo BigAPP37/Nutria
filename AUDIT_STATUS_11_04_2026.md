@@ -63,12 +63,10 @@
 - **Fix:** Desestructurar `error` en cada query + mostrar toast/banner si alguna falla.
 - **Estimación:** 45min
 
-### PERF-03 — psych-detector: 5 queries secuenciales por usuario
+### ~~PERF-03~~ — psych-detector: 5 queries secuenciales por usuario ✅ PARCIALMENTE RESUELTO
 - **Archivo:** `supabase/functions/psych-detector/index.ts`
-- **Estado:** Parcial. Batching de 10 usuarios con `Promise.allSettled` ✅. Pero dentro de `detectFlagsForUser` las 5 queries son secuenciales (await encadenados). Además, la query de usuarios activos no usa DISTINCT.
-- **Fix:** (1) Paralelizar queries 1-4 con `Promise.all`. (2) Crear RPC `get_active_user_ids(since DATE)` con `SELECT DISTINCT`.
-- **Riesgo:** Timeout con 200+ usuarios activos (Edge Functions ~30-60s).
-- **Estimación:** 2h
+- **Estado:** Las 5 queries dentro de `detectFlagsForUser` ahora corren en paralelo con `Promise.all` ✅. Batching de 10 usuarios con `Promise.allSettled` ya existía ✅.
+- **Riesgo residual:** La query de usuarios activos en modo cron (`SELECT user_id FROM food_log_entries`) no usa `DISTINCT` a nivel SQL — la deduplicación sigue siendo en JS. Con muchos usuarios activos puede transferir muchas filas duplicadas. Fix requiere RPC `get_active_user_ids(since DATE)` con `SELECT DISTINCT user_id` → **necesita migración SQL, pendiente**.
 
 ### PERF-04 — Dashboard web: sin TanStack Query
 - **Archivo:** `src/app/(app)/dashboard/page.tsx`

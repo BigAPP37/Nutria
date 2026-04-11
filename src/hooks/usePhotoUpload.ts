@@ -88,13 +88,17 @@ export async function uploadPhoto(
     throw new Error(`Error al subir la foto: ${error.message}`)
   }
 
-  // Obtiene la URL pública del archivo subido
-  const { data: publicUrlData } = supabase.storage
+  // Genera una URL firmada (bucket privado) — válida 7 días
+  const { data: signedData, error: signedError } = await supabase.storage
     .from('food-photos')
-    .getPublicUrl(path)
+    .createSignedUrl(path, 60 * 60 * 24 * 7)
+
+  if (signedError || !signedData) {
+    throw new Error(`Error al obtener URL de la foto: ${signedError?.message}`)
+  }
 
   return {
     path,
-    url: publicUrlData.publicUrl,
+    url: signedData.signedUrl,
   }
 }

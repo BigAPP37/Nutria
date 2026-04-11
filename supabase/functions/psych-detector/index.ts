@@ -99,56 +99,75 @@ async function detectFlagsForUser(
   const last21Days = getLastNDaysISO(21)
   const cutoff14 = getNDaysAgoISO(14)
   const cutoff3 = getNDaysAgoISO(3)
+  const cutoff7 = getNDaysAgoISO(7)
   const cutoff21 = getNDaysAgoISO(21)
 
-  // Obtener registros de estado diario de los últimos 14 días
-  const { data: dailyStatuses, error: statusError } = await supabase
-    .from('daily_log_status')
-    .select('log_date, is_day_complete, total_calories')
-    .eq('user_id', userId)
-    .gte('log_date', cutoff14)
-    .returns<DailyLogStatus[]>()
+  // Las 5 queries son independientes entre sí — se lanzan en paralelo
+  const [
+    { data: dailyStatuses, error: statusError },
+    { data: foodEntries,   error: entriesError },
+    { data: foodEntries21, error: entries21Error },
+    { data: recentFlags },
+    { data: firstEntry },
+  ] = await Promise.all([
+    // 1. Estado diario últimos 14 días (FLAG 1)
+    supabase
+      .from('daily_log_status')
+      .select('log_date, is_day_complete, total_calories')
+      .eq('user_id', userId)
+      .gte('log_date', cutoff14)
+      .returns<DailyLogStatus[]>(),
+
+    // 2. Entradas de comida últimos 14 días (FLAGS 1, 2 y 3)
+    supabase
+      .from('food_log_entries')
+      .select('log_date, custom_description')
+      .eq('user_id', userId)
+      .gte('log_date', cutoff14)
+      .is('deleted_at', null)
+      .returns<FoodLogEntry[]>(),
+
+    // 3. Entradas de comida últimos 21 días — para verificar actividad mínima (FLAG 2)
+    supabase
+      .from('food_log_entries')
+      .select('log_date')
+      .eq('user_id', userId)
+      .gte('log_date', cutoff21)
+      .is('deleted_at', null)
+      .returns<Pick<FoodLogEntry, 'log_date'>[]>(),
+
+    // 4. Flags recientes últimos 7 días — para evitar duplicados
+    supabase
+      .from('psychological_flags')
+      .select('flag_type')
+      .eq('user_id', userId)
+      .gte('detected_at', cutoff7),
+
+    // 5. Primera entrada del usuario — para calcular antigüedad (FLAG 2)
+    supabase
+      .from('food_log_entries')
+      .select('log_date')
+      .eq('user_id', userId)
+      .is('deleted_at', null)
+      .order('log_date', { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+  ])
 
   if (statusError) {
     console.error(`Error fetching daily_log_status for ${userId}:`, statusError.message)
     return { flagsCreated: 0, skipped: 0 }
   }
-
-  // Obtener entradas de comida de los últimos 14 días
-  const { data: foodEntries, error: entriesError } = await supabase
-    .from('food_log_entries')
-    .select('log_date, custom_description')
-    .eq('user_id', userId)
-    .gte('log_date', cutoff14)
-    .is('deleted_at', null)
-    .returns<FoodLogEntry[]>()
-
   if (entriesError) {
     console.error(`Error fetching food_log_entries for ${userId}:`, entriesError.message)
     return { flagsCreated: 0, skipped: 0 }
   }
-
-  // Obtener entradas de los últimos 21 días para verificar actividad mínima
-  const { data: foodEntries21, error: entries21Error } = await supabase
-    .from('food_log_entries')
-    .select('log_date')
-    .eq('user_id', userId)
-    .gte('log_date', cutoff21)
-    .is('deleted_at', null)
-    .returns<Pick<FoodLogEntry, 'log_date'>[]>()
-
   if (entries21Error) {
     console.error(`Error fetching 21-day food_log_entries for ${userId}:`, entries21Error.message)
     return { flagsCreated: 0, skipped: 0 }
   }
-
-  // Flags activos en los últimos 7 días — para evitar duplicados
-  const cutoff7 = getNDaysAgoISO(7)
-  const { data: recentFlags } = await supabase
-    .from('psychological_flags')
-    .select('flag_type')
-    .eq('user_id', userId)
-    .gte('detected_at', cutoff7)
+  // recentFlags: si falla tratamos como vacío (no bloquea detección, solo puede duplicar flags)
+  // firstEntry: si falla/null → userAgeInDays = 0 → FLAG 2 no se activa (safe)
 
   const recentFlagTypes = new Set((recentFlags || []).map((f: { flag_type: string }) => f.flag_type))
 
@@ -193,16 +212,7 @@ async function detectFlagsForUser(
   // Días SIN ninguna entrada en food_log_entries, consecutivos desde más reciente
   // Solo activa si el usuario lleva >= 7 días usando la app Y tuvo >= 5 días con registros en las últimas 3 semanas
 
-  // Obtener primer registro del usuario para calcular antigüedad
-  const { data: firstEntry } = await supabase
-    .from('food_log_entries')
-    .select('log_date')
-    .eq('user_id', userId)
-    .is('deleted_at', null)
-    .order('log_date', { ascending: true })
-    .limit(1)
-    .maybeSingle()
-
+  // firstEntry obtenido en el Promise.all inicial
   const userAgeInDays = firstEntry
     ? Math.floor(
         (Date.now() - new Date(firstEntry.log_date).getTime()) / (1000 * 60 * 60 * 24)
