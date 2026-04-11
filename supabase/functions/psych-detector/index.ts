@@ -57,6 +57,10 @@ interface DetectedFlag {
   details: Record<string, unknown>
 }
 
+interface ActiveUserRow {
+  user_id: string
+}
+
 // Calcula fechas ISO de los últimos N días (sin incluir hoy opcionalmente)
 function getLastNDaysISO(n: number): string[] {
   const dates: string[] = []
@@ -387,6 +391,19 @@ async function processUserBatch(supabase: SupabaseClient, userIds: string[]) {
   return { processed, totalFlagsCreated, totalSkipped }
 }
 
+async function fetchActiveUserIds(supabase: SupabaseClient, sinceDate: string) {
+  const { data, error } = await supabase.rpc('get_active_user_ids', { since_date: sinceDate })
+
+  if (error) {
+    return { userIds: [], error }
+  }
+
+  return {
+    userIds: (data || []).map((row: ActiveUserRow) => row.user_id),
+    error: null,
+  }
+}
+
 serve(async (req: Request) => {
   // Manejar preflight CORS
   if (req.method === 'OPTIONS') {
@@ -443,21 +460,13 @@ serve(async (req: Request) => {
     // Modo cron: procesar todos los usuarios activos en los últimos 30 días
     const cutoff30 = getNDaysAgoISO(30)
 
-    const { data: activeUsers, error: usersError } = await supabase
-      .from('food_log_entries')
-      .select('user_id')
-      .gte('log_date', cutoff30)
-      .is('deleted_at', null)
-
+    const { userIds: activeUserIds, error: usersError } = await fetchActiveUserIds(supabase, cutoff30)
     if (usersError) {
       return json(req, { error: 'Failed to fetch active users', details: usersError.message }, 500)
     }
 
-    // Deduplicar user_ids
-    const uniqueUserIds = [...new Set((activeUsers || []).map((r: { user_id: string }) => r.user_id))]
-
-    for (let i = 0; i < uniqueUserIds.length; i += CRON_BATCH_SIZE) {
-      const batch = uniqueUserIds.slice(i, i + CRON_BATCH_SIZE)
+    for (let i = 0; i < activeUserIds.length; i += CRON_BATCH_SIZE) {
+      const batch = activeUserIds.slice(i, i + CRON_BATCH_SIZE)
       const batchResult = await processUserBatch(supabase, batch)
       processed += batchResult.processed
       totalFlagsCreated += batchResult.totalFlagsCreated
