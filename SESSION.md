@@ -723,3 +723,27 @@ Use this structure for each daily update:
   - agrupar este bloque en commit limpio de seguridad
   - aplicar migraciones en Supabase
   - si se sigue con la auditoría, revisar `SEC-07` / `SEC-08` en `supabase/config.toml`
+
+### 2026-04-11 22:45 Europe/Madrid
+- Workspace Used: `/Users/alex/Documents/GitHub/Nutria` — rama `main`
+- Current Goal: Cerrar auditoría completa, consolidar workspace único y sincronizar repo móvil.
+- Completed Today:
+  - **Workspace unificado:** `session-sync` fusionado a `main` con force push. Carpetas obsoletas (`Desktop/Nutria`, `nutria`, `Proyectos/Nutria`) eliminadas del disco. `SESSION.md` actualizado con regla de workspace único.
+  - **Migraciones aplicadas en Supabase:** `20260410` (avatares), `20260411` (índices), `20260412` (stripe_events), `20260413` (food-photos bucket), `20260414` (get_active_user_ids RPC).
+  - **PERF-02 + PERF-04:** Dashboard migrado a `useDashboardData` (TanStack Query, `staleTime: 30s`). `useEffect` manual eliminado. Commit `a34ba91`.
+  - **PERF-03:** psych-detector usa RPC `get_active_user_ids` en modo cron (Codex). Commit `3fb76eb`.
+  - **ARQ-01/02/03/10:** Verificados en código — ya estaban resueltos por Codex en sesiones anteriores. Auditados y marcados en `AUDIT_STATUS_11_04_2026.md`.
+  - **SEC-11:** Confirmado visualmente en Supabase Dashboard — bucket `food-photos` privado.
+  - **Auditoría completa 10/04/2026 cerrada al 100%.**
+  - **Repo móvil rescatado:** `Nutria/` tenía 9 commits locales sin pushear. Pusheados a rama `mobile` en GitHub tras fix de `http.postBuffer`. Commit head: `52f4085`.
+  - `AUDIT_STATUS_11_04_2026.md` actualizado y sincronizado en múltiples rondas.
+- Decisions:
+  - Workspace único: `/Users/alex/Documents/GitHub/Nutria`, rama `main`. Sin excepciones.
+  - Rama `mobile` en GitHub para el código Expo — no mezclar con `main` (web Next.js).
+  - Auditoría cerrada: próximo trabajo es producto/features o deuda móvil, no más hardening urgente.
+- Open Issues:
+  - `Nutria/` sigue sin ser trackeado desde el repo raíz — tiene su propio `.git` apuntando a rama `mobile`. No es un problema activo.
+  - SEC-07/08 (`config.toml`): verificar que los cambios están reflejados en Supabase Dashboard remoto (no solo en el archivo local).
+- Next Session:
+  - Decidir siguiente bloque: producto/UI/features (rediseño "Warm Living", recetas keto) o deuda móvil (TODOs, typed routes, pantallas placeholder).
+  - Si se va a producto: empezar por `globals.css` tokens + fuentes (máximo impacto visual, mínimo riesgo).
