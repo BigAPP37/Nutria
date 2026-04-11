@@ -44,36 +44,30 @@
 - **Archivo:** `supabase/migrations/20260411_add_core_indexes.sql` (creado)
 - **Estado:** Cerrado. Los 9 índices core quedaron confirmados en la BD remota. La migración los registra formalmente con `IF NOT EXISTS` (idempotente). **Añadido bonus:** `idx_user_profiles_stripe_customer`.
 
-### PERF-02 — Dashboard: waterfall userId + 3 queries secuenciales
-- **Archivo:** `src/app/(app)/dashboard/page.tsx` líneas 62-136
-- **Estado:** Pendiente total. Flujo actual:
-  1. `useEffect` → `supabase.auth.getUser()` → `setUserId` (~100ms)
-  2. Segundo `useEffect` (espera userId) → 3 queries secuenciales: `food_log_entries` → `daily_log_status` → `water_log`
-- **Fix:** (1) Reemplazar `getUser()` manual por `useProfile().data?.id`. (2) Envolver las 3 queries en `Promise.all([...])`.
-- **Riesgo:** +300-400ms de latencia visible en cada visita al dashboard.
-- **Estimación:** 2h
+### ~~PERF-02~~ — Dashboard: waterfall userId + 3 queries secuenciales ✅ PARCIALMENTE RESUELTO
+- **Archivo:** `src/app/(app)/dashboard/page.tsx`
+- **Estado:** El waterfall por `getUser()` ya no existe — el dashboard usa `profile?.id` directamente (línea 43). Las 3 queries ya están paralelizadas con `Promise.all` (línea 86). **Lo que falta:** el dashboard todavía no consume `useDashboardData` (el hook TanStack Query ya existe en `src/hooks/useDashboardData.ts`) — la carga sigue siendo manual en `useEffect`. Ese paso final se soluciona junto con PERF-04.
+- **Riesgo residual:** sin caché entre navegaciones hasta que se integre el hook.
 
 ---
 
 ## 🟠 PENDIENTES ALTOS
 
-### ARQ-11 — Dashboard: errores silenciosos en las 3 queries
-- **Archivo:** `src/app/(app)/dashboard/page.tsx` líneas 99-131
-- **Estado:** Pendiente. Las 3 queries ignoran `error` completamente. Dashboard vacío sin feedback si falla la BD.
-- **Fix:** Desestructurar `error` en cada query + mostrar toast/banner si alguna falla.
-- **Estimación:** 45min
+### ~~ARQ-11~~ — Dashboard: errores silenciosos en las 3 queries ✅ RESUELTO
+- **Archivo:** `src/app/(app)/dashboard/page.tsx` línea 121
+- **Estado:** Resuelto. El código recoge `entriesError`, `statusError`, `waterError`, hace `console.error`, resetea el estado y muestra `loadError` en la UI.
 
 ### ~~PERF-03~~ — psych-detector: 5 queries secuenciales por usuario ✅ PARCIALMENTE RESUELTO
 - **Archivo:** `supabase/functions/psych-detector/index.ts`
-- **Estado:** Las 5 queries dentro de `detectFlagsForUser` ahora corren en paralelo con `Promise.all` ✅. Batching de 10 usuarios con `Promise.allSettled` ya existía ✅.
-- **Riesgo residual:** La query de usuarios activos en modo cron (`SELECT user_id FROM food_log_entries`) no usa `DISTINCT` a nivel SQL — la deduplicación sigue siendo en JS. Con muchos usuarios activos puede transferir muchas filas duplicadas. Fix requiere RPC `get_active_user_ids(since DATE)` con `SELECT DISTINCT user_id` → **necesita migración SQL, pendiente**.
+- **Estado:** Las 5 queries dentro de `detectFlagsForUser` corren en paralelo con `Promise.all` ✅. Batching de 10 usuarios con `Promise.allSettled` ✅. La RPC `get_active_user_ids(since DATE)` ya existe en migración `20260414_get_active_user_ids.sql` ✅.
+- **Riesgo residual:** La edge function todavía no invoca la RPC — sigue consultando `food_log_entries` directamente y deduplicando en JS (línea 446). Fix: sustituir esa query por `supabase.rpc('get_active_user_ids', { since_date })`.
+- **Estimación:** 30min
 
-### PERF-04 — Dashboard web: sin TanStack Query
+### PERF-04 — Dashboard web: sin TanStack Query ⚠️ PENDIENTE DE INTEGRACIÓN
 - **Archivo:** `src/app/(app)/dashboard/page.tsx`
-- **Estado:** Pendiente. Dashboard usa `useState + useEffect` manual; no hay caché entre navegaciones.
-- **Fix:** Migrar `loadDailyData` a hook TanStack Query con `staleTime: 30_000`.
-- **Riesgo:** 3 requests a Supabase en cada tab-switch (3-5 veces/día por usuario).
-- **Estimación:** 3h (depende de PERF-02)
+- **Estado:** El hook `useDashboardData` ya existe en `src/hooks/useDashboardData.ts` con `staleTime: 30_000`. Lo que falta es que `dashboard/page.tsx` lo consuma en lugar de la carga manual con `useEffect`. Este paso cierra también PERF-02 por completo.
+- **Riesgo:** 3 requests a Supabase en cada tab-switch hasta integrarlo.
+- **Estimación:** 1h
 
 ### ~~PERF-05~~ — useManualLog: invalida query keys inexistentes ✅ RESUELTO
 - **Archivo:** `src/hooks/useManualLog.ts` líneas 77-78
@@ -99,10 +93,10 @@
 - **Archivo:** `supabase/config.toml` línea 205
 - **Estado:** Resuelto en `supabase/config.toml`. Confirmar también en Supabase Dashboard remoto si no se sincroniza automáticamente.
 
-### ~~SEC-11~~ — Bucket food-photos sin RLS ✅ RESUELTO
-- **Archivo:** `supabase/migrations/20260413_add_food_photos_bucket.sql` (pendiente de aplicar en remoto)
-- **Estado:** Fix preparado. La migración deja el bucket como **privado** (`public = false`) y añade políticas RLS para SELECT / INSERT / DELETE con `auth.uid()::text = (storage.foldername(name))[1]`. Idempotente.
-- **Riesgo residual:** `src/hooks/usePhotoUpload.ts` llama a `getPublicUrl()` (línea 94). En bucket privado esa URL no es accesible directamente — habrá que migrar a `createSignedUrl()` para que las fotos se muestren. Ese cambio requiere tocar `usePhotoUpload.ts` (no incluido aquí).
+### ~~SEC-11~~ — Bucket food-photos sin RLS ✅ RESUELTO EN CÓDIGO
+- **Archivo:** `supabase/migrations/20260413_add_food_photos_bucket.sql`
+- **Estado:** Migración aplicada en Supabase ✅. Bucket privado con RLS ✅. `src/hooks/usePhotoUpload.ts` ya usa `createSignedUrl()` (línea 91) — no `getPublicUrl()` ✅.
+- **Riesgo residual:** ninguno en código. Confirmar visualmente en Supabase Dashboard que el bucket `food-photos` aparece como privado.
 
 ### ~~ARQ-15~~ — Fibra hardcoded a 25g ✅ RESUELTO
 - **Archivo:** `src/app/(app)/dashboard/page.tsx` línea 188
@@ -122,28 +116,20 @@
 
 ---
 
-## Plan de ejecución — por bloques de impacto
+## Plan de ejecución — pendientes reales
 
-### Bloque A — Quick wins (<2h total)
-1. Bloque A ya cerrado en código. Solo queda confirmar que `SEC-07/08` también están reflejados en Supabase Dashboard remoto si el entorno no se sincroniza desde `config.toml`.
+### 1. PERF-04 + PERF-02 (1h) — Integrar useDashboardData en dashboard/page.tsx
+- El hook ya existe. Solo hay que sustituir el `useEffect` manual por el hook.
+- Cierra PERF-04 y termina de cerrar PERF-02.
 
-### Bloque B — Seguridad restante (2-3h)
-8. **SEC-11** (1h): Migración bucket food-photos + RLS
-9. **PERF-01** ya cerrado
+### 2. PERF-03 (30min) — Conectar psych-detector a get_active_user_ids
+- La RPC ya existe. Solo hay que invocarla en la edge function en lugar de la query directa.
 
-### Bloque C — Performance dashboard (4-5h)
-10. **PERF-02** (2h): Eliminar waterfall userId + paralelizar 3 queries
-11. **ARQ-11** (45min): Error handling en las 3 queries del dashboard
-12. **PERF-04** (3h): Migrar dashboard a TanStack Query
-
-### Bloque D — Edge Functions (2h)
-13. **PERF-03** (2h): Paralelizar queries en `detectFlagsForUser` + DISTINCT en query de usuarios activos
-
-### Bloque E — UI (30min)
-14. **PERF-07** (30min): `<img>` → `next/image` en `plans/[planId]/page.tsx`
+### 3. SEC-11 (5min) — Verificar bucket food-photos en Supabase Dashboard
+- Confirmar visualmente que el bucket aparece como privado.
 
 ---
 
-*Análisis generado el 2026-04-11 y actualizado tras los commits `50d50e2` y `87208d8`.*
+*Análisis generado el 2026-04-11 y actualizado el 2026-04-11 con correcciones de Codex + Claude.*
 *Workspace: `/Users/alex/Documents/GitHub/Nutria`*
 *Proyecto Supabase: `lslqqmfflmfjlzmneqof`*
