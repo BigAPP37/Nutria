@@ -101,11 +101,10 @@
 - **Archivo:** `supabase/config.toml` línea 205
 - **Estado:** Resuelto en `supabase/config.toml`. Confirmar también en Supabase Dashboard remoto si no se sincroniza automáticamente.
 
-### SEC-11 — Bucket food-photos sin RLS
-- **Estado:** Pendiente total. No existe migración para el bucket `food-photos` (el de avatars sí existe en `20260410_add_profile_avatars.sql`).
-- **Fix:** Migración con `INSERT INTO storage.buckets` + políticas RLS `auth.uid()::text = (storage.foldername(name))[1]`.
-- **Riesgo:** Si el bucket existe en producción, cualquier usuario autenticado puede acceder a fotos de otros.
-- **Estimación:** 1h
+### ~~SEC-11~~ — Bucket food-photos sin RLS ✅ RESUELTO
+- **Archivo:** `supabase/migrations/20260413_add_food_photos_bucket.sql` (pendiente de aplicar en remoto)
+- **Estado:** Fix preparado. La migración deja el bucket como **privado** (`public = false`) y añade políticas RLS para SELECT / INSERT / DELETE con `auth.uid()::text = (storage.foldername(name))[1]`. Idempotente.
+- **Riesgo residual:** `src/hooks/usePhotoUpload.ts` llama a `getPublicUrl()` (línea 94). En bucket privado esa URL no es accesible directamente — habrá que migrar a `createSignedUrl()` para que las fotos se muestren. Ese cambio requiere tocar `usePhotoUpload.ts` (no incluido aquí).
 
 ### ~~ARQ-15~~ — Fibra hardcoded a 25g ✅ RESUELTO
 - **Archivo:** `src/app/(app)/dashboard/page.tsx` línea 188
