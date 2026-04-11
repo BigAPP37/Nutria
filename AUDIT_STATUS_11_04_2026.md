@@ -57,17 +57,13 @@
 - **Archivo:** `src/app/(app)/dashboard/page.tsx` línea 121
 - **Estado:** Resuelto. El código recoge `entriesError`, `statusError`, `waterError`, hace `console.error`, resetea el estado y muestra `loadError` en la UI.
 
-### ~~PERF-03~~ — psych-detector: 5 queries secuenciales por usuario ✅ PARCIALMENTE RESUELTO
+### ~~PERF-03~~ — psych-detector: 5 queries secuenciales por usuario ✅ RESUELTO
 - **Archivo:** `supabase/functions/psych-detector/index.ts`
-- **Estado:** Las 5 queries dentro de `detectFlagsForUser` corren en paralelo con `Promise.all` ✅. Batching de 10 usuarios con `Promise.allSettled` ✅. La RPC `get_active_user_ids(since DATE)` ya existe en migración `20260414_get_active_user_ids.sql` ✅.
-- **Riesgo residual:** La edge function todavía no invoca la RPC — sigue consultando `food_log_entries` directamente y deduplicando en JS (línea 446). Fix: sustituir esa query por `supabase.rpc('get_active_user_ids', { since_date })`.
-- **Estimación:** 30min
+- **Estado:** Resuelto. Queries en paralelo con `Promise.all` ✅. Batching con `Promise.allSettled` ✅. psych-detector ahora usa la RPC `get_active_user_ids` en modo cron — no más query directa a `food_log_entries` ni deduplicación en JS ✅. Commit: `3fb76eb`.
 
-### PERF-04 — Dashboard web: sin TanStack Query ⚠️ PENDIENTE DE INTEGRACIÓN
+### ~~PERF-04~~ — Dashboard web: sin TanStack Query ✅ RESUELTO
 - **Archivo:** `src/app/(app)/dashboard/page.tsx`
-- **Estado:** El hook `useDashboardData` ya existe en `src/hooks/useDashboardData.ts` con `staleTime: 30_000`. Lo que falta es que `dashboard/page.tsx` lo consuma en lugar de la carga manual con `useEffect`. Este paso cierra también PERF-02 por completo.
-- **Riesgo:** 3 requests a Supabase en cada tab-switch hasta integrarlo.
-- **Estimación:** 1h
+- **Estado:** Resuelto. `dashboard/page.tsx` consume `useDashboardData` con `staleTime: 30s`. El `useEffect` de carga manual eliminado. `reloadFoodEntries` y agua usan `queryClient.invalidateQueries`. Commit: `a34ba91`.
 
 ### ~~PERF-05~~ — useManualLog: invalida query keys inexistentes ✅ RESUELTO
 - **Archivo:** `src/hooks/useManualLog.ts` líneas 77-78
@@ -118,15 +114,16 @@
 
 ## Plan de ejecución — pendientes reales
 
-### 1. PERF-04 + PERF-02 (1h) — Integrar useDashboardData en dashboard/page.tsx
-- El hook ya existe. Solo hay que sustituir el `useEffect` manual por el hook.
-- Cierra PERF-04 y termina de cerrar PERF-02.
-
-### 2. PERF-03 (30min) — Conectar psych-detector a get_active_user_ids
-- La RPC ya existe. Solo hay que invocarla en la edge function en lugar de la query directa.
+### ~~1. PERF-04 + PERF-02~~ ✅ Cerrado — `a34ba91`
+### ~~2. PERF-03~~ ✅ Cerrado — `3fb76eb`
 
 ### 3. SEC-11 (5min) — Verificar bucket food-photos en Supabase Dashboard
-- Confirmar visualmente que el bucket aparece como privado.
+- Confirmar visualmente que el bucket aparece como privado en `lslqqmfflmfjlzmneqof`.
+
+---
+
+## ✅ Auditoría completada
+Todos los issues de la auditoría 10/04/2026 están cerrados excepto SEC-11 (verificación visual, sin cambios de código).
 
 ---
 
