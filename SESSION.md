@@ -15,14 +15,18 @@ It captures the latest project state, decisions, blockers, and next steps so con
 - Always leave a concrete `Next Session` section
 
 ## Canonical Shared Repo
-- Shared context repo: `/Users/alex/Documents/GitHub/Nutria`
+- **ÚNICO workspace de trabajo:** `/Users/alex/Documents/GitHub/Nutria`
+- **Rama:** `main`
 - GitHub remote: `https://github.com/BigAPP37/Nutria`
 
-## Known Local Workspaces
-- `/Users/alex/Documents/GitHub/Nutria` — shared repo for context file
-- `/Users/alex/Desktop/Nutria` — recommended current working base aligned with remote and ahead by local commits
-- `/Users/alex/nutria` — Expo/Supabase scaffold branch with divergent history and uncommitted local changes
-- `/Users/alex/Proyectos/Nutria` — older divergent local line
+## Regla de workspace
+**Siempre trabajar en `/Users/alex/Documents/GitHub/Nutria` en rama `main`.**
+Las otras carpetas (Desktop/Nutria, nutria, Proyectos/Nutria) están obsoletas y NO deben usarse.
+
+## Workspaces obsoletos (no usar)
+- `/Users/alex/Desktop/Nutria` — desactualizado
+- `/Users/alex/nutria` — desactualizado
+- `/Users/alex/Proyectos/Nutria` — desactualizado
 
 ## Entry Template
 Use this structure for each daily update:
