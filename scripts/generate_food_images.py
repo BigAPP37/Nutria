@@ -6,7 +6,7 @@ Genera imágenes de alimentos con Google Imagen 3 y las sube a Supabase Storage.
 
 SETUP (una sola vez):
 ---------------------
-1. Añade GOOGLE_AI_KEY a .env.local (obtener en https://aistudio.google.com/apikey)
+1. Añade GOOGLE_AI_KEY o GEMINI_API_KEY a .env.local (obtener en https://aistudio.google.com/apikey)
 
 2. Crea el bucket 'food-images' en Supabase Dashboard:
    Storage → New bucket → Name: food-images → Public: ON → Create
@@ -132,13 +132,13 @@ def main():
 
     env = load_env()
 
-    # Google AI
-    google_key = env.get("GOOGLE_AI_KEY", "").strip()
+    # Google AI / Gemini
+    google_key = env.get("GOOGLE_AI_KEY", "").strip() or env.get("GEMINI_API_KEY", "").strip()
     if not google_key:
         sys.exit(
-            "❌  Falta GOOGLE_AI_KEY en .env.local\n"
+            "❌  Falta GOOGLE_AI_KEY o GEMINI_API_KEY en .env.local\n"
             "   Obtén tu clave en: https://aistudio.google.com/apikey\n"
-            "   Luego añade: GOOGLE_AI_KEY=tu_clave"
+            "   Luego añade: GEMINI_API_KEY=tu_clave"
         )
     ai_client = genai.Client(api_key=google_key)
 

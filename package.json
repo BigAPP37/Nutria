@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "recipes:pipeline": "python3 scripts/recipes_pipeline.py"
   },
   "dependencies": {
     "@stripe/stripe-js": "^9.0.0",
