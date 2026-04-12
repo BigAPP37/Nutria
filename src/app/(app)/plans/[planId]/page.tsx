@@ -155,6 +155,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
   const locked = plan.is_premium && !isPremium
   const goalMeta = GOAL_META[(plan.goal_type as keyof typeof GOAL_META) ?? 'maintain'] ?? GOAL_META.maintain
   const GoalIcon = goalMeta.icon
+  const visibleDays = locked ? days.filter((day) => day.day_number === 1) : days
 
   return (
     <AppPage>
@@ -253,27 +254,25 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
           </section>
         )}
 
-        {days.length > 0 && (
+        {visibleDays.length > 0 && (
           <section>
             <AppSectionHeader
               title="Semana"
-              description="Muévete por los días para ver el menú y el reparto previsto."
+              description={locked ? 'Puedes explorar el primer día del plan antes de desbloquearlo.' : 'Muévete por los días para ver el menú y el reparto previsto.'}
             />
             <div className="mt-3 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-              {days.map(day => {
+              {visibleDays.map(day => {
                 const isSelected = day.day_number === selectedDay
-                const isDayLocked = locked && day.day_number > 1
 
                 return (
                   <button
                     key={day.id}
-                    onClick={() => !isDayLocked && setSelectedDay(day.day_number)}
+                    onClick={() => setSelectedDay(day.day_number)}
                     className="flex min-w-[78px] flex-shrink-0 flex-col items-center gap-1 rounded-[1.25rem] px-4 py-3 transition-transform active:scale-[0.98]"
                     style={{
                       background: isSelected ? 'linear-gradient(135deg, #F59C62 0%, #E77D47 100%)' : '#FFFFFF',
                       border: `1px solid ${isSelected ? 'rgba(231,125,71,0.25)' : '#F0EDE9'}`,
                       boxShadow: isSelected ? '0 14px 28px rgba(231,125,71,0.18)' : 'var(--shadow-card)',
-                      opacity: isDayLocked ? 0.5 : 1,
                     }}
                   >
                     <span className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: isSelected ? 'rgba(255,255,255,0.72)' : '#B0AAA2' }}>
