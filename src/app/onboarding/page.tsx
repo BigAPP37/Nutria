@@ -86,16 +86,6 @@ export default function OnboardingPage() {
     })
   }, [router])
 
-  // Resetear store si el usuario llega a /onboarding con currentScreen='register'
-  // pero sin un OAuth code activo — significa que es una sesión persistida de una
-  // cuenta ya completada, no un flujo de registro en curso.
-  useEffect(() => {
-    const hasOAuthCode = window.location.search.includes('code=')
-    if (currentScreen === 'register' && !hasOAuthCode) {
-      useOnboardingStore.getState().goToScreen('welcome')
-    }
-  }, []) // eslint-disable-line
-
   // Auto-detectar país desde navigator.language al montar (una sola vez)
   useEffect(() => {
     if (data.country) return
@@ -301,13 +291,30 @@ export default function OnboardingPage() {
   // ─── Registro con Google ───────────────────────────────────────────────────
 
   async function handleGoogleRegister() {
-    const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/onboarding`,
-      },
-    })
+    setRegisterError(null)
+    setOauthError(null)
+    setIsRegistering(true)
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/onboarding`,
+          queryParams: {
+            prompt: 'select_account',
+          },
+        },
+      })
+
+      if (error) {
+        setRegisterError(error.message || 'No pudimos iniciar sesión con Google. Inténtalo de nuevo.')
+        setIsRegistering(false)
+      }
+    } catch {
+      setRegisterError('No pudimos iniciar sesión con Google. Inténtalo de nuevo.')
+      setIsRegistering(false)
+    }
   }
 
   // ─── Detectar auth tras redirect OAuth ────────────────────────────────────
@@ -2193,7 +2200,7 @@ export default function OnboardingPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
-                <p className="text-sm" style={{ color: '#44403C' }}>Verificando tu cuenta…</p>
+                <p className="text-sm" style={{ color: '#F5F5F4' }}>Verificando tu cuenta…</p>
               </div>
             )}
 
@@ -2261,7 +2268,7 @@ export default function OnboardingPage() {
                 style={{
                   background: '#FFFFFF',
                   border: '1px solid #E7E5E4',
-                  color: 'white',
+                  color: '#1C1917',
                 }}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
