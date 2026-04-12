@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { getTodayDateKey } from '@/lib/date'
-import { ChevronLeft, ChevronRight, Lock, Clock, Flame, Beef, Wheat, Droplets, CheckCircle2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Lock, Clock, Flame, Beef, Wheat, Droplets, CheckCircle2, Sparkles, Target, Dumbbell, Scale } from 'lucide-react'
+import { AppHero, AppPage, AppPanel, AppSectionHeader } from '@/components/ui/AppPage'
 
 type Plan = {
   id: string
@@ -40,6 +41,12 @@ type Meal = {
     image_url: string | null
   } | null
 }
+
+const GOAL_META = {
+  lose_weight: { label: 'Pérdida de peso', icon: Scale, color: '#F97316', bg: 'rgba(249,115,22,0.08)' },
+  maintain: { label: 'Mantenimiento', icon: Target, color: '#0EA5E9', bg: 'rgba(14,165,233,0.08)' },
+  gain_muscle: { label: 'Ganancia muscular', icon: Dumbbell, color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)' },
+} as const
 
 const MEAL_LABELS: Record<string, string> = {
   breakfast: 'Desayuno',
@@ -146,112 +153,136 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
 
   const currentDay = days.find(d => d.day_number === selectedDay)
   const locked = plan.is_premium && !isPremium
+  const goalMeta = GOAL_META[(plan.goal_type as keyof typeof GOAL_META) ?? 'maintain'] ?? GOAL_META.maintain
+  const GoalIcon = goalMeta.icon
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
-      {/* Header */}
-      <div
-        className="relative px-4 pt-12 pb-6"
-        style={{ background: 'linear-gradient(160deg, #F97316 0%, #EA6C0A 100%)' }}
+    <AppPage>
+      <AppHero
+        eyebrow="Plan semanal"
+        title={plan.title}
+        description={plan.description}
+        action={
+          <div className="hidden h-14 w-14 md:block">
+            <div className="relative h-14 w-14">
+              <Image src="/nutria-reading.png" alt="Nuti" fill className="object-contain drop-shadow-md" sizes="56px" />
+            </div>
+          </div>
+        }
       >
-        <button onClick={() => router.back()} className="flex items-center gap-1 text-white/80 mb-4 active:opacity-70">
-          <ChevronLeft className="w-5 h-5" />
-          <span className="text-sm">Dietas</span>
-        </button>
-        <h1 className="text-white text-xl font-black leading-tight">{plan.title}</h1>
-        <p className="text-white/75 text-xs mt-1 leading-relaxed">{plan.description}</p>
-
-        {/* Macro resumen */}
-        <div className="flex gap-3 mt-4">
-          {[
-            { icon: Flame,    val: `${plan.target_calories}`, unit: 'kcal' },
-            { icon: Beef,     val: `${plan.duration_days}`,   unit: 'días' },
-          ].map(({ icon: Icon, val, unit }) => (
-            <div key={unit} className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1">
-              <Icon className="w-3.5 h-3.5 text-white" />
-              <span className="text-white text-xs font-bold">{val}</span>
-              <span className="text-white/70 text-xs">{unit}</span>
-            </div>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => router.back()}
+            className="glass-pill inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-white/86 transition-transform active:scale-[0.98]"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            Volver a dietas
+          </button>
+          <span className="glass-pill inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-white/86">
+            <GoalIcon className="h-3.5 w-3.5" />
+            {goalMeta.label}
+          </span>
+          <span className="glass-pill inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-white/86">
+            <Flame className="h-3.5 w-3.5" />
+            {plan.target_calories} kcal/día
+          </span>
+          <span className="glass-pill inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-white/86">
+            <Clock className="h-3.5 w-3.5" />
+            {plan.duration_days} días
+          </span>
           {isActivePlan && (
-            <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-              <span className="text-white text-xs font-bold">Plan activo</span>
-            </div>
+            <span className="glass-pill inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-white/86">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Plan activo
+            </span>
           )}
         </div>
-      </div>
+      </AppHero>
 
-      <div className="px-4 py-5 space-y-5">
-
-        {/* Botón activar plan */}
+      <div className="space-y-6">
         {!isActivePlan && !locked && (
-          <>
-          <button
-            onClick={handleActivatePlan}
-            disabled={isActivatingPlan}
-            className="w-full py-3 rounded-2xl text-sm font-bold text-white active:scale-[0.98] transition-transform"
-            style={{
-              background: isActivatingPlan ? '#FDBA74' : 'linear-gradient(135deg, #F97316, #EA6C0A)',
-              boxShadow: isActivatingPlan ? 'none' : '0 4px 14px rgba(249,115,22,0.35)',
-            }}
-          >
-            {isActivatingPlan ? 'Activando...' : 'Empezar este plan'}
-          </button>
-          {activationError && (
-            <p className="mt-2 text-sm text-red-600">{activationError}</p>
-          )}
-          </>
+          <section>
+            <AppPanel className="p-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl"
+                  style={{ background: 'rgba(249,115,22,0.12)' }}
+                >
+                  <Sparkles className="h-5 w-5" style={{ color: '#F97316' }} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-stone-800">Listo para empezar</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-stone-500">
+                    Activa este plan para usarlo como referencia diaria.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleActivatePlan}
+                disabled={isActivatingPlan}
+                className="mt-4 w-full rounded-2xl py-3 text-sm font-bold text-white transition-transform active:scale-[0.98]"
+                style={{
+                  background: isActivatingPlan ? '#FDBA74' : 'linear-gradient(135deg, #F97316, #EA6C0A)',
+                  boxShadow: isActivatingPlan ? 'none' : '0 10px 24px rgba(249,115,22,0.24)',
+                }}
+              >
+                {isActivatingPlan ? 'Activando...' : 'Empezar este plan'}
+              </button>
+              {activationError ? <p className="mt-2 text-sm text-red-600">{activationError}</p> : null}
+            </AppPanel>
+          </section>
         )}
 
-        {/* Paywall */}
         {locked && (
-          <div
-            className="rounded-2xl p-4 flex items-center gap-3"
-            style={{ background: 'linear-gradient(135deg, #1C1917, #292524)' }}
-          >
-            <Lock className="w-5 h-5 text-amber-400 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-white text-sm font-bold">Plan Premium</p>
-              <p className="text-white/60 text-xs mt-0.5">Hazte premium para ver todos los días y recetas</p>
+          <section>
+            <div className="rounded-[1.8rem] bg-[linear-gradient(135deg,#1C1917_0%,#2E2019_58%,#3B352B_100%)] p-5 shadow-[0_24px_46px_rgba(28,25,23,0.22)]">
+              <div className="mb-2 flex items-center gap-2">
+                <Lock className="h-4 w-4 text-amber-400" />
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Plan premium</span>
+              </div>
+              <p className="text-base font-bold text-white">Este plan se desbloquea con Premium</p>
+              <p className="mt-1 text-xs text-white/62">Verás la semana completa, las recetas y el detalle de cada día.</p>
+              <button
+                onClick={() => router.push('/premium')}
+                className="mt-4 w-full rounded-xl py-2.5 text-sm font-bold text-white"
+                style={{ background: 'linear-gradient(135deg, #F97316, #EA6C0A)' }}
+              >
+                Ver premium
+              </button>
             </div>
-            <button
-              onClick={() => router.push('/premium')}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold"
-              style={{ background: '#F97316', color: 'white' }}
-            >
-              Ver
-            </button>
-          </div>
+          </section>
         )}
 
-        {/* Selector de días */}
         {days.length > 0 && (
           <section>
-            <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3 px-1">Semana</p>
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
+            <AppSectionHeader
+              title="Semana"
+              description="Muévete por los días para ver el menú y los macros previstos."
+            />
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
               {days.map(day => {
                 const isSelected = day.day_number === selectedDay
                 const isDayLocked = locked && day.day_number > 1
+
                 return (
                   <button
                     key={day.id}
                     onClick={() => !isDayLocked && setSelectedDay(day.day_number)}
-                    className="flex-shrink-0 flex flex-col items-center gap-0.5 rounded-2xl px-4 py-2.5 transition-all active:scale-95"
+                    className="flex min-w-[78px] flex-shrink-0 flex-col items-center gap-1 rounded-[1.25rem] px-4 py-3 transition-transform active:scale-[0.98]"
                     style={{
-                      background: isSelected ? '#F97316' : 'white',
-                      border: `1px solid ${isSelected ? '#F97316' : '#F0EDE9'}`,
-                      minWidth: 64,
+                      background: isSelected ? 'linear-gradient(135deg, #F59C62 0%, #E77D47 100%)' : '#FFFFFF',
+                      border: `1px solid ${isSelected ? 'rgba(231,125,71,0.25)' : '#F0EDE9'}`,
+                      boxShadow: isSelected ? '0 14px 28px rgba(231,125,71,0.18)' : 'var(--shadow-card)',
                       opacity: isDayLocked ? 0.5 : 1,
                     }}
                   >
-                    <span className="text-[10px] font-medium" style={{ color: isSelected ? 'rgba(255,255,255,0.8)' : '#A8A29E' }}>
-                      {day.day_label?.split('·')[1]?.trim() || `Día ${day.day_number}`}
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: isSelected ? 'rgba(255,255,255,0.72)' : '#B0AAA2' }}>
+                      {day.day_label?.split('·')[1]?.trim() || 'día'}
                     </span>
-                    <span className="text-sm font-black" style={{ color: isSelected ? 'white' : '#292524' }}>
+                    <span className="text-base font-black" style={{ color: isSelected ? '#FFFDF7' : '#292524' }}>
                       {day.day_number}
                     </span>
-                    {isDayLocked && <Lock className="w-3 h-3" style={{ color: isSelected ? 'white' : '#A8A29E' }} />}
+                    {isDayLocked ? <Lock className="h-3 w-3" style={{ color: isSelected ? '#FFFDF7' : '#A8A29E' }} /> : null}
                   </button>
                 )
               })}
@@ -259,43 +290,57 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
           </section>
         )}
 
-        {/* Macros del día */}
         {currentDay && (
-          <div className="grid grid-cols-4 gap-2">
-            {[
-              { icon: Flame,   label: 'kcal',    val: currentDay.total_calories,        color: '#F97316' },
-              { icon: Beef,    label: 'proteína', val: `${currentDay.total_protein_g}g`, color: '#10B981' },
-              { icon: Wheat,   label: 'carbos',   val: `${currentDay.total_carbs_g}g`,  color: '#F59E0B' },
-              { icon: Droplets,label: 'grasa',    val: `${currentDay.total_fat_g}g`,    color: '#6366F1' },
-            ].map(({ icon: Icon, label, val, color }) => (
-              <div key={label} className="rounded-xl bg-white p-2.5 text-center" style={{ border: '1px solid #F0EDE9' }}>
-                <Icon className="w-4 h-4 mx-auto mb-1" style={{ color }} />
-                <p className="text-sm font-black text-stone-800">{val}</p>
-                <p className="text-[9px] text-stone-400 uppercase">{label}</p>
-              </div>
-            ))}
-          </div>
+          <section>
+            <AppSectionHeader
+              title={currentDay.day_label || `Día ${selectedDay}`}
+              description="Vista rápida del reparto nutricional del día."
+            />
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              {[
+                { icon: Flame, label: 'Energía', val: currentDay.total_calories, suffix: 'kcal', color: '#F97316', bg: 'rgba(249,115,22,0.08)' },
+                { icon: Beef, label: 'Proteína', val: currentDay.total_protein_g, suffix: 'g', color: '#10B981', bg: 'rgba(16,185,129,0.08)' },
+                { icon: Wheat, label: 'Carbos', val: currentDay.total_carbs_g, suffix: 'g', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)' },
+                { icon: Droplets, label: 'Grasa', val: currentDay.total_fat_g, suffix: 'g', color: '#6366F1', bg: 'rgba(99,102,241,0.08)' },
+              ].map(({ icon: Icon, label, val, suffix, color, bg }) => (
+                <AppPanel key={label} className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl" style={{ background: bg }}>
+                      <Icon className="h-4 w-4" style={{ color }} />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">{label}</p>
+                      <p className="mt-1 text-lg font-black text-stone-800">
+                        {val}
+                        <span className="ml-1 text-sm font-semibold text-stone-400">{suffix}</span>
+                      </p>
+                    </div>
+                  </div>
+                </AppPanel>
+              ))}
+            </div>
+          </section>
         )}
 
-        {/* Comidas del día */}
         <section>
-          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3 px-1">
-            {currentDay?.day_label || 'Comidas'}
-          </p>
+          <AppSectionHeader
+            title="Comidas del día"
+            description={locked ? 'Puedes ver el primer día. El resto se desbloquea con Premium.' : 'Cada bloque abre la receta y sus detalles.'}
+          />
 
           {mealsLoading ? (
-            <div className="space-y-3">
-              {[0,1,2,3].map(i => (
-                <div key={i} className="rounded-2xl bg-white h-20 animate-pulse" style={{ border: '1px solid #F0EDE9' }} />
+            <div className="mt-3 space-y-3">
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} className="h-24 animate-pulse rounded-[1.5rem] bg-white" style={{ border: '1px solid #F0EDE9' }} />
               ))}
             </div>
           ) : meals.length === 0 ? (
-            <div className="rounded-2xl bg-white p-6 text-center" style={{ border: '1px solid #F0EDE9' }}>
-              <p className="text-2xl mb-1">🥗</p>
-              <p className="text-sm text-stone-500">Sin comidas para este día</p>
-            </div>
+            <AppPanel className="mt-3 p-8 text-center">
+              <p className="mb-2 text-3xl">🥗</p>
+              <p className="text-sm font-medium text-stone-600">Todavía no hay comidas cargadas para este día</p>
+            </AppPanel>
           ) : (
-            <div className="space-y-3">
+            <div className="mt-3 space-y-3">
               {meals.map(meal => (
                 <MealCard
                   key={meal.id}
@@ -307,7 +352,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
           )}
         </section>
       </div>
-    </div>
+    </AppPage>
   )
 }
 
@@ -316,49 +361,54 @@ function MealCard({ meal, onPress }: { meal: Meal; onPress: () => void }) {
   return (
     <button
       onClick={onPress}
-      className="w-full rounded-2xl bg-white flex items-center gap-3 p-3 text-left active:scale-[0.98] transition-transform"
-      style={{ border: '1px solid #F0EDE9' }}
+      className="app-panel w-full rounded-[1.5rem] p-3 text-left transition-transform active:scale-[0.98]"
     >
-      {/* Imagen o emoji */}
-      <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center bg-stone-50">
-        {recipe?.image_url ? (
-          <Image
-            src={recipe.image_url}
-            alt={recipe.title}
-            fill
-            unoptimized
-            className="object-cover"
-            sizes="64px"
-          />
-        ) : (
-          <span className="text-2xl">{MEAL_EMOJI[meal.meal_type] || '🍽️'}</span>
-        )}
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: '#F97316' }}>
-          {MEAL_LABELS[meal.meal_type]}
-        </p>
-        <p className="text-sm font-bold text-stone-800 leading-snug line-clamp-2">
-          {recipe?.title || 'Sin receta'}
-        </p>
-        <div className="flex items-center gap-3 mt-1.5">
-          {recipe?.calories_kcal && (
-            <span className="text-xs text-stone-500 flex items-center gap-1">
-              <Flame className="w-3 h-3" style={{ color: '#F97316' }} />
-              {Math.round(recipe.calories_kcal)} kcal
-            </span>
-          )}
-          {recipe?.ready_in_min && (
-            <span className="text-xs text-stone-400 flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {recipe.ready_in_min} min
-            </span>
+      <div className="flex items-center gap-3">
+        <div className="relative flex h-18 w-18 flex-shrink-0 items-center justify-center overflow-hidden rounded-[1.15rem] bg-[rgba(249,115,22,0.06)]">
+          {recipe?.image_url ? (
+            <Image
+              src={recipe.image_url}
+              alt={recipe.title}
+              fill
+              unoptimized
+              className="object-cover"
+              sizes="72px"
+            />
+          ) : (
+            <span className="text-2xl">{MEAL_EMOJI[meal.meal_type] || '🍽️'}</span>
           )}
         </div>
-      </div>
 
-      <ChevronRight className="w-4 h-4 text-stone-300 flex-shrink-0" />
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex items-center gap-2">
+            <span
+              className="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]"
+              style={{ background: 'rgba(249,115,22,0.08)', color: '#F97316' }}
+            >
+              {MEAL_LABELS[meal.meal_type]}
+            </span>
+          </div>
+          <p className="line-clamp-2 text-sm font-bold leading-snug text-stone-800">
+            {recipe?.title || 'Sin receta'}
+          </p>
+          <div className="mt-2 flex items-center gap-3">
+            {recipe?.calories_kcal ? (
+              <span className="flex items-center gap-1 text-xs text-stone-500">
+                <Flame className="h-3 w-3" style={{ color: '#F97316' }} />
+                {Math.round(recipe.calories_kcal)} kcal
+              </span>
+            ) : null}
+            {recipe?.ready_in_min ? (
+              <span className="flex items-center gap-1 text-xs text-stone-400">
+                <Clock className="h-3 w-3" />
+                {recipe.ready_in_min} min
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        <ChevronRight className="h-4 w-4 flex-shrink-0 text-stone-300" />
+      </div>
     </button>
   )
 }
