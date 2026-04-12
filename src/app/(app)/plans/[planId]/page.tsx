@@ -257,7 +257,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
           <section>
             <AppSectionHeader
               title="Semana"
-              description="Muévete por los días para ver el menú y los macros previstos."
+              description="Muévete por los días para ver el menú y el reparto previsto."
             />
             <div className="mt-3 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
               {days.map(day => {
@@ -282,7 +282,6 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
                     <span className="text-base font-black" style={{ color: isSelected ? '#FFFDF7' : '#292524' }}>
                       {day.day_number}
                     </span>
-                    {isDayLocked ? <Lock className="h-3 w-3" style={{ color: isSelected ? '#FFFDF7' : '#A8A29E' }} /> : null}
                   </button>
                 )
               })}
@@ -325,7 +324,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
         <section>
           <AppSectionHeader
             title="Comidas del día"
-            description={locked ? 'Puedes ver el primer día. El resto se desbloquea con Premium.' : 'Cada bloque abre la receta y sus detalles.'}
+            description="Cada bloque abre la receta y sus detalles."
           />
 
           {mealsLoading ? (
