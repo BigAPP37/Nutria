@@ -151,6 +151,42 @@ export default function OnboardingPage() {
     pose: 'reading' as const,
   }
 
+  function getErrorMessage(err: unknown): string {
+    if (err instanceof Error && err.message) return err.message
+
+    if (err && typeof err === 'object') {
+      const candidate = err as {
+        message?: string
+        code?: string
+        details?: string
+        hint?: string
+        error_description?: string
+      }
+
+      return (
+        candidate.message ||
+        candidate.error_description ||
+        candidate.details ||
+        candidate.hint ||
+        candidate.code ||
+        JSON.stringify(err)
+      )
+    }
+
+    return 'Error desconocido'
+  }
+
+  async function waitForAuthenticatedUser(supabase: ReturnType<typeof createClient>, retries = 8, delayMs = 350) {
+    for (let attempt = 0; attempt < retries; attempt += 1) {
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (user) return user
+      if (error && attempt === retries - 1) throw error
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+
+    return null
+  }
+
   // ─── Guardar datos del onboarding una vez autenticado ─────────────────────
 
   async function submitOnboardingData() {
@@ -171,6 +207,11 @@ export default function OnboardingPage() {
 
     try {
       const supabase = createClient()
+      const authUser = await waitForAuthenticatedUser(supabase)
+
+      if (!authUser) {
+        throw new Error('No pudimos validar tu sesión con Google. Inténtalo de nuevo.')
+      }
 
       const nutritionGoals = calculateNutritionGoals({
         weight_kg: storeData.weight_kg,
@@ -232,8 +273,11 @@ export default function OnboardingPage() {
       router.push('/dashboard')
       router.refresh()
     } catch (err) {
-      console.error('Error en submit del onboarding:', err)
-      setRegisterError('Ocurrió un error inesperado. Por favor intenta de nuevo.')
+      console.error('Error en submit del onboarding:', {
+        raw: err,
+        parsed: getErrorMessage(err),
+      })
+      setRegisterError(getErrorMessage(err))
     } finally {
       setIsRegistering(false)
       isSubmittingRef.current = false
