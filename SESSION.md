@@ -16,11 +16,13 @@ It captures the latest project state, decisions, blockers, and next steps so con
 
 ## Canonical Shared Repo
 - **ÚNICO workspace de trabajo:** `/Users/alex/Documents/GitHub/Nutria`
-- **Rama:** `main`
+- **Rama única compartida de trabajo:** `alex-dev`
 - GitHub remote: `https://github.com/BigAPP37/Nutria`
 
 ## Regla de workspace
-**Siempre trabajar en `/Users/alex/Documents/GitHub/Nutria` en rama `main`.**
+**Siempre trabajar en `/Users/alex/Documents/GitHub/Nutria` sobre la rama `alex-dev`.**
+**No trabajar en `main` para cambios de producto o UI salvo instrucción explícita.**
+**Codex y Claude deben entrar directamente a `alex-dev` al iniciar sesión.**
 Las otras carpetas (Desktop/Nutria, nutria, Proyectos/Nutria) están obsoletas y NO deben usarse.
 
 ## Workspaces obsoletos (no usar)
@@ -747,3 +749,24 @@ Use this structure for each daily update:
 - Next Session:
   - Decidir siguiente bloque: producto/UI/features (rediseño "Warm Living", recetas keto) o deuda móvil (TODOs, typed routes, pantallas placeholder).
   - Si se va a producto: empezar por `globals.css` tokens + fuentes (máximo impacto visual, mínimo riesgo).
+
+### 2026-04-12 Europe/Madrid
+- Workspace Used: `/Users/alex/Documents/GitHub/Nutria`
+- Current Goal: Unificar el flujo de trabajo entre Codex, Claude y Codespaces en una sola rama compartida y dejar el bloque reciente de onboarding visible ahí.
+- Completed Today:
+  - Se fija `alex-dev` como rama única compartida para trabajo diario.
+  - Regla de sesión actualizada: Codex y Claude deben entrar directamente a `alex-dev`, no a `main`.
+  - El bloque reciente de onboarding web queda preparado para moverse a `alex-dev` como siguiente base compartida.
+- Decisions:
+  - `main` deja de ser la rama de trabajo interactiva del día a día.
+  - Codespaces, Codex y Claude deben revisar y desarrollar sobre `alex-dev`.
+  - Si hay cambios locales ajenos en el árbol, se aíslan antes de empujar; no se abren ramas nuevas por defecto salvo petición explícita.
+- Open Issues:
+  - Confirmar que `alex-dev` existe en remoto y que el Codespace del usuario se abre sobre esa rama.
+  - `next.config.ts` sigue modificado fuera del bloque de onboarding y `Nutria/` sigue como repo anidado no trackeado desde la raíz.
+- Next Session:
+  - Trabajar directamente en `alex-dev`.
+  - Verificar en Codespaces con `git branch --show-current` que la sesión está sobre `alex-dev` antes de revisar UI.
+- Refs:
+  - Rama objetivo: `alex-dev`
+  - Bloque reciente de onboarding: commit `f160f70`
