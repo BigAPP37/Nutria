@@ -1,0 +1,71 @@
+{
+  "bundle_id": "2026-04-fatloss-sample-v1",
+  "recipes": [
+    {
+      "slug": "tortilla-espinacas-feta",
+      "title": "Tortilla de espinacas con feta",
+      "description": "Desayuno saciante, alto en proteína y fácil de preparar.",
+      "meal_type": "breakfast",
+      "cuisine": "mediterránea",
+      "prep_time_min": 8,
+      "cook_time_min": 10,
+      "ready_in_min": 18,
+      "servings": 1,
+      "calories_kcal": 410,
+      "protein_g": 28,
+      "carbs_g": 8,
+      "fat_g": 27,
+      "fiber_g": 3,
+      "tags": ["high-protein", "mediterranean"],
+      "ingredients": [
+        {
+          "ingredient_name": "huevos",
+          "quantity": 3,
+          "unit": "unidades"
+        },
+        {
+          "ingredient_name": "espinacas frescas",
+          "quantity": 80,
+          "unit": "g"
+        },
+        {
+          "ingredient_name": "queso feta",
+          "quantity": 40,
+          "unit": "g"
+        }
+      ],
+      "steps": [
+        {
+          "instruction": "Saltea las espinacas 2 minutos en una sartén antiadherente."
+        },
+        {
+          "instruction": "Añade los huevos batidos, incorpora el feta y cocina hasta cuajar."
+        }
+      ]
+    }
+  ],
+  "plans": [
+    {
+      "slug": "fatloss-1800-7d-sample",
+      "title": "Plan Pérdida de Peso · 7 días · Sample",
+      "description": "Lote editorial de ejemplo para pérdida de peso realista.",
+      "goal_type": "lose_weight",
+      "duration_days": 1,
+      "target_calories": 1800,
+      "is_premium": true,
+      "is_sample": true,
+      "days": [
+        {
+          "day_number": 1,
+          "day_label": "Día 1 · Lunes",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_slug": "tortilla-espinacas-feta"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

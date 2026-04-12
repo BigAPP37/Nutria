@@ -15,6 +15,13 @@ Ahora hay un punto único de entrada:
 python3 scripts/recipes_pipeline.py <comando>
 ```
 
+Y además un flujo editorial real para lotes externos:
+
+```bash
+npm run recipes:pipeline -- validate-bundle content/recipe-bundles/example-bundle
+npm run recipes:pipeline -- import-bundle content/recipe-bundles/example-bundle --replace-existing-plans
+```
+
 ## Flujo seguro recomendado
 
 Este es el flujo que puedes ejecutar sin riesgo de duplicar planes:
@@ -64,6 +71,30 @@ python3 scripts/recipes_pipeline.py seed-static
 
 `seed-static` queda fuera del flujo automático por defecto porque hoy inserta datos de forma acumulativa.
 
+### Validar e importar bundles editoriales
+
+Estructura esperada:
+
+- una carpeta por lote
+- `manifest.json`
+- subcarpeta `images/` con las imágenes Gemini ya generadas
+
+Ejemplo incluido:
+
+`content/recipe-bundles/example-bundle/manifest.json`
+
+Validación:
+
+```bash
+npm run recipes:pipeline -- validate-bundle content/recipe-bundles/example-bundle
+```
+
+Importación:
+
+```bash
+npm run recipes:pipeline -- import-bundle content/recipe-bundles/example-bundle --replace-existing-plans
+```
+
 ## Variables necesarias
 
 En `.env.local`:
@@ -100,13 +131,13 @@ Para hacerlo bien de verdad:
   recibe objetivo, kcal, estilo, restricciones y número de días
 
 - `agent_recipe_generator.py`
-  devuelve recetas y planes en JSON normalizado
+  devuelve recetas y planes en JSON normalizado para guardarlos en una carpeta bundle
 
 - `validate_recipe_bundle.py`
   bloquea datos incoherentes antes de tocar Supabase
 
-- `sync_recipe_bundle.py`
-  hace upsert idempotente en BD
+- `import_recipe_bundle.py`
+  sube imágenes y sincroniza recetas/planes a BD
 
 - `recipes_pipeline.py`
   queda como orquestador operativo
@@ -115,9 +146,9 @@ Para hacerlo bien de verdad:
 
 1. Hacer idempotente el seed estático.
 2. Sacar las recetas estáticas a JSON/YAML en vez de tenerlas embebidas en Python.
-3. Crear el validador de bundles.
-4. Crear el importador/upserter de bundles.
-5. Conectar un agente generador encima.
+3. Conectar ChatGPT para producir bundles completos.
+4. Generar imágenes Gemini por slug dentro del bundle.
+5. Revisar y luego importar con `validate-bundle -> import-bundle`.
 
 ## Operativa mínima diaria
 

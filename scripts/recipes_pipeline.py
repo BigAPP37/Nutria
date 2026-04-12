@@ -156,6 +156,21 @@ def cmd_seed_static(args: argparse.Namespace) -> None:
     run_script("seed_meal_plans_static.py", script_args, child_env)
 
 
+def cmd_validate_bundle(args: argparse.Namespace) -> None:
+    env = load_env()
+    child_env = build_child_env(env)
+    run_script("validate_recipe_bundle.py", [args.bundle_dir], child_env)
+
+
+def cmd_import_bundle(args: argparse.Namespace) -> None:
+    env = load_env()
+    child_env = build_child_env(env)
+    script_args = [args.bundle_dir]
+    if args.replace_existing_plans:
+        script_args.append("--replace-existing-plans")
+    run_script("import_recipe_bundle.py", script_args, child_env)
+
+
 def cmd_full_safe(args: argparse.Namespace) -> None:
     env = load_env()
     sb = get_supabase(env)
@@ -200,6 +215,15 @@ def build_parser() -> argparse.ArgumentParser:
     seed_static = subparsers.add_parser("seed-static", help="Inserta planes estáticos de forma explícita")
     seed_static.add_argument("--dry-run", action="store_true", help="Vista previa sin insertar")
     seed_static.set_defaults(func=cmd_seed_static)
+
+    validate_bundle = subparsers.add_parser("validate-bundle", help="Valida un lote editorial de recetas/planes")
+    validate_bundle.add_argument("bundle_dir", help="Ruta de la carpeta del bundle")
+    validate_bundle.set_defaults(func=cmd_validate_bundle)
+
+    import_bundle = subparsers.add_parser("import-bundle", help="Importa un lote editorial validado a Supabase")
+    import_bundle.add_argument("bundle_dir", help="Ruta de la carpeta del bundle")
+    import_bundle.add_argument("--replace-existing-plans", action="store_true", help="Reemplaza planes existentes por title+goal_type")
+    import_bundle.set_defaults(func=cmd_import_bundle)
 
     full_safe = subparsers.add_parser("full-safe", help="Ejecuta el flujo seguro por defecto: reporte + imágenes automáticas + reporte")
     full_safe.add_argument("--limit", type=int, default=None, help="Máximo de foods a procesar")
