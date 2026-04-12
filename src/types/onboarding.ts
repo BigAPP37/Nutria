@@ -4,8 +4,9 @@
 export type ScreenId =
   | 'welcome'
   | 'goal'
-  | 'weight-experience'
   | 'past-diets'
+  | 'diet-feedback'
+  | 'weight-experience'
   | 'body-name'
   | 'body-about'
   | 'body-measurements'

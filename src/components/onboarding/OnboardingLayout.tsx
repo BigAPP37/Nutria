@@ -59,9 +59,9 @@ export function OnboardingLayout({
       {/* Contenido de cada pantalla */}
       <main
         className="page-container relative z-10 flex flex-1 flex-col overflow-y-auto pt-4"
-        style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
+        style={{ paddingBottom: 'max(3.5rem, calc(env(safe-area-inset-bottom) + 1rem))' }}
       >
-        <div className="app-card min-h-full px-5 py-5 sm:px-6">
+        <div className="app-card min-h-full px-5 pt-5 pb-8 sm:px-6 sm:pb-10">
           {children}
         </div>
       </main>

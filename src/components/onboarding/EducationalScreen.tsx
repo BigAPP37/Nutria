@@ -24,9 +24,9 @@ export function EducationalScreen({
   illustrationContent,
 }: EducationalScreenProps) {
   return (
-    <div className="flex-1 flex flex-col pt-2 pb-8">
+    <div className="flex-1 flex flex-col pt-2 pb-10">
       {/* Contenido centrado verticalmente */}
-      <div className="flex-[2] flex flex-col items-center justify-center gap-4 text-center">
+      <div className="flex-[2] flex flex-col items-center justify-center gap-5 text-center">
         {/* Ilustración de Nuti */}
         <div className="flex items-center justify-center flex-shrink-0 w-full px-2">
           {illustrationContent ?? (
@@ -53,7 +53,7 @@ export function EducationalScreen({
       <button
         type="button"
         onClick={onNext}
-        className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95"
+        className="mt-10 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95"
         style={{
           background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
           boxShadow: '0 6px 24px rgba(249,115,22,0.35)',

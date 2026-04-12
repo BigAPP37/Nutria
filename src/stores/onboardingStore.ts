@@ -95,11 +95,7 @@ export function getScreenSequence(data: OnboardingData): ScreenId[] {
 
   // Pantallas condicionales de experiencia con la pérdida de peso
   if (data.goal === 'lose_weight') {
-    screens.push('weight-experience')
-    // Solo mostrar historial de dietas si no es la primera vez intentando
-    if (data.weight_loss_experience && data.weight_loss_experience !== 'never_tried') {
-      screens.push('past-diets')
-    }
+    screens.push('past-diets', 'diet-feedback', 'weight-experience')
   }
 
   screens.push(

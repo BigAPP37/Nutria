@@ -109,6 +109,57 @@ export default function OnboardingPage() {
   const sequence = getScreenSequence(data)
   const currentIndex = sequence.indexOf(currentScreen)
   const totalScreens = sequence.length
+  const primaryPastDiet = data.past_diets[0] ?? 'none'
+
+  const dietFeedback = {
+    keto: {
+      eyebrow: 'Keto / baja en carbohidratos',
+      title: 'Suele funcionar rápido, pero no por magia',
+      text: 'La bajada inicial suele venir en parte de agua y glucógeno. A medio plazo, su efecto depende más de la adherencia total que del nombre de la dieta.',
+      pose: 'thinking' as const,
+    },
+    intermittent_fasting: {
+      eyebrow: 'Ayuno intermitente',
+      title: 'Ayuda si te hace comer menos, no por la ventana en sí',
+      text: 'La evidencia muestra resultados parecidos a otras estrategias cuando las calorías finales son similares. Lo útil es si te reduce fricción y hambre.',
+      pose: 'reading' as const,
+    },
+    mediterranean: {
+      eyebrow: 'Dieta mediterránea',
+      title: 'Tiene muy buena evidencia, pero las cantidades siguen importando',
+      text: 'Es uno de los patrones más sólidos para salud cardiometabólica y adherencia. Aun así, el progreso real depende de cómo se sostiene en el día a día.',
+      pose: 'celebration' as const,
+    },
+    calorie_counting: {
+      eyebrow: 'Conteo de calorías',
+      title: 'Da precisión, pero no debería agotarte',
+      text: 'Registrar mejora bastante la conciencia de ingesta. Suele funcionar mejor cuando se usa como guía flexible y no como una fuente constante de estrés.',
+      pose: 'reading' as const,
+    },
+    high_protein: {
+      eyebrow: 'Dieta alta en proteína',
+      title: 'Suele ayudar por saciedad y masa muscular',
+      text: 'Una proteína suficiente puede facilitar la pérdida de grasa y proteger mejor la masa magra. Su valor real aparece cuando el patrón completo es sostenible.',
+      pose: 'spoon' as const,
+    },
+    vegan: {
+      eyebrow: 'Vegetariana / vegana',
+      title: 'Puede funcionar muy bien si está bien planificada',
+      text: 'Suele mejorar calidad dietética y puede facilitar el déficit. Los puntos más sensibles suelen ser proteína total, B12, hierro y calcio.',
+      pose: 'pear' as const,
+    },
+    none: {
+      eyebrow: 'Sin dietas previas',
+      title: 'Empezar simple suele ser una ventaja',
+      text: 'No hace falta venir de una dieta para progresar. La evidencia favorece más la consistencia y el entorno diario que empezar con reglas complejas.',
+      pose: 'wave' as const,
+    },
+  }[primaryPastDiet] ?? {
+    eyebrow: 'Tu contexto',
+    title: 'Lo importante no es la etiqueta, sino lo que puedes sostener',
+    text: 'El mejor plan suele ser el que puedes repetir con calma durante semanas, no el que promete más en menos días.',
+    pose: 'reading' as const,
+  }
 
   // ─── Guardar datos del onboarding una vez autenticado ─────────────────────
 
@@ -523,7 +574,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 mt-3"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -540,14 +591,39 @@ export default function OnboardingPage() {
           <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <SingleSelectQuestion
-                question="¿Cuál es tu objetivo principal?"
-                subtitle="Esto nos ayuda a personalizar todo tu plan"
+                question="¿Qué cambio quieres notar primero?"
+                subtitle="Elige la prioridad que más te mueve ahora. Nuti ajustará tu plan, tu tono y tus recomendaciones desde aquí."
                 options={[
-                  { value: 'lose_weight',  label: 'Perder peso' },
-                  { value: 'maintain',     label: 'Mantener mi peso' },
-                  { value: 'gain_muscle',  label: 'Ganar masa muscular' },
-                  { value: 'improve_diet', label: 'Mejorar mi alimentación' },
-                  { value: 'eat_healthy',  label: 'Comer de forma más saludable' },
+                  {
+                    value: 'lose_weight',
+                    label: 'Perder grasa con claridad',
+                    description: 'Bajar peso sin hacerlo a base de restricciones imposibles.',
+                    emoji: '🔥',
+                  },
+                  {
+                    value: 'maintain',
+                    label: 'Mantenerme sin desorden',
+                    description: 'Sostener tu peso con más estructura, calma y consistencia.',
+                    emoji: '⚖️',
+                  },
+                  {
+                    value: 'gain_muscle',
+                    label: 'Ganar músculo de verdad',
+                    description: 'Comer mejor para construir masa muscular con intención.',
+                    emoji: '💪',
+                  },
+                  {
+                    value: 'improve_diet',
+                    label: 'Ordenar mi alimentación',
+                    description: 'Comer mejor, improvisar menos y recuperar sensación de control.',
+                    emoji: '🥗',
+                  },
+                  {
+                    value: 'eat_healthy',
+                    label: 'Sentirme más saludable',
+                    description: 'Tener una base más sana y ligera sin obsesionarme con contar todo.',
+                    emoji: '✨',
+                  },
                 ]}
                 value={data.goal_raw}
                 onChange={(v) => {
@@ -568,7 +644,7 @@ export default function OnboardingPage() {
               type="button"
               onClick={nextScreen}
               disabled={!data.goal_raw}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -579,19 +655,68 @@ export default function OnboardingPage() {
           </div>
         )
 
-      // ── 3. Experiencia con la pérdida de peso (solo si goal=lose_weight) ──
+      // ── 3. Dieta seguida anteriormente (solo si goal=lose_weight) ────────
+      case 'past-diets':
+        return (
+          <div className="flex-1 flex flex-col justify-between py-3">
+            <div className="space-y-5">
+              <SingleSelectQuestion
+                question="¿Qué enfoque has probado más en serio?"
+                subtitle="Elige la dieta o estrategia que más has seguido hasta ahora."
+                options={[
+                  { value: 'keto', label: 'Keto / baja en carbohidratos' },
+                  { value: 'intermittent_fasting', label: 'Ayuno intermitente' },
+                  { value: 'mediterranean', label: 'Mediterránea' },
+                  { value: 'calorie_counting', label: 'Conteo de calorías' },
+                  { value: 'high_protein', label: 'Alta en proteína' },
+                  { value: 'vegan', label: 'Vegetariana / vegana' },
+                  { value: 'none', label: 'Ninguna en concreto' },
+                ]}
+                value={data.past_diets[0] ?? null}
+                onChange={(v) => updateData({ past_diets: [v] })}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={nextScreen}
+              disabled={data.past_diets.length === 0}
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              style={{
+                background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
+                boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
+              }}
+            >
+              Continuar
+            </button>
+          </div>
+        )
+
+      // ── 4. Salida científica según dieta previa ──────────────────────────
+      case 'diet-feedback':
+        return (
+          <EducationalScreen
+            eyebrow={dietFeedback.eyebrow}
+            title={dietFeedback.title}
+            text={dietFeedback.text}
+            onNext={nextScreen}
+            pose={dietFeedback.pose}
+          />
+        )
+
+      // ── 5. Experiencia con la pérdida de peso (solo si goal=lose_weight) ─
       case 'weight-experience':
         return (
           <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <SingleSelectQuestion
-                question="¿Tienes experiencia con la pérdida de peso?"
+                question="¿Cómo te ha ido cuando has intentado bajar?"
+                subtitle="Esto nos ayuda a evitar el tipo de plan que ya no te sirve."
                 options={[
-                  { value: 'lost_want_more', label: 'He perdido peso y quiero perder más' },
-                  { value: 'tried_failed',   label: 'He intentado perder peso, pero sin éxito' },
-                  { value: 'lost_regained',  label: 'He perdido peso, pero lo he recuperado' },
-                  { value: 'on_medication',  label: 'Estoy tomando medicación (Wegovy, Mounjaro…)' },
-                  { value: 'never_tried',    label: 'Es mi primera vez intentándolo' },
+                  { value: 'lost_want_more', label: 'He progresado, pero aún quiero bajar más' },
+                  { value: 'tried_failed', label: 'Lo he intentado varias veces y no me ha funcionado' },
+                  { value: 'lost_regained', label: 'He bajado, pero luego lo he recuperado' },
+                  { value: 'on_medication', label: 'Ahora mismo lo hago con medicación' },
+                  { value: 'never_tried', label: 'En realidad sería mi primer intento serio' },
                 ]}
                 value={data.weight_loss_experience}
                 onChange={(v) => updateData({ weight_loss_experience: v as typeof data.weight_loss_experience })}
@@ -601,49 +726,13 @@ export default function OnboardingPage() {
               type="button"
               onClick={nextScreen}
               disabled={!data.weight_loss_experience}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
               }}
             >
               Continuar
-            </button>
-          </div>
-        )
-
-      // ── 4. Historial de dietas (condicional) ──────────────────────────────
-      case 'past-diets':
-        return (
-          <div className="flex-1 flex flex-col justify-between py-3">
-            <div className="space-y-5">
-              <MultiSelectQuestion
-                question="¿Has seguido alguna de estas dietas?"
-                subtitle="Selecciona todas las que hayas probado"
-                layout="pills"
-                options={[
-                  { value: 'keto',                label: 'Keto / baja en carbohidratos' },
-                  { value: 'intermittent_fasting', label: 'Ayuno intermitente' },
-                  { value: 'mediterranean',        label: 'Mediterránea' },
-                  { value: 'calorie_counting',     label: 'Conteo de calorías' },
-                  { value: 'high_protein',         label: 'Dieta proteica' },
-                  { value: 'vegan',                label: 'Vegetariana/vegana' },
-                  { value: 'none',                 label: 'Ninguna' },
-                ]}
-                values={data.past_diets}
-                onChange={(v) => updateData({ past_diets: v })}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
-              style={{
-                background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
-                boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
-              }}
-            >
-              {data.past_diets.length > 0 ? 'Continuar' : 'Omitir'}
             </button>
           </div>
         )
@@ -691,7 +780,7 @@ export default function OnboardingPage() {
               type="button"
               onClick={nextScreen}
               disabled={!data.name.trim()}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -862,7 +951,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={handleBodyAboutNext}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1054,7 +1143,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={handleBodyMeasurementsNext}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1087,7 +1176,7 @@ export default function OnboardingPage() {
               type="button"
               onClick={nextScreen}
               disabled={!data.activity_level}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1132,7 +1221,7 @@ export default function OnboardingPage() {
               type="button"
               onClick={nextScreen}
               disabled={!data.food_relationship}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1169,7 +1258,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1202,7 +1291,7 @@ export default function OnboardingPage() {
               type="button"
               onClick={nextScreen}
               disabled={!data.emotional_eating_frequency}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1240,7 +1329,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1311,7 +1400,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1431,7 +1520,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 mt-4"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1524,7 +1613,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 mt-4"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1577,7 +1666,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1612,7 +1701,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1646,7 +1735,7 @@ export default function OnboardingPage() {
               type="button"
               onClick={nextScreen}
               disabled={!data.commitment_time}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1681,7 +1770,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1715,7 +1804,7 @@ export default function OnboardingPage() {
               type="button"
               onClick={nextScreen}
               disabled={!data.living_situation}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1748,7 +1837,7 @@ export default function OnboardingPage() {
               type="button"
               onClick={nextScreen}
               disabled={!data.household_support}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1794,7 +1883,7 @@ export default function OnboardingPage() {
               type="button"
               onClick={nextScreen}
               disabled={!data.ai_tone_preference}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -1895,7 +1984,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={nextScreen}
-              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                 boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
@@ -2081,7 +2170,7 @@ export default function OnboardingPage() {
                   <button
                     type="button"
                     onClick={nextScreen}
-                    className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95"
+                    className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95"
                     style={{ background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)', boxShadow: '0 6px 24px rgba(249,115,22,0.4)' }}
                   >
                     Guarda tu plan — es gratis
@@ -2252,7 +2341,7 @@ export default function OnboardingPage() {
                 type="button"
                 onClick={handleEmailRegister}
                 disabled={isRegistering}
-                className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+                className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
                 style={{
                   background: 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
                   boxShadow: '0 6px 24px rgba(249,115,22,0.35)',
