@@ -114,50 +114,50 @@ export default function OnboardingPage() {
   const dietFeedback = {
     keto: {
       eyebrow: 'Keto / baja en carbohidratos',
-      title: 'Suele funcionar rápido, pero no por magia',
-      text: 'La bajada inicial suele venir en parte de agua y glucógeno. A medio plazo, su efecto depende más de la adherencia total que del nombre de la dieta.',
+      title: 'Suele dar sensación de avance rápido',
+      text: 'Al principio muchas personas notan cambios rápidos, pero parte de eso suele ser agua. Lo que de verdad marca la diferencia después es cuánto tiempo puedes sostenerlo bien.',
       pose: 'thinking' as const,
     },
     intermittent_fasting: {
       eyebrow: 'Ayuno intermitente',
-      title: 'Ayuda si te hace comer menos, no por la ventana en sí',
-      text: 'La evidencia muestra resultados parecidos a otras estrategias cuando las calorías finales son similares. Lo útil es si te reduce fricción y hambre.',
+      title: 'Puede ayudarte si te simplifica comer mejor',
+      text: 'No funciona por la ventana en sí, sino porque a algunas personas les ayuda a ordenar horarios y a comer con menos fricción.',
       pose: 'reading' as const,
     },
     mediterranean: {
       eyebrow: 'Dieta mediterránea',
-      title: 'Tiene muy buena evidencia, pero las cantidades siguen importando',
-      text: 'Es uno de los patrones más sólidos para salud cardiometabólica y adherencia. Aun así, el progreso real depende de cómo se sostiene en el día a día.',
+      title: 'Tiene una base muy sólida',
+      text: 'Es de los enfoques con mejor respaldo para salud y adherencia. Aun así, sigue necesitando estructura real en el día a día para que se note.',
       pose: 'celebration' as const,
     },
     calorie_counting: {
       eyebrow: 'Conteo de calorías',
-      title: 'Da precisión, pero no debería agotarte',
-      text: 'Registrar mejora bastante la conciencia de ingesta. Suele funcionar mejor cuando se usa como guía flexible y no como una fuente constante de estrés.',
+      title: 'Da claridad, pero no debería pesarte mentalmente',
+      text: 'Registrar puede ayudarte mucho a entender lo que comes. Suele ir mejor cuando se usa como guía, no como una fuente constante de presión.',
       pose: 'reading' as const,
     },
     high_protein: {
       eyebrow: 'Dieta alta en proteína',
-      title: 'Suele ayudar por saciedad y masa muscular',
-      text: 'Una proteína suficiente puede facilitar la pérdida de grasa y proteger mejor la masa magra. Su valor real aparece cuando el patrón completo es sostenible.',
+      title: 'Suele ayudar bastante con saciedad y fuerza',
+      text: 'Tomar suficiente proteína puede hacer más fácil comer mejor y cuidar la masa muscular. Lo importante es que el conjunto siga siendo llevadero.',
       pose: 'spoon' as const,
     },
     vegan: {
       eyebrow: 'Vegetariana / vegana',
-      title: 'Puede funcionar muy bien si está bien planificada',
-      text: 'Suele mejorar calidad dietética y puede facilitar el déficit. Los puntos más sensibles suelen ser proteína total, B12, hierro y calcio.',
+      title: 'Puede ir muy bien si está bien montada',
+      text: 'Puede ser una forma muy buena de comer. Normalmente solo pide prestar un poco más de atención a proteína, B12, hierro y calcio.',
       pose: 'pear' as const,
     },
     none: {
       eyebrow: 'Sin dietas previas',
       title: 'Empezar simple suele ser una ventaja',
-      text: 'No hace falta venir de una dieta para progresar. La evidencia favorece más la consistencia y el entorno diario que empezar con reglas complejas.',
+      text: 'No necesitas venir de una dieta para hacerlo bien. Muchas veces funciona mejor empezar con algo claro, realista y fácil de sostener.',
       pose: 'wave' as const,
     },
   }[primaryPastDiet] ?? {
     eyebrow: 'Tu contexto',
     title: 'Lo importante no es la etiqueta, sino lo que puedes sostener',
-    text: 'El mejor plan suele ser el que puedes repetir con calma durante semanas, no el que promete más en menos días.',
+    text: 'El mejor plan suele ser el que puedes repetir con calma durante semanas, no el que promete demasiado en pocos días.',
     pose: 'reading' as const,
   }
 
@@ -1192,8 +1192,8 @@ export default function OnboardingPage() {
         return (
           <EducationalScreen
             eyebrow="Lo que dice la ciencia"
-            title="Las dietas restrictivas no son la solución"
-            text="Los estudios muestran que el 80% de las personas que hacen dietas muy restrictivas recuperan el peso perdido en menos de 2 años. En Nutria creemos en cambios sostenibles, no en restricciones extremas."
+            title="Apretar demasiado casi nunca sale bien"
+            text="Cuando un plan exige demasiado, suele durar poco. Lo que mejor funciona normalmente no es sufrir más, sino encontrar algo que puedas mantener sin romperte a la semana tres."
             onNext={nextScreen}
             pose="reading"
           />
@@ -1345,8 +1345,8 @@ export default function OnboardingPage() {
         return (
           <EducationalScreen
             eyebrow="Sin culpa, sin presión"
-            title="¡Es completamente normal!"
-            text="Todos tenemos días complicados con la comida. No pasa absolutamente nada — somos humanos. La clave no es la perfección, sino el equilibrio y la consistencia a largo plazo."
+            title="Lo que te pasa es más común de lo que parece"
+            text="Hay días en los que comer bien cuesta más. No significa que lo estés haciendo mal. Lo importante no es ser perfecta, sino volver a tu centro sin castigo ni drama."
             onNext={nextScreen}
             pose="pear"
           />
@@ -1683,16 +1683,16 @@ export default function OnboardingPage() {
           <div className="flex-1 flex flex-col justify-between py-3">
             <div className="space-y-5">
               <MultiSelectQuestion
-                question="¿Qué cambiaría en tu vida si comieras mejor?"
-                subtitle="Selecciona todo lo que resuene contigo"
+                question="Si esto empieza a ir bien, ¿qué te gustaría notar en tu día a día?"
+                subtitle="No pienses en números. Piensa en cómo quieres sentirte, moverte o vivirte."
                 layout="pills"
                 options={[
-                  { value: 'more_energy',              label: 'Más energía durante el día' },
-                  { value: 'sleep_energy',             label: 'Dormir mejor' },
-                  { value: 'body_confidence',          label: 'Sentirme más fuerte y ágil' },
-                  { value: 'reduce_stress',            label: 'Menos estrés y ansiedad' },
-                  { value: 'look_feel_good',           label: 'Sentirme cómodo/a con mi cuerpo' },
-                  { value: 'long_term_health',         label: 'Cuidar mi salud a largo plazo' },
+                  { value: 'more_energy', label: 'Tener energía más estable' },
+                  { value: 'sleep_energy', label: 'Dormir y recuperar mejor' },
+                  { value: 'body_confidence', label: 'Moverme con más ligereza y fuerza' },
+                  { value: 'reduce_stress', label: 'Sentir menos ruido mental con la comida' },
+                  { value: 'look_feel_good', label: 'Estar más en paz con mi cuerpo' },
+                  { value: 'long_term_health', label: 'Cuidarme bien a largo plazo' },
                 ]}
                 values={data.secondary_goals}
                 onChange={(v) => updateData({ secondary_goals: v })}
@@ -1853,8 +1853,8 @@ export default function OnboardingPage() {
         return (
           <EducationalScreen
             eyebrow="Tu contexto real"
-            title="Tu entorno importa más de lo que crees"
-            text="Dónde, cómo y con quién vives puede afectar enormemente a tus hábitos alimentarios. Nuti tendrá esto en cuenta para darte consejos adaptados a tu situación real — no a una situación ideal."
+            title="Tu entorno cambia mucho más de lo que parece"
+            text="No es lo mismo comer sola, con familia, con prisas o rodeada de tentaciones. Por eso Nuti no te va a hablar como si vivieras en una situación perfecta."
             onNext={nextScreen}
             pose="cozy"
           />

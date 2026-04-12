@@ -34,16 +34,19 @@ export function EducationalScreen({
           )}
         </div>
 
-        <div className="space-y-2 max-w-sm px-4">
+        <div className="space-y-3 max-w-[34rem] px-4">
           {eyebrow && (
             <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#F97316' }}>
               {eyebrow}
             </p>
           )}
-          <h2 className="font-bold leading-tight" style={{ color: '#1C1917', fontSize: 28, fontWeight: 800, lineHeight: 1.15 }}>
+          <h2 className="font-bold leading-tight" style={{ color: '#1C1917', fontSize: 30, fontWeight: 800, lineHeight: 1.08, letterSpacing: '-0.02em' }}>
             {title}
           </h2>
-          <p className="text-sm leading-relaxed" style={{ color: '#78716C' }}>
+          <p
+            className="mx-auto max-w-[30rem]"
+            style={{ color: '#57534E', fontSize: 15, lineHeight: 1.68, fontWeight: 500 }}
+          >
             {text}
           </p>
         </div>

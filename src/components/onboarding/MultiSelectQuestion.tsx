@@ -37,23 +37,23 @@ export function MultiSelectQuestion({
   return (
     <div className="space-y-7">
       <div className="text-center">
-        <h2 className="font-bold leading-tight" style={{ color: '#1C1917', fontSize: 26, fontWeight: 800, lineHeight: 1.15 }}>
+        <h2 className="font-bold leading-tight" style={{ color: '#1C1917', fontSize: 28, fontWeight: 800, lineHeight: 1.08, letterSpacing: '-0.02em' }}>
           {question}
         </h2>
         {subtitle && (
-          <p className="mt-1.5" style={{ color: '#78716C', fontSize: 13 }}>
+          <p className="mt-2 mx-auto max-w-[32rem]" style={{ color: '#57534E', fontSize: 14, lineHeight: 1.55, fontWeight: 500 }}>
             {subtitle}
           </p>
         )}
         {maxSelections && (
-          <p className="text-xs mt-1" style={{ color: '#A8A29E' }}>
+          <p className="text-xs mt-1.5" style={{ color: '#A8A29E' }}>
             Elige hasta {maxSelections}
           </p>
         )}
       </div>
 
       {layout === 'pills' ? (
-        <div className="flex flex-wrap gap-2.5 justify-center">
+        <div className="flex flex-wrap gap-3 justify-center">
           {options.map((option) => {
             const isSelected = values.includes(option.value)
             return (
@@ -61,15 +61,17 @@ export function MultiSelectQuestion({
                 key={option.value}
                 type="button"
                 onClick={() => toggle(option.value)}
-                className="px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-200 active:scale-95"
+                className="px-4 py-3 rounded-full text-sm font-medium transition-all duration-200 active:scale-95"
                 style={isSelected ? {
                   background: '#F97316',
                   color: 'white',
                   border: '1px solid #F97316',
+                  boxShadow: '0 10px 22px rgba(249,115,22,0.18)',
                 } : {
                   background: '#FFFFFF',
                   color: '#44403C',
                   border: '1px solid #E7E5E4',
+                  boxShadow: '0 6px 18px rgba(28,25,23,0.05)',
                 }}
               >
                 {option.label}
