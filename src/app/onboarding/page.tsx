@@ -187,6 +187,16 @@ export default function OnboardingPage() {
     return null
   }
 
+  function clearOAuthParams() {
+    if (typeof window === 'undefined') return
+
+    const url = new URL(window.location.href)
+    ;['code', 'error', 'error_code', 'error_description', 'state'].forEach((key) => {
+      url.searchParams.delete(key)
+    })
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+  }
+
   // ─── Guardar datos del onboarding una vez autenticado ─────────────────────
 
   async function submitOnboardingData() {
@@ -367,32 +377,55 @@ export default function OnboardingPage() {
 
     const supabase = createClient()
     let submitted = false
+    let cancelled = false
 
-    // Detectar si venimos de un redirect OAuth (hay ?code= en la URL)
-    const hasOAuthCode = typeof window !== 'undefined' && window.location.search.includes('code=')
+    const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+    const oauthCode = params?.get('code')
+    const oauthErrorDescription = params?.get('error_description') || params?.get('error')
+    const hasOAuthCode = Boolean(oauthCode)
 
     let timeout: ReturnType<typeof setTimeout> | null = null
 
-    if (hasOAuthCode) {
+    if (oauthErrorDescription) {
+      setIsOAuthLoading(false)
+      setOauthError(oauthErrorDescription)
+      setRegisterError(oauthErrorDescription)
+      clearOAuthParams()
+    } else if (hasOAuthCode && oauthCode) {
       setIsOAuthLoading(true)
       setOauthError(null)
 
       // Timeout de seguridad: si en 10s no se completa el code exchange, mostrar error
       timeout = setTimeout(() => {
-        if (!submitted) {
+        if (!submitted && !cancelled) {
           setIsOAuthLoading(false)
           setOauthError('La autenticación tardó demasiado. Por favor, inténtalo de nuevo.')
         }
       }, 10_000)
 
-      // Verificación inmediata — si Supabase ya completó el code exchange, getUser() lo sabrá
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (user && !submitted) {
+      supabase.auth.exchangeCodeForSession(oauthCode).then(({ data, error }) => {
+        if (cancelled || submitted) return
+
+        if (error) {
+          if (timeout) clearTimeout(timeout)
+          setIsOAuthLoading(false)
+          setOauthError(error.message || 'No pudimos completar el acceso con Google.')
+          setRegisterError(error.message || 'No pudimos completar el acceso con Google.')
+          clearOAuthParams()
+          return
+        }
+
+        if (data.session?.user) {
           if (timeout) clearTimeout(timeout)
           submitted = true
+          setIsOAuthLoading(false)
+          clearOAuthParams()
           submitOnboardingData()
+          return
         }
-        // Si no hay usuario aún, onAuthStateChange lo capturará cuando termine el exchange
+
+        // Si la sesión no está lista aún, onAuthStateChange la capturará.
+        clearOAuthParams()
       })
     }
 
@@ -408,6 +441,7 @@ export default function OnboardingPage() {
     })
 
     return () => {
+      cancelled = true
       if (timeout) clearTimeout(timeout)
       subscription.unsubscribe()
     }
