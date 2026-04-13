@@ -770,3 +770,68 @@ Use this structure for each daily update:
 - Refs:
   - Rama objetivo: `alex-dev`
   - Bloque reciente de onboarding: commit `f160f70`
+
+### 2026-04-13 Europe/Madrid
+- Workspace Used: `/Users/alex/Documents/GitHub/Nutria` — rama compartida `alex-dev`
+- Current Goal: Consolidar el bloque visual reciente (`onboarding` + `plans`), dejar operativo un flujo editorial de recetas/dietas y seguir depurando el alta con Google en web.
+- Completed Today:
+  - **Onboarding web:**
+    - reforzada la tarjeta de objetivo con copy y selección más visual: `f160f70`
+    - reordenada la rama de dietas a `goal -> past-diets -> diet-feedback -> weight-experience`: `f160f70`
+    - humanizadas las tarjetas educativas del onboarding y mejorada la legibilidad: `2c7fe36`
+    - endurecido el registro con Google en la última pantalla:
+      - mejor manejo de errores de OAuth
+      - espera de sesión antes de enviar onboarding
+      - callback OAuth reforzado con `exchangeCodeForSession` explícito y limpieza de query params
+      - commits: `24f008a`, `93e56d0`, `3bbc418`
+  - **Plans web:**
+    - página de detalle de plan alineada visualmente con `/plans`, quitando el layout antiguo desconectado del índice: `6cad86e`
+    - simplificado el gating premium repetido en detalle de plan: `300ec89`
+    - si el plan está bloqueado, ahora solo se muestra `Día 1` en vez de una semana completa desactivada: `ac85ebb`
+  - **Recetas / dietas — flujo editorial nuevo:**
+    - creado un orquestador único para automatización de contenido en `scripts/recipes_pipeline.py`: `6f27241`
+    - `generate_food_images.py` acepta `GEMINI_API_KEY` como alias de `GOOGLE_AI_KEY`: `6f27241`
+    - añadido workflow editorial por bundles:
+      - `scripts/validate_recipe_bundle.py`
+      - `scripts/import_recipe_bundle.py`
+      - ejemplo en `content/recipe-bundles/example-bundle/manifest.json`
+      - guía operativa en `docs/recipes-automation.md`
+      - commit: `6ca4517`
+    - intención del flujo:
+      - ChatGPT genera el lote estructurado de recetas/planes
+      - Gemini genera la imagen final del plato
+      - el lote se guarda en carpeta
+      - Codex revisa/valida
+      - se importa a Supabase con receta + macros + pasos + plan + imagen
+- Decisions:
+  - Se mantiene `alex-dev` como rama única compartida de trabajo para Codex, Claude y Codespaces.
+  - El flujo correcto para recetas/dietas no es generación runtime en producción, sino pipeline editorial offline con revisión previa.
+  - El seed estático actual no debe entrar en un flujo “automático por defecto” porque hoy inserta de forma acumulativa y no es idempotente.
+  - Para pruebas OAuth, mientras no exista hosting real detrás de `nutriapro.es`, Supabase debe apuntar al dominio activo de Codespaces si se quiere probar el alta web allí.
+- Open Issues:
+  - **Google OAuth web no está completamente cerrado todavía.** El último estado visible es:
+    - `bad_oauth_state` / `OAuth state has expired` al volver al dominio de Codespaces.
+    - antes de eso ya se corrigieron errores de provider deshabilitado y `redirect_uri_mismatch`.
+    - quedan pendientes de verificar:
+      - `Site URL` y `Redirect URLs` finales que se usarán durante pruebas reales
+      - limpieza de cookies/estado viejo entre intentos
+      - que el login vuelva siempre a `/onboarding` y no a la raíz
+  - El usuario no tiene despliegue real detrás de `nutriapro.es`; no usar ese dominio como destino funcional de callback mientras siga sin hosting.
+  - El árbol local sigue teniendo cambios ajenos fuera de este bloque:
+    - `next.config.ts` modificado
+    - `Nutria/` como repo anidado no trackeado desde la raíz
+    - `scripts/__pycache__/` generado localmente durante validaciones
+- Next Session:
+  - cerrar definitivamente el alta con Google en web desde Codespaces o desde el dominio real cuando exista hosting
+  - crear prompt maestro para que ChatGPT genere bundles editoriales directamente en el formato `manifest.json`
+  - hacer idempotente el import/seed de planes para permitir republicaciones sin borrado manual
+  - si se sigue con recetas:
+    - preparar plantilla de carpeta bundle real
+    - definir checklist de revisión humana antes de `import-bundle`
+- Refs:
+  - `/Users/alex/Documents/GitHub/Nutria/src/app/onboarding/page.tsx`
+  - `/Users/alex/Documents/GitHub/Nutria/src/app/(app)/plans/[planId]/page.tsx`
+  - `/Users/alex/Documents/GitHub/Nutria/scripts/recipes_pipeline.py`
+  - `/Users/alex/Documents/GitHub/Nutria/scripts/validate_recipe_bundle.py`
+  - `/Users/alex/Documents/GitHub/Nutria/scripts/import_recipe_bundle.py`
+  - `/Users/alex/Documents/GitHub/Nutria/docs/recipes-automation.md`
