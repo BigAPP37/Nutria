@@ -63,7 +63,7 @@ export default function OnboardingPage() {
   const [registerShowPassword, setRegisterShowPassword] = useState(false)
   const [registerError, setRegisterError] = useState<string | null>(null)
   const [isRegistering, setIsRegistering] = useState(false)
-  const [registerCountdown, setRegisterCountdown] = useState(600) // 10 min
+  const [authMode, setAuthMode] = useState<'register' | 'login'>('register')
   // Ref para evitar doble submit (handleEmailRegister + onAuthStateChange simultáneos)
   const isSubmittingRef = useRef(false)
   // Estado de carga OAuth — true mientras Supabase completa el code exchange tras redirect
@@ -161,6 +161,8 @@ export default function OnboardingPage() {
         details?: string
         hint?: string
         error_description?: string
+        status?: number
+        statusText?: string
       }
 
       return (
@@ -168,12 +170,42 @@ export default function OnboardingPage() {
         candidate.error_description ||
         candidate.details ||
         candidate.hint ||
+        candidate.statusText ||
+        (candidate.status ? `Request failed with status ${candidate.status}` : undefined) ||
         candidate.code ||
-        JSON.stringify(err)
+        JSON.stringify(err) ||
+        String(err)
       )
     }
 
     return 'Error desconocido'
+  }
+
+  function serializeError(err: unknown) {
+    if (err instanceof Error) {
+      return {
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
+        cause: err.cause,
+      }
+    }
+
+    if (err && typeof err === 'object') {
+      const ownProps = Object.fromEntries(
+        Object.getOwnPropertyNames(err).map((key) => [
+          key,
+          (err as Record<string, unknown>)[key],
+        ]),
+      )
+
+      return {
+        ...ownProps,
+        stringified: JSON.stringify(err),
+      }
+    }
+
+    return { value: err }
   }
 
   async function waitForAuthenticatedUser(supabase: ReturnType<typeof createClient>, retries = 8, delayMs = 350) {
@@ -232,7 +264,7 @@ export default function OnboardingPage() {
         goal: storeData.goal,
       })
 
-      const { error: onboardingError } = await supabase.rpc('complete_onboarding_atomic', {
+      const onboardingResponse = await supabase.rpc('complete_onboarding_atomic', {
         p_display_name: storeData.name || 'Usuario',
         p_height_cm: storeData.height_cm,
         p_date_of_birth: storeData.birth_date,
@@ -275,8 +307,20 @@ export default function OnboardingPage() {
         p_fat_g: nutritionGoals.fat_g,
       })
 
-      if (onboardingError) {
-        throw onboardingError
+      if (onboardingResponse.error) {
+        throw {
+          ...onboardingResponse.error,
+          status: onboardingResponse.status,
+          statusText: onboardingResponse.statusText,
+        }
+      }
+
+      if (onboardingResponse.status >= 400) {
+        throw {
+          status: onboardingResponse.status,
+          statusText: onboardingResponse.statusText,
+          message: 'No pudimos completar el onboarding.',
+        }
       }
 
       useOnboardingStore.getState().reset()
@@ -284,7 +328,7 @@ export default function OnboardingPage() {
       router.refresh()
     } catch (err) {
       console.error('Error en submit del onboarding:', {
-        raw: err,
+        raw: serializeError(err),
         parsed: getErrorMessage(err),
       })
       setRegisterError(getErrorMessage(err))
@@ -296,11 +340,46 @@ export default function OnboardingPage() {
 
   // ─── Registro con email/contraseña ────────────────────────────────────────
 
-  async function handleEmailRegister() {
+  async function handleEmailAuth() {
     if (!registerEmail || !registerPassword) {
       setRegisterError('Por favor completa todos los campos.')
       return
     }
+
+    if (authMode === 'login') {
+      setIsRegistering(true)
+      setRegisterError(null)
+
+      try {
+        const supabase = createClient()
+        const { data, error: authError } = await supabase.auth.signInWithPassword({
+          email: registerEmail,
+          password: registerPassword,
+        })
+
+        if (authError) {
+          if (authError.message.includes('Invalid login credentials')) {
+            setRegisterError('Email o contraseña incorrectos.')
+          } else if (authError.message.includes('Email not confirmed')) {
+            setRegisterError('Por favor verifica tu email antes de iniciar sesión.')
+          } else {
+            setRegisterError(authError.message || 'No pudimos iniciar sesión. Inténtalo de nuevo.')
+          }
+          return
+        }
+
+        if (data.user) {
+          await submitOnboardingData()
+        }
+        return
+      } catch {
+        setRegisterError('Ocurrió un error inesperado. Por favor intenta de nuevo.')
+        return
+      } finally {
+        setIsRegistering(false)
+      }
+    }
+
     if (registerPassword.length < 6) {
       setRegisterError('La contraseña debe tener al menos 6 caracteres.')
       return
@@ -475,16 +554,6 @@ export default function OnboardingPage() {
     }
     rafId = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(rafId)
-  }, [currentScreen])
-
-  // ─── Countdown en pantalla de registro ───────────────────────────────────
-  useEffect(() => {
-    if (currentScreen !== 'register') return
-    setRegisterCountdown(600)
-    const interval = setInterval(() => {
-      setRegisterCountdown((prev) => (prev > 0 ? prev - 1 : 0))
-    }, 1000)
-    return () => clearInterval(interval)
   }, [currentScreen])
 
   // ─── Validación: pantalla 5b — fecha + sexo ──────────────────────────────
@@ -2290,51 +2359,68 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              {/* Header — countdown urgencia */}
+              {/* Header sereno */}
               <div className="text-center space-y-3">
-                <p className="text-[11px] font-bold tracking-widest uppercase" style={{ color: '#F97316' }}>
-                  Tu plan expira en
-                </p>
-
-                {/* Countdown grande */}
-                <div className="relative flex items-center justify-center mx-auto" style={{ width: 160, height: 160 }}>
-                  {/* Glow pulsante */}
-                  <div
-                    className="absolute inset-0 rounded-full animate-pulse"
-                    style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.22) 0%, transparent 70%)' }}
-                  />
-                  {/* Anillo */}
-                  <svg width="160" height="160" viewBox="0 0 160 160" className="absolute inset-0">
-                    <circle cx="80" cy="80" r="70" fill="none" stroke="#F0EDE9" strokeWidth="6" />
-                    <circle
-                      cx="80" cy="80" r="70"
-                      fill="none"
-                      stroke="#F97316"
-                      strokeWidth="6"
-                      strokeLinecap="round"
-                      strokeDasharray={2 * Math.PI * 70}
-                      strokeDashoffset={2 * Math.PI * 70 * (1 - registerCountdown / 600)}
-                      style={{ transform: 'rotate(-90deg)', transformOrigin: '80px 80px', transition: 'stroke-dashoffset 1s linear' }}
-                    />
-                  </svg>
-                  {/* Tiempo */}
-                  <div className="relative flex flex-col items-center justify-center">
-                    <span
-                      className="font-black tabular-nums leading-none"
-                      style={{ fontSize: 44, color: registerCountdown < 60 ? '#EA580C' : '#F97316', letterSpacing: '-0.02em' }}
-                    >
-                      {String(Math.floor(registerCountdown / 60)).padStart(2, '0')}:{String(registerCountdown % 60).padStart(2, '0')}
-                    </span>
-                    <span className="text-xs font-medium mt-0.5" style={{ color: '#A8A29E' }}>min · seg</span>
-                  </div>
+                <div
+                  className="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] border"
+                  style={{
+                    background: 'radial-gradient(circle at top, rgba(249,115,22,0.18) 0%, rgba(249,115,22,0.04) 70%)',
+                    borderColor: 'rgba(249,115,22,0.18)',
+                    boxShadow: '0 20px 40px rgba(249,115,22,0.14)',
+                  }}
+                >
+                  <NutriaImage pose="celebration" size={76} maxWidth="76px" priority />
                 </div>
 
                 <div>
-                  <h2 className="font-black" style={{ color: '#1C1917', fontSize: 22, fontWeight: 900, lineHeight: 1.2 }}>
-                    Guarda tu plan ahora
+                  <p className="text-[11px] font-bold tracking-widest uppercase" style={{ color: '#F97316' }}>
+                    Plan preparado
+                  </p>
+                  <h2 className="font-black mt-2" style={{ color: '#1C1917', fontSize: 22, fontWeight: 900, lineHeight: 1.2 }}>
+                    Tu plan está listo
                   </h2>
-                  <p className="text-sm mt-1" style={{ color: '#78716C' }}>Es gratis. Sin tarjeta de crédito.</p>
+                  <p className="text-sm mt-1" style={{ color: '#78716C' }}>
+                    {authMode === 'register'
+                      ? 'Crea tu cuenta para guardarlo y empezar hoy'
+                      : 'Inicia sesión para recuperar tu plan y entrar'}
+                  </p>
                 </div>
+              </div>
+
+              <div
+                className="grid grid-cols-2 rounded-2xl p-1"
+                style={{ background: '#F5F5F4', border: '1px solid #E7E5E4' }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('register')
+                    setRegisterError(null)
+                  }}
+                  className="rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+                  style={{
+                    background: authMode === 'register' ? '#FFFFFF' : 'transparent',
+                    color: authMode === 'register' ? '#1C1917' : '#78716C',
+                    boxShadow: authMode === 'register' ? '0 6px 18px rgba(28,25,23,0.08)' : 'none',
+                  }}
+                >
+                  Crear cuenta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('login')
+                    setRegisterError(null)
+                  }}
+                  className="rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+                  style={{
+                    background: authMode === 'login' ? '#FFFFFF' : 'transparent',
+                    color: authMode === 'login' ? '#1C1917' : '#78716C',
+                    boxShadow: authMode === 'login' ? '0 6px 18px rgba(28,25,23,0.08)' : 'none',
+                  }}
+                >
+                  Iniciar sesión
+                </button>
               </div>
 
               {/* Google */}
@@ -2388,10 +2474,10 @@ export default function OnboardingPage() {
                 <div className="relative">
                   <input
                     type={registerShowPassword ? 'text' : 'password'}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={authMode === 'register' ? 'Mínimo 6 caracteres' : 'Tu contraseña'}
                     value={registerPassword}
                     onChange={(e) => setRegisterPassword(e.target.value)}
-                    autoComplete="new-password"
+                    autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
                     disabled={isRegistering}
                     className="w-full pl-4 pr-11 py-3.5 rounded-xl text-stone-900 placeholder:text-stone-400 outline-none transition-all disabled:opacity-50"
                     style={{ background: '#FFFFFF', border: '1px solid #E7E5E4' }}
@@ -2424,7 +2510,7 @@ export default function OnboardingPage() {
             <div className="space-y-3">
               <button
                 type="button"
-                onClick={handleEmailRegister}
+                onClick={handleEmailAuth}
                 disabled={isRegistering}
                 className="mt-8 w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
                 style={{
@@ -2438,10 +2524,10 @@ export default function OnboardingPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    Creando cuenta…
+                    {authMode === 'register' ? 'Creando cuenta…' : 'Iniciando sesión…'}
                   </>
                 ) : (
-                  'Crear cuenta gratis'
+                  authMode === 'register' ? 'Crear cuenta gratis' : 'Entrar y continuar'
                 )}
               </button>
               <p className="text-[11px] text-center leading-relaxed" style={{ color: '#78716C' }}>
@@ -2451,10 +2537,18 @@ export default function OnboardingPage() {
                 <Link href="/privacy" className="underline">Privacidad</Link>.
               </p>
               <p className="text-xs text-center" style={{ color: '#78716C' }}>
-                ¿Ya tienes cuenta?{' '}
-                <Link href="/login" className="font-semibold" style={{ color: '#F97316' }}>
-                  Iniciar sesión
-                </Link>
+                {authMode === 'register' ? '¿Ya tienes cuenta?' : '¿Aún no tienes cuenta?'}{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode(authMode === 'register' ? 'login' : 'register')
+                    setRegisterError(null)
+                  }}
+                  className="font-semibold"
+                  style={{ color: '#F97316' }}
+                >
+                  {authMode === 'register' ? 'Iniciar sesión' : 'Crear cuenta'}
+                </button>
               </p>
             </div>
           </div>
