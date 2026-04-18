@@ -181,6 +181,14 @@ export default function OnboardingPage() {
     return 'Error desconocido'
   }
 
+  function normalizeErrorMessage(message: string | undefined | null) {
+    const value = (message || '').trim()
+    if (!value || value === '{}' || value === '[]' || value === 'Error desconocido') {
+      return null
+    }
+    return value
+  }
+
   function serializeError(err: unknown) {
     if (err instanceof Error) {
       return {
@@ -213,11 +221,20 @@ export default function OnboardingPage() {
     status?: number,
     statusText?: string,
   ) {
-    const message = getErrorMessage(rpcError)
-    const error = new Error(message || 'No pudimos completar el onboarding.')
+    const serializedRpcError = serializeError(rpcError)
+    const derivedMessage =
+      normalizeErrorMessage(getErrorMessage(rpcError)) ||
+      normalizeErrorMessage(
+        typeof serializedRpcError === 'object' ? JSON.stringify(serializedRpcError) : String(serializedRpcError),
+      ) ||
+      normalizeErrorMessage(statusText) ||
+      (status ? `Request failed with status ${status}` : null) ||
+      'No pudimos completar el onboarding.'
+
+    const error = new Error(derivedMessage)
 
     Object.assign(error, {
-      rpcError: serializeError(rpcError),
+      rpcError: serializedRpcError,
       status,
       statusText,
     })
@@ -346,11 +363,19 @@ export default function OnboardingPage() {
       router.push('/dashboard')
       router.refresh()
     } catch (err) {
+      const raw = serializeError(err)
+      const parsed = getErrorMessage(err)
       console.error('Error en submit del onboarding:', {
-        raw: serializeError(err),
-        parsed: getErrorMessage(err),
+        raw,
+        parsed,
       })
-      setRegisterError(getErrorMessage(err))
+      console.error(
+        `Error en submit del onboarding (detalle): ${
+          normalizeErrorMessage(parsed) ||
+          (typeof raw === 'object' ? JSON.stringify(raw) : String(raw))
+        }`,
+      )
+      setRegisterError(normalizeErrorMessage(parsed) || 'No pudimos completar el onboarding.')
     } finally {
       setIsRegistering(false)
       isSubmittingRef.current = false
