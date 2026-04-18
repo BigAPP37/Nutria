@@ -208,6 +208,23 @@ export default function OnboardingPage() {
     return { value: err }
   }
 
+  function buildOnboardingRpcError(
+    rpcError: unknown,
+    status?: number,
+    statusText?: string,
+  ) {
+    const message = getErrorMessage(rpcError)
+    const error = new Error(message || 'No pudimos completar el onboarding.')
+
+    Object.assign(error, {
+      rpcError: serializeError(rpcError),
+      status,
+      statusText,
+    })
+
+    return error
+  }
+
   async function waitForAuthenticatedUser(supabase: ReturnType<typeof createClient>, retries = 8, delayMs = 350) {
     for (let attempt = 0; attempt < retries; attempt += 1) {
       const { data: { user }, error } = await supabase.auth.getUser()
@@ -308,19 +325,21 @@ export default function OnboardingPage() {
       })
 
       if (onboardingResponse.error) {
-        throw {
-          ...onboardingResponse.error,
-          status: onboardingResponse.status,
-          statusText: onboardingResponse.statusText,
-        }
+        throw buildOnboardingRpcError(
+          onboardingResponse.error,
+          onboardingResponse.status,
+          onboardingResponse.statusText,
+        )
       }
 
       if (onboardingResponse.status >= 400) {
-        throw {
-          status: onboardingResponse.status,
-          statusText: onboardingResponse.statusText,
-          message: 'No pudimos completar el onboarding.',
-        }
+        throw buildOnboardingRpcError(
+          {
+            message: 'No pudimos completar el onboarding.',
+          },
+          onboardingResponse.status,
+          onboardingResponse.statusText,
+        )
       }
 
       useOnboardingStore.getState().reset()
