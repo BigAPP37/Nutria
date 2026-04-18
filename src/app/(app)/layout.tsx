@@ -10,6 +10,7 @@ import { getQueryClient } from '@/lib/queryClient'
 import { createClient } from '@/lib/supabase/client'
 import { useAuthStore } from '@/stores/authStore'
 import { BottomNav } from '@/components/ui/BottomNav'
+import { FULL_ACCESS_ENABLED } from '@/lib/fullAccess'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -56,12 +57,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       setProfile(profile ?? null)
       setLoading(false)
 
-      if (!profile && !profileError) {
+      if (!FULL_ACCESS_ENABLED && !profile && !profileError) {
         router.replace('/onboarding')
         return
       }
 
-      if (profile && !profile.onboarding_completed) {
+      if (!FULL_ACCESS_ENABLED && profile && !profile.onboarding_completed) {
         router.replace('/onboarding')
       }
     }

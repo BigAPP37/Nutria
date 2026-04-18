@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getTodayDateKey } from '@/lib/date'
 import { ChevronLeft, ChevronRight, Lock, Clock, Flame, Beef, Wheat, Droplets, CheckCircle2, Sparkles, Target, Dumbbell, Scale } from 'lucide-react'
 import { AppHero, AppPage, AppPanel, AppSectionHeader } from '@/components/ui/AppPage'
+import { FULL_ACCESS_ENABLED } from '@/lib/fullAccess'
 
 type Plan = {
   id: string
@@ -100,7 +101,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
 
       setPlan(planRes.data)
       setDays(daysRes.data || [])
-      setIsPremium(profileRes.data?.is_premium ?? false)
+      setIsPremium(FULL_ACCESS_ENABLED ? true : (profileRes.data?.is_premium ?? false))
       setIsActivePlan(!!userPlanRes.data)
       setLoading(false)
     }
@@ -141,10 +142,47 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
     setIsActivatingPlan(true)
     setActivationError(null)
 
-    const { error: activationError } = await sb.rpc('activate_meal_plan_atomic', {
-      p_plan_id: plan.id,
-      p_started_at: getTodayDateKey(),
-    })
+    let activationError: { message?: string } | null = null
+
+    if (FULL_ACCESS_ENABLED) {
+      const { data: { user } } = await sb.auth.getUser()
+      if (!user) {
+        setActivationError('Necesitas iniciar sesión para activar el plan.')
+        setIsActivatingPlan(false)
+        return
+      }
+
+      const deactivateRes = await sb
+        .from('user_meal_plans')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .neq('plan_id', plan.id)
+
+      if (deactivateRes.error) {
+        activationError = deactivateRes.error
+      } else {
+        const upsertRes = await sb
+          .from('user_meal_plans')
+          .upsert(
+            {
+              user_id: user.id,
+              plan_id: plan.id,
+              started_at: getTodayDateKey(),
+              is_active: true,
+            },
+            { onConflict: 'user_id,plan_id' }
+          )
+
+        activationError = upsertRes.error
+      }
+    } else {
+      const rpcRes = await sb.rpc('activate_meal_plan_atomic', {
+        p_plan_id: plan.id,
+        p_started_at: getTodayDateKey(),
+      })
+      activationError = rpcRes.error
+    }
 
     if (activationError) {
       setActivationError('No pudimos activar el plan. Inténtalo de nuevo.')

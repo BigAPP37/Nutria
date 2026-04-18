@@ -1,6 +1,7 @@
 // Store de Zustand para el estado Premium y control de fotos diarias
 import { create } from 'zustand'
 import { getTodayDateKey } from '@/lib/date'
+import { FULL_ACCESS_ENABLED } from '@/lib/fullAccess'
 
 // Genera la clave de localStorage para el día de hoy
 function getTodayKey(): string {
@@ -35,14 +36,14 @@ export const usePremiumStore = create<PremiumStoreState>((set, get) => {
   }
 
   return {
-    isPremium: false,
+    isPremium: FULL_ACCESS_ENABLED,
     premiumExpiresAt: null,
     photoLogsToday: loadPhotoCount(),
     maxFreePhotos: 3,
     isLoading: false,
 
     setPremium(isPremium: boolean, expiresAt: string | null) {
-      set({ isPremium, premiumExpiresAt: expiresAt })
+      set({ isPremium: FULL_ACCESS_ENABLED ? true : isPremium, premiumExpiresAt: expiresAt })
     },
 
     // Comprueba si la fecha almacenada es hoy; si no, resetea el conteo
@@ -71,7 +72,7 @@ export const usePremiumStore = create<PremiumStoreState>((set, get) => {
 
     // El usuario puede usar foto si es premium o no ha llegado al límite
     canUsePhoto(): boolean {
-      return get().isPremium || get().photoLogsToday < 3
+      return FULL_ACCESS_ENABLED || get().isPremium || get().photoLogsToday < 3
     },
 
     setLoading(v: boolean) {

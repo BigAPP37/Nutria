@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { limitAiLogRequests, type AiRateLimitResult } from '@/lib/aiRateLimit'
+import { FULL_ACCESS_ENABLED } from '@/lib/fullAccess'
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
@@ -160,6 +161,10 @@ async function enforcePhotoQuota(
   userId: string,
   logDate: string
 ) {
+  if (FULL_ACCESS_ENABLED) {
+    return null
+  }
+
   const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
     .select('is_premium, premium_expires_at, subscription_status')

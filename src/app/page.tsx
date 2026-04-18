@@ -1,6 +1,7 @@
 // Página raíz: redirige al dashboard o login según el estado de autenticación
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { FULL_ACCESS_ENABLED } from '@/lib/fullAccess'
 
 export default async function RootPage() {
   const supabase = await createClient()
@@ -10,6 +11,10 @@ export default async function RootPage() {
   } = await supabase.auth.getUser()
 
   if (user) {
+    if (FULL_ACCESS_ENABLED) {
+      redirect('/dashboard')
+    }
+
     // Verificar si el usuario completó el onboarding
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')

@@ -3,6 +3,7 @@
 
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { FULL_ACCESS_ENABLED } from '@/lib/fullAccess'
 
 // Rutas que requieren autenticación
 const PROTECTED_ROUTES = ['/dashboard', '/stats', '/settings', '/log', '/plans', '/premium']
@@ -78,16 +79,16 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  if (isProtectedRoute && user && !hasCompletedOnboarding) {
+  if (!FULL_ACCESS_ENABLED && isProtectedRoute && user && !hasCompletedOnboarding) {
     return NextResponse.redirect(new URL('/onboarding', request.url))
   }
 
-  if (isOnboardingRoute && user && hasCompletedOnboarding) {
+  if (isOnboardingRoute && user && (hasCompletedOnboarding || FULL_ACCESS_ENABLED)) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   if (isAuthRoute && user) {
-    const destination = hasCompletedOnboarding ? '/dashboard' : '/onboarding'
+    const destination = hasCompletedOnboarding || FULL_ACCESS_ENABLED ? '/dashboard' : '/onboarding'
     return NextResponse.redirect(new URL(destination, request.url))
   }
 

@@ -4,6 +4,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { usePremiumStore } from '@/stores/premiumStore'
+import { FULL_ACCESS_ENABLED } from '@/lib/fullAccess'
 
 export function usePremiumStatus(userId: string | null) {
   const { setPremium } = usePremiumStore()
@@ -15,6 +16,16 @@ export function usePremiumStatus(userId: string | null) {
     staleTime: 5 * 60 * 1000, // 5 minutos
 
     queryFn: async () => {
+      if (FULL_ACCESS_ENABLED) {
+        setPremium(true, null)
+        return {
+          isPremium: true,
+          premiumExpiresAt: null,
+          stripeCustomerId: null,
+          subscriptionStatus: 'active' as const,
+        }
+      }
+
       const { data, error } = await supabase
         .from('user_profiles')
         .select('is_premium, premium_expires_at, stripe_customer_id, subscription_status')

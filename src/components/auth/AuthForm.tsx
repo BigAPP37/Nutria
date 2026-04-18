@@ -6,6 +6,7 @@ import { Apple, Eye, EyeOff, Flame, Sparkles, TrendingUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { FULL_ACCESS_ENABLED } from '@/lib/fullAccess'
 
 type AuthMode = 'login' | 'register'
 
@@ -68,6 +69,11 @@ export function AuthForm({ mode }: AuthFormProps) {
         }
 
         if (data.user) {
+          if (FULL_ACCESS_ENABLED) {
+            window.location.href = '/dashboard'
+            return
+          }
+
           const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
             .select('onboarding_completed')

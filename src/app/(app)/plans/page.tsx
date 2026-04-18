@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ChevronRight, Lock, Sparkles, Target, Dumbbell, Scale } from 'lucide-react'
 import Image from 'next/image'
 import { AppHero, AppPage, AppPanel, AppSectionHeader } from '@/components/ui/AppPage'
+import { FULL_ACCESS_ENABLED } from '@/lib/fullAccess'
 
 type MealPlan = {
   id: string
@@ -59,7 +60,7 @@ export default function PlansPage() {
       }
 
       setPlans(plansRes.data || [])
-      setIsPremium(profileRes.data?.is_premium ?? false)
+      setIsPremium(FULL_ACCESS_ENABLED ? true : (profileRes.data?.is_premium ?? false))
       setUserPlan(userPlanRes.data)
       setLoading(false)
     }
