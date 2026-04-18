@@ -10,6 +10,7 @@
     "recipes:pipeline": "python3 scripts/recipes_pipeline.py"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
     "@stripe/stripe-js": "^9.0.0",
     "@supabase/ssr": "^0.5.1",
     "@supabase/supabase-js": "^2.45.4",

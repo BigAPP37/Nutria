@@ -835,3 +835,61 @@ Use this structure for each daily update:
   - `/Users/alex/Documents/GitHub/Nutria/scripts/validate_recipe_bundle.py`
   - `/Users/alex/Documents/GitHub/Nutria/scripts/import_recipe_bundle.py`
   - `/Users/alex/Documents/GitHub/Nutria/docs/recipes-automation.md`
+
+### 2026-04-18 22:26 Europe/Madrid
+- Workspace Used: `/Users/alex/Documents/GitHub/Nutria` — rama compartida `alex-dev`
+- Current Goal: Recuperar el último estado real tras cierre accidental de sesión y dejar documentados los cambios finales de recetas v2 y onboarding web.
+- Completed Today:
+  - **Sesión recuperada vía `codex resume`:**
+    - reanudada la conversación previa usando un session id guardado
+    - confirmado que el último contexto útil no estaba reflejado todavía en `SESSION.md`
+  - **Recetas / planes v2:**
+    - el bundle avanzado ya incluía en recetas los campos terapéuticos:
+      - `sodium_mg`
+      - `added_sugars_g`
+      - `saturated_fat_g`
+      - `potassium_mg`
+      - `gluten_free`
+    - detectado que el importador no persistía esos nuevos campos en `recipes`
+    - corregido el importador para subir esos campos al importar
+    - añadida migración de esquema para alinear `recipes` con esos nuevos campos nutricionales/terapéuticos
+    - validado el bundle final con:
+      - `500` recetas
+      - `6` planes
+      - `therapeutic_profile` limpio en los planes genéricos
+    - el siguiente paso operativo que quedó marcado era importar el bundle con reemplazo seguro de planes existentes
+  - **Onboarding web / Supabase:**
+    - tras pasar auth, el bloqueo real ya no era OAuth puro sino desajuste entre el RPC `complete_onboarding_atomic` y la tabla remota `user_tdee_state`
+    - identificado que remoto no estaba alineado con lo que la web espera:
+      - faltaban `goal_kcal`, `macro_protein_g`, `macro_carbs_g`, `macro_fat_g`
+      - el RPC estaba intentando usar columnas antiguas/no presentes como `tdee`, `protein_g`, `carbs_g`, `fat_g`
+    - añadida la migración `supabase/migrations/20260421_align_user_tdee_state_with_web.sql`
+    - esa migración:
+      - completa `user_tdee_state` con las columnas que faltaban para la web
+      - reescribe `complete_onboarding_atomic` para guardar en:
+        - `current_tdee_kcal`
+        - `initial_tdee_kcal`
+        - `goal_kcal`
+        - `macro_protein_g`
+        - `macro_carbs_g`
+        - `macro_fat_g`
+      - mantiene los casts explícitos de enums ya corregidos antes
+    - según la sesión recuperada, la migración se aplicó también en remoto con `supabase db push`
+- Decisions:
+  - Mantener `alex-dev` como rama compartida y usar `SESSION.md` como fuente de continuidad cuando una sesión se corte.
+  - El flujo correcto de recetas sigue siendo editorial offline con validación previa, no generación runtime en producción.
+  - Para probar Google OAuth correctamente, iniciar siempre desde el dominio activo de Vercel y no desde Codespaces, porque `redirectTo` usa `window.location.origin`.
+- Open Issues:
+  - Verificar en la UI que email/password ya completa onboarding sin error tras alinear `user_tdee_state`.
+  - Verificar Google OAuth solo desde `https://nutria-tau.vercel.app/onboarding`, no desde `github.dev` / Codespaces.
+  - Confirmar en código y base de datos cuál fue exactamente la migración de `recipes` usada para soportar los nuevos campos terapéuticos, si se quiere dejar también referenciada con nombre exacto en este archivo.
+- Next Session:
+  - probar onboarding web completo en Vercel con email/password
+  - probar onboarding web con Google desde Vercel
+  - si onboarding queda estable, ejecutar la importación del bundle v2 con reemplazo seguro de planes
+  - dejar reflejado en `SESSION.md` el nombre exacto de la migración de `recipes` y el comando/import real usado
+- Refs:
+  - `/Users/alex/Documents/GitHub/Nutria/SESSION.md`
+  - `/Users/alex/Documents/GitHub/Nutria/supabase/migrations/20260421_align_user_tdee_state_with_web.sql`
+  - `/Users/alex/Documents/GitHub/Nutria/scripts/import_recipe_bundle.py`
+  - `/Users/alex/Documents/GitHub/Nutria/scripts/generated_bundles/local-recipes-500-seed-17-v2/manifest.json`

@@ -20,6 +20,8 @@ import { MealSection } from '@/components/dashboard/MealSection'
 import { NaturalTextLogger } from '@/components/dashboard/NaturalTextLogger'
 import { EditEntrySheet } from '@/components/dashboard/EditEntrySheet'
 import { ReminderBanner } from '@/components/dashboard/ReminderBanner'
+import { Toast } from '@/components/ui/Toast'
+import { NutriaImage } from '@/components/NutriaImage'
 import type { FoodLogEntry, MealType } from '@/types/database'
 import { usePsychFlag } from '@/hooks/usePsychFlag'
 import { PsychSupportCard } from '@/components/psych/PsychSupportCard'
@@ -44,10 +46,20 @@ export default function DashboardPage() {
   const router = useRouter()
   const { data: profile, isLoading: profileLoading, error: profileError } = useProfile()
 
-  const [isLoggingComplete, setIsLoggingComplete] = useState(false)
+  const [optimisticLoggingComplete, setOptimisticLoggingComplete] = useState<boolean | null>(null)
   const [showTextLogger, setShowTextLogger] = useState(false)
   const [editingEntry, setEditingEntry] = useState<FoodLogEntry | null>(null)
   const [currentDate, setCurrentDate] = useState(() => new Date())
+  const [showSavedToast, setShowSavedToast] = useState(() => {
+    if (typeof window === 'undefined') return false
+
+    const shouldShowToast = window.sessionStorage.getItem('nutria:food-saved-toast') === '1'
+    if (shouldShowToast) {
+      window.sessionStorage.removeItem('nutria:food-saved-toast')
+    }
+
+    return shouldShowToast
+  })
 
   const today = getTodayISO(currentDate)
   const formattedDate = getFormattedDate(currentDate)
@@ -66,13 +78,8 @@ export default function DashboardPage() {
   const foodEntries = dashboardData?.foodEntries ?? []
   const waterGlasses = dashboardData?.waterGlasses ?? 0
   const loadError = dashboardError?.message ?? null
-
-  // Sync isLoggingComplete desde el hook cuando cambia el día o los datos cargan
-  useEffect(() => {
-    if (dashboardData !== undefined) {
-      setIsLoggingComplete(dashboardData.isLoggingComplete)
-    }
-  }, [dashboardData?.isLoggingComplete])
+  const serverIsLoggingComplete = dashboardData?.isLoggingComplete ?? false
+  const isLoggingComplete = optimisticLoggingComplete ?? serverIsLoggingComplete
 
   useEffect(() => {
     if (profileLoading) return
@@ -97,7 +104,6 @@ export default function DashboardPage() {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
-
 
   // Calcular totales del día
   const totals = foodEntries.reduce(
@@ -128,7 +134,7 @@ export default function DashboardPage() {
 
   // Agregar alimento — navega al formulario
   function handleAddEntry(mealType: MealType) {
-    router.push(`/dashboard/add?meal=${mealType}&date=${today}`)
+    router.push(`/log?meal=${mealType}`)
   }
 
   // Recargar entradas tras guardar o editar
@@ -286,6 +292,26 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {foodEntries.length === 0 && (
+          <div className="app-card overflow-hidden px-5 py-6 text-center">
+            <div className="mx-auto mb-1 w-full max-w-[150px]">
+              <NutriaImage pose="wave" size={140} withGlow />
+            </div>
+            <h3 className="mt-1 text-xl font-semibold text-[var(--ink-1)]">
+              ¡Empieza registrando tu primera comida!
+            </h3>
+            <p className="mx-auto mt-2 max-w-[15rem] text-sm text-[var(--ink-3)]">
+              Haz una foto, escribe o busca un alimento.
+            </p>
+            <Link
+              href="/log"
+              className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-2xl bg-[var(--color-primary-500)] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(249,115,22,0.22)] transition-transform hover:scale-[1.01]"
+            >
+              Registrar comida
+            </Link>
+          </div>
+        )}
+
         {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map((meal) => (
           <MealSection
             key={meal}
@@ -313,7 +339,7 @@ export default function DashboardPage() {
           onClick={async () => {
             if (!userId) return
             const newValue = !isLoggingComplete
-            setIsLoggingComplete(newValue)
+            setOptimisticLoggingComplete(newValue)
             const supabase = createClient()
             const { error } = await supabase.from('daily_log_status').upsert(
               {
@@ -331,7 +357,9 @@ export default function DashboardPage() {
 
             if (error) {
               console.error('[dashboard] Error actualizando is_day_complete:', error)
-              setIsLoggingComplete(!newValue)
+              setOptimisticLoggingComplete(!newValue)
+            } else {
+              setOptimisticLoggingComplete(null)
             }
           }}
           className={`flex w-full items-center justify-center gap-2 rounded-[1.4rem] border px-4 py-4 transition-all ${
@@ -379,6 +407,12 @@ export default function DashboardPage() {
           onClose={() => setShowTextLogger(false)}
         />
       )}
+
+      <Toast
+        message="Comida registrada ✓"
+        isVisible={showSavedToast}
+        onClose={() => setShowSavedToast(false)}
+      />
     </div>
   )
 }

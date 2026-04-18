@@ -3,8 +3,8 @@
 // Página principal de registro de comida
 // Orquesta el flujo completo: selección de método → captura → análisis → confirmación → éxito
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useMemo, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useLogSessionStore } from '@/stores/logSessionStore'
@@ -33,8 +33,27 @@ function getTodayIso(): string {
   return getTodayDateKey()
 }
 
-export default function LogPage() {
+function parseMealParam(value: string | null) {
+  switch (value?.toLowerCase()) {
+    case 'breakfast':
+    case 'desayuno':
+      return 'breakfast' as const
+    case 'lunch':
+    case 'almuerzo':
+      return 'lunch' as const
+    case 'dinner':
+    case 'cena':
+      return 'dinner' as const
+    case 'snack':
+      return 'snack' as const
+    default:
+      return null
+  }
+}
+
+function LogPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const store = useLogSessionStore()
   const { data: profile } = useProfile()
 
@@ -49,6 +68,12 @@ export default function LogPage() {
   const { isPremium, photoLogsToday, maxFreePhotos, canUsePhoto, incrementPhotoLog } = usePremiumStore()
 
   const today = getTodayIso()
+  const initialMealType = useMemo(() => parseMealParam(searchParams.get('meal')), [searchParams])
+
+  function resetLogFlow() {
+    store.reset(initialMealType ?? undefined)
+    setBarcodeProduct(null)
+  }
 
   // Obtiene el usuario autenticado al montar el componente
   useEffect(() => {
@@ -71,9 +96,9 @@ export default function LogPage() {
 
   // Resetea el store al montar la página para empezar limpio
   useEffect(() => {
-    store.reset()
+    store.reset(initialMealType ?? undefined)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [initialMealType])
 
   // Hook de mutación de la IA
   const aiLogMutation = useAiLog()
@@ -151,7 +176,7 @@ export default function LogPage() {
   // Manejador: descarta el resultado eliminando las entradas insertadas por la IA
   async function handleDiscard() {
     if (!store.aiResult?.log_entry_ids?.length) {
-      store.reset()
+      resetLogFlow()
       return
     }
 
@@ -166,7 +191,7 @@ export default function LogPage() {
       // Si falla el borrado, igualmente volvemos al estado inicial
     } finally {
       setIsDiscarding(false)
-      store.reset()
+      resetLogFlow()
     }
   }
 
@@ -238,7 +263,7 @@ export default function LogPage() {
           <LogSuccess
             kcal={store.savedKcal}
             mealType={store.mealType}
-            onLogAnother={() => store.reset()}
+            onLogAnother={resetLogFlow}
           />
         </div>
       </div>
@@ -248,9 +273,9 @@ export default function LogPage() {
   return (
     <div className="min-h-screen">
       <div className="hero-surface">
-        <div className="app-shell px-4 pb-6 pt-3">
+        <div className="app-shell px-4 pb-4 pt-2">
         {/* Cabecera con botón de volver */}
-        <header className="flex items-center gap-3 py-4">
+        <header className="flex items-center gap-3 py-2.5">
           <button
             onClick={() => router.push('/dashboard')}
             className="
@@ -267,13 +292,13 @@ export default function LogPage() {
             <h1 className="display-title text-3xl font-semibold text-white">Registrar comida</h1>
           </div>
         </header>
-        <p className="max-w-[16rem] text-sm text-white/78">
+        <p className="max-w-[15rem] text-sm text-white/78">
           Usa el método que te resulte más natural y mantenlo rápido.
         </p>
       </div>
       </div>
 
-      <div className="page-container flex flex-col gap-5 pt-5">
+      <div className="page-container flex flex-col gap-4 pt-3">
           {/* Selector de tipo de comida — siempre visible (excepto análisis) */}
           {!isAnalyzing && store.step !== 'confirming' && (
             <MealTypeSelector
@@ -339,7 +364,7 @@ export default function LogPage() {
 
               {/* Botón para cambiar de método */}
               <button
-                onClick={() => store.reset()}
+                onClick={resetLogFlow}
                 className="
                   flex w-fit items-center gap-2 text-sm font-medium text-[var(--ink-2)]
                   transition-colors hover:text-[var(--ink-1)]
@@ -407,7 +432,7 @@ export default function LogPage() {
                 </div>
               </div>
               <button
-                onClick={() => store.reset()}
+                onClick={resetLogFlow}
                 className="
                   w-full py-3 rounded-xl bg-amber-500 text-white
                   text-sm font-semibold
@@ -439,5 +464,28 @@ export default function LogPage() {
         />
       )}
     </div>
+  )
+}
+
+function LogPageFallback() {
+  return (
+    <div className="min-h-screen">
+      <div className="hero-surface">
+        <div className="app-shell px-4 pb-4 pt-2">
+          <div className="h-20 animate-pulse rounded-[1.6rem] bg-white/10" />
+        </div>
+      </div>
+      <div className="page-container pt-3">
+        <div className="h-32 animate-pulse rounded-[1.6rem] bg-[var(--surface-1)]" />
+      </div>
+    </div>
+  )
+}
+
+export default function LogPage() {
+  return (
+    <Suspense fallback={<LogPageFallback />}>
+      <LogPageContent />
+    </Suspense>
   )
 }

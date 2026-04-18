@@ -29,7 +29,7 @@ const BENEFITS = [
   { icon: '🧠', text: 'Algoritmo que se adapta a ti semana a semana' },
   { icon: '📅', text: 'Historial completo (90+ días)' },
   { icon: '📊', text: 'Gráficos de progreso detallados' },
-  { icon: '💪', text: 'Análisis de macros semanal' },
+  { icon: '💪', text: 'Balance semanal más detallado' },
   { icon: '📤', text: 'Exportar tus datos en CSV' },
 ]
 

@@ -719,6 +719,21 @@ export default function OnboardingPage() {
           <div className="flex-1 flex flex-col justify-between py-2">
             {/* Hero */}
             <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-2">
+              <div className="w-full flex justify-end">
+                <Link
+                  href="/login"
+                  className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold transition-all"
+                  style={{
+                    color: '#78716C',
+                    background: '#FFFFFF',
+                    border: '1px solid #E7E5E4',
+                    boxShadow: '0 8px 20px rgba(28,25,23,0.05)',
+                  }}
+                >
+                  Ya tengo cuenta
+                </Link>
+              </div>
+
               {/* Nuti + eyebrow */}
               <div className="flex flex-col items-center gap-1">
                 <NutriaImage pose="wave" size={120} maxWidth="120px" priority withGlow />
@@ -780,6 +795,14 @@ export default function OnboardingPage() {
             >
               ¡Empezamos!
             </button>
+
+            <p className="mt-3 text-center text-xs" style={{ color: '#78716C' }}>
+              Si ya habías entrado antes, puedes{' '}
+              <Link href="/login" className="font-semibold underline" style={{ color: '#F97316' }}>
+                iniciar sesión aquí
+              </Link>
+              .
+            </p>
           </div>
         )
 
@@ -2593,6 +2616,13 @@ export default function OnboardingPage() {
                 >
                   {authMode === 'register' ? 'Iniciar sesión' : 'Crear cuenta'}
                 </button>
+              </p>
+              <p className="text-xs text-center" style={{ color: '#78716C' }}>
+                Si prefieres entrar directamente a la pantalla de acceso, usa{' '}
+                <Link href="/login" className="font-semibold underline" style={{ color: '#F97316' }}>
+                  /login
+                </Link>
+                .
               </p>
             </div>
           </div>

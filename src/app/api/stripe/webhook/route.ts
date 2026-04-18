@@ -123,6 +123,14 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  function getSubscriptionPeriodEnd(subscription: Stripe.Subscription): number | null {
+    const periodEnds = subscription.items.data
+      .map((item) => item.current_period_end)
+      .filter((value): value is number => typeof value === 'number')
+
+    return periodEnds.length > 0 ? Math.max(...periodEnds) : null
+  }
+
   // Función auxiliar: obtener user_id desde metadata o por stripe_customer_id
   async function resolveUserId(
     metadata: Stripe.Metadata | null,
@@ -180,11 +188,11 @@ export async function POST(request: NextRequest) {
         if (session.subscription) {
           const subscription = await stripe.subscriptions.retrieve(
             session.subscription as string
-          )
-          premiumExpiresAt = new Date(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (subscription as any).current_period_end * 1000
-          ).toISOString()
+          ) as Stripe.Subscription
+          const currentPeriodEnd = getSubscriptionPeriodEnd(subscription)
+          premiumExpiresAt = currentPeriodEnd
+            ? new Date(currentPeriodEnd * 1000).toISOString()
+            : null
           subscriptionStatus =
             subscription.status === 'trialing' ? 'trialing' : 'active'
         }
@@ -215,10 +223,10 @@ export async function POST(request: NextRequest) {
           break
         }
 
-        const premiumExpiresAt = new Date(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (subscription as any).current_period_end * 1000
-        ).toISOString()
+        const currentPeriodEnd = getSubscriptionPeriodEnd(subscription)
+        const premiumExpiresAt = currentPeriodEnd
+          ? new Date(currentPeriodEnd * 1000).toISOString()
+          : null
 
         const statusMap: Record<string, string> = {
           active: 'active',

@@ -4,6 +4,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { WeeklySnapshotDisplay } from '@/types/logging'
+import type { Database } from '@/types/supabase.generated'
+
+type TdeeWeeklySnapshotRow = Database['public']['Tables']['tdee_weekly_snapshots']['Row']
 
 // Formatea el rango de la semana en español: "11–17 Mar"
 function formatWeekLabel(weekStart: string): string {
@@ -24,8 +27,7 @@ function formatWeekLabel(weekStart: string): string {
   return `${startDay} ${startMonth}–${endDay} ${endMonth}`
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function transformSnapshot(row: Record<string, any>): WeeklySnapshotDisplay {
+function transformSnapshot(row: TdeeWeeklySnapshotRow): WeeklySnapshotDisplay {
   return {
     week_label: formatWeekLabel(row.week_start),
     week_start: row.week_start,
@@ -33,9 +35,9 @@ function transformSnapshot(row: Record<string, any>): WeeklySnapshotDisplay {
     weight_delta_kg: row.weight_delta_kg ?? null,
     avg_calories_day: row.avg_calories_day ?? null,
     complete_days: row.complete_days ?? 0,
-    was_adjusted: row.was_adjusted ?? false,
+    was_adjusted: row.adjustment_kcal !== null && row.adjustment_kcal !== 0,
     adjustment_kcal: row.adjustment_kcal ?? 0,
-    tdee_after: row.tdee_after ?? 0,
+    tdee_after: row.tdee_after_adjustment ?? 0,
   }
 }
 

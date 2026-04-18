@@ -1,0 +1,24 @@
+{
+  "bundle_id": "local-recipes-500-seed-17",
+  "recipes": 500,
+  "by_meal_type": {
+    "desayuno": 120,
+    "comida": 140,
+    "cena": 140,
+    "picoteo": 100
+  },
+  "sample_titles": [
+    "Avena suave con arándanos y toque de nueces",
+    "Avena suave con fresas y toque de almendras",
+    "Avena suave con fresas y toque de almendras",
+    "Avena suave con fresas y toque de nueces",
+    "Avena suave con fresas y toque de nueces",
+    "Avena suave con fresas y toque de semillas de chía",
+    "Avena suave con fresas y toque de semillas de chía",
+    "Avena suave con manzana y toque de almendras",
+    "Avena suave con manzana y toque de nueces",
+    "Avena suave con plátano y toque de almendras",
+    "Avena suave con plátano y toque de nueces",
+    "Avena suave con plátano y toque de semillas de chía"
+  ]
+}

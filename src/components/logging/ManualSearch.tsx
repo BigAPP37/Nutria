@@ -26,7 +26,7 @@ export function ManualSearch({
   const [query, setQuery] = useState('')
   const [selectedFood, setSelectedFood] = useState<FoodSearchResult | null>(null)
 
-  const { results, isLoading } = useFoodSearch(query)
+  const { results, isLoading, error, refetch } = useFoodSearch(query)
 
   // Si hay un alimento seleccionado, muestra el selector de porción
   if (selectedFood) {
@@ -108,8 +108,49 @@ export function ManualSearch({
         </div>
       )}
 
+      {/* Error de búsqueda */}
+      {!isLoading && query.length >= 2 && error && (
+        <div style={{ textAlign: 'center', padding: '32px 0' }}>
+          <div style={{
+            width: 52,
+            height: 52,
+            borderRadius: 18,
+            background: '#FFFBEB',
+            border: '1px solid #F59E0B',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 12px',
+          }}>
+            <Search style={{ width: 22, height: 22, color: '#F59E0B' }} strokeWidth={1.5} />
+          </div>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#B45309', marginBottom: 4 }}>
+            No pudimos buscar ahora mismo
+          </p>
+          <p style={{ fontSize: 12, color: '#A8A29E', marginBottom: 12 }}>
+            Revisa la conexión o inténtalo otra vez
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            style={{
+              padding: '10px 18px',
+              borderRadius: 12,
+              background: 'white',
+              color: '#B45309',
+              fontSize: 13,
+              fontWeight: 700,
+              border: '1px solid #F59E0B',
+              cursor: 'pointer',
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {/* Sin resultados */}
-      {!isLoading && query.length >= 2 && results.length === 0 && (
+      {!isLoading && query.length >= 2 && !error && results.length === 0 && (
         <div style={{ textAlign: 'center', padding: '32px 0' }}>
           <div style={{
             width: 52,
@@ -124,7 +165,7 @@ export function ManualSearch({
             <Search style={{ width: 22, height: 22, color: '#C4B9B3' }} strokeWidth={1.5} />
           </div>
           <p style={{ fontSize: 14, fontWeight: 600, color: '#78716C', marginBottom: 4 }}>
-            Sin resultados
+            No encontramos ese alimento
           </p>
           <p style={{ fontSize: 12, color: '#A8A29E' }}>
             Prueba con otro término o usa el método de texto

@@ -55,7 +55,7 @@ interface LogSessionState {
   setMealType(type: MealType): void
   setError(msg: string): void
   setSavedKcal(kcal: number): void
-  reset(): void
+  reset(mealType?: MealType): void
 }
 
 // Infiere el tipo de comida según la hora actual
@@ -142,5 +142,5 @@ export const useLogSessionStore = create<LogSessionState>((set) => ({
   setSavedKcal: (kcal) => set({ savedKcal: kcal }),
 
   // Reinicia el store al estado inicial
-  reset: () => set({ ...initialState, mealType: inferMealType() }),
+  reset: (mealType) => set({ ...initialState, mealType: mealType ?? inferMealType() }),
 }))

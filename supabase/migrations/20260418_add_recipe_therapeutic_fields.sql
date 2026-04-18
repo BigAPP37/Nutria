@@ -1,0 +1,8 @@
+ALTER TABLE public.recipes
+  ADD COLUMN IF NOT EXISTS sodium_mg NUMERIC(8,2),
+  ADD COLUMN IF NOT EXISTS saturated_fat_g NUMERIC(6,2),
+  ADD COLUMN IF NOT EXISTS added_sugars_g NUMERIC(6,2),
+  ADD COLUMN IF NOT EXISTS potassium_mg NUMERIC(8,2),
+  ADD COLUMN IF NOT EXISTS phosphorus_mg NUMERIC(8,2),
+  ADD COLUMN IF NOT EXISTS gluten_free BOOLEAN,
+  ADD COLUMN IF NOT EXISTS fodmap_profile TEXT;

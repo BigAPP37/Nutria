@@ -298,8 +298,7 @@ Analiza el alimento o comida y devuelve ÚNICAMENTE un JSON válido sin markdown
 }
 Usa porciones típicas de ${regionLabel}. Sé preciso con las estimaciones calóricas.`
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let messages: any[]
+    let messages: MessageParam[]
 
     if (method === 'photo') {
       messages = [{
@@ -446,3 +445,4 @@ Usa porciones típicas de ${regionLabel}. Sé preciso con las estimaciones caló
     return jsonError('Error interno del servidor.', 500)
   }
 }
+import type { MessageParam } from '@anthropic-ai/sdk/resources/messages'

@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local tooling / generated artifacts
+scripts/__pycache__/
+nutria_generator_log.txt
+nutria_generator_progress.json
+supabase/.temp/
+Nutria/

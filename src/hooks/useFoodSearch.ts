@@ -30,6 +30,8 @@ async function searchFoods(query: string, countryCode: string): Promise<FoodSear
 export function useFoodSearch(query: string): {
   results: FoodSearchResult[]
   isLoading: boolean
+  error: Error | null
+  refetch: () => void
 } {
   const { data: profile } = useProfile()
   // Estado del query con debounce aplicado
@@ -44,7 +46,7 @@ export function useFoodSearch(query: string): {
     return () => clearTimeout(timer)
   }, [query])
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['food-search', debouncedQuery, profile?.country_code ?? 'ES'],
     queryFn: () => searchFoods(debouncedQuery, profile?.country_code ?? 'ES'),
     // Solo busca si hay al menos 2 caracteres
@@ -57,5 +59,7 @@ export function useFoodSearch(query: string): {
   return {
     results: data ?? [],
     isLoading,
+    error: error as Error | null,
+    refetch,
   }
 }

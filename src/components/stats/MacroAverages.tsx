@@ -106,7 +106,7 @@ export function MacroAverages({ data, targets, isLoading }: MacroAveragesProps) 
       {/* Título y subtítulo */}
       <div>
         <p style={{ fontSize: 15, fontWeight: 700, color: '#1C1917' }}>
-          Macros promedio
+          Balance semanal
         </p>
         <p style={{ fontSize: 12, color: '#A8A29E', marginTop: 2 }}>
           Esta semana · {data.daysWithData} {data.daysWithData === 1 ? 'día con datos' : 'días con datos'}

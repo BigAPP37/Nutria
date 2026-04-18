@@ -75,6 +75,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
   const [activationError, setActivationError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [mealsLoading, setMealsLoading] = useState(false)
+  const [screenError, setScreenError] = useState<string | null>(null)
 
   // Cargar plan + días + perfil
   useEffect(() => {
@@ -89,6 +90,13 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
         sb.from('user_profiles').select('is_premium').eq('id', user.id).maybeSingle(),
         sb.from('user_meal_plans').select('plan_id').eq('user_id', user.id).eq('plan_id', planId).eq('is_active', true).maybeSingle(),
       ])
+
+      const firstError = planRes.error ?? daysRes.error ?? profileRes.error ?? userPlanRes.error
+      if (firstError) {
+        setScreenError(firstError.message)
+        setLoading(false)
+        return
+      }
 
       setPlan(planRes.data)
       setDays(daysRes.data || [])
@@ -110,10 +118,15 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
 
     async function fetchMeals() {
       setMealsLoading(true)
-      const { data } = await sb.from('meal_plan_meals')
+      const { data, error } = await sb.from('meal_plan_meals')
         .select('id, meal_type, order_index, recipe:recipes(id, title, calories_kcal, protein_g, ready_in_min, image_url)')
         .eq('day_id', dayId)
         .order('order_index')
+      if (error) {
+        setScreenError(error.message)
+        setMealsLoading(false)
+        return
+      }
       setMeals((data as unknown as Meal[]) || [])
       setMealsLoading(false)
     }
@@ -148,6 +161,17 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
       <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-orange-400 border-t-transparent animate-spin" />
       </div>
+    )
+  }
+
+  if (screenError) {
+    return (
+      <AppPage>
+        <AppPanel className="p-6 text-center">
+          <p className="text-sm font-semibold text-stone-700">No pudimos cargar este plan</p>
+          <p className="mt-2 text-sm text-stone-500">{screenError}</p>
+        </AppPanel>
+      </AppPage>
     )
   }
 
@@ -229,7 +253,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
               >
                 {isActivatingPlan ? 'Activando...' : 'Empezar este plan'}
               </button>
-              {activationError ? <p className="mt-2 text-sm text-red-600">{activationError}</p> : null}
+              {activationError ? <p className="mt-2 text-sm text-amber-600">{activationError}</p> : null}
             </AppPanel>
           </section>
         )}

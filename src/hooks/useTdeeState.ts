@@ -4,6 +4,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { TdeeDisplayState } from '@/types/logging'
+import type { Database } from '@/types/supabase.generated'
+
+type UserTdeeStateRow = Database['public']['Tables']['user_tdee_state']['Row']
 
 // Determina la etiqueta de confianza según el nivel numérico
 function getConfidenceLabel(score: number): string {
@@ -13,19 +16,18 @@ function getConfidenceLabel(score: number): string {
 }
 
 // Transforma la fila cruda de la BD al tipo de display
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function transformRow(row: Record<string, any>): TdeeDisplayState {
+function transformRow(row: UserTdeeStateRow): TdeeDisplayState {
   const confidence = row.confidence_level ?? 0
   return {
-    goal_kcal: row.goal_kcal ?? row.tdee_estimate ?? 2000,
+    goal_kcal: row.current_tdee_kcal ?? 2000,
     confidence_level: confidence,
     confidence_label: getConfidenceLabel(confidence),
     weeks_of_data: row.weeks_of_data ?? 0,
-    last_adjusted: row.last_adjusted ?? row.updated_at ?? new Date().toISOString(),
+    last_adjusted: row.last_adjusted_at ?? row.updated_at ?? new Date().toISOString(),
     macro_targets: {
-      protein_g: row.macro_protein_g ?? row.protein_g ?? 150,
-      carbs_g: row.macro_carbs_g ?? row.carbs_g ?? 250,
-      fat_g: row.macro_fat_g ?? row.fat_g ?? 65,
+      protein_g: 150,
+      carbs_g: 250,
+      fat_g: 65,
     },
   }
 }

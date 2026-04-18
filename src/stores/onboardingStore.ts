@@ -1,8 +1,9 @@
 // Store del onboarding ampliado usando Zustand
 // La secuencia de pantallas es dinámica según las respuestas del usuario
+// y persiste en localStorage para recuperar el progreso entre sesiones.
 
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 import type { UserGoal, ActivityLevel, BiologicalSex } from '@/types/database'
 import type {
   ScreenId,
@@ -240,6 +241,9 @@ export const useOnboardingStore = create<OnboardingState>()(
         })
       },
     }),
-    { name: 'nutria-onboarding' },
+    {
+      name: 'onboarding-store',
+      storage: createJSONStorage(() => localStorage),
+    },
   ),
 )

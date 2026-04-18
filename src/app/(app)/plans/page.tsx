@@ -36,6 +36,7 @@ export default function PlansPage() {
   const [userPlan, setUserPlan] = useState<UserMealPlan | null>(null)
   const [isPremium, setIsPremium] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [screenError, setScreenError] = useState<string | null>(null)
 
   useEffect(() => {
     const sb = createClient()
@@ -49,6 +50,13 @@ export default function PlansPage() {
         sb.from('user_profiles').select('is_premium').eq('id', user.id).maybeSingle(),
         sb.from('user_meal_plans').select('*').eq('user_id', user.id).eq('is_active', true).maybeSingle(),
       ])
+
+      const firstError = plansRes.error ?? profileRes.error ?? userPlanRes.error
+      if (firstError) {
+        setScreenError(firstError.message)
+        setLoading(false)
+        return
+      }
 
       setPlans(plansRes.data || [])
       setIsPremium(profileRes.data?.is_premium ?? false)
@@ -66,6 +74,17 @@ export default function PlansPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-orange-400 border-t-transparent animate-spin" />
       </div>
+    )
+  }
+
+  if (screenError) {
+    return (
+      <AppPage>
+        <AppPanel className="p-6 text-center">
+          <p className="text-sm font-semibold text-stone-700">No pudimos cargar los planes</p>
+          <p className="mt-2 text-sm text-stone-500">{screenError}</p>
+        </AppPanel>
+      </AppPage>
     )
   }
 

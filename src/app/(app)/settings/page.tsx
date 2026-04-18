@@ -95,15 +95,13 @@ function Row({
 
 function LegalLink({ href, label }: { href: string; label: string }) {
   return (
-    <a
+    <Link
       href={href}
-      target="_blank"
-      rel="noopener noreferrer"
       className="flex items-center justify-between border-b border-[var(--line-soft)] px-4 py-3.5 transition-colors last:border-0 hover:bg-[var(--surface-2)]"
     >
       <span className="text-sm text-[var(--ink-2)]">{label}</span>
       <ExternalLink className="h-4 w-4 text-[var(--ink-3)]" />
-    </a>
+    </Link>
   )
 }
 
@@ -131,6 +129,7 @@ export default function SettingsPage() {
   const [isRemovingAvatar, setIsRemovingAvatar] = useState(false)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const avatarSrc = useMemo(
     () => avatarPreviewUrl ?? profile?.avatar_url ?? null,
@@ -467,7 +466,7 @@ export default function SettingsPage() {
                   Sube una imagen cuadrada o vertical. Máximo 5 MB.
                 </p>
                 {avatarError ? (
-                  <p className="mt-2 text-xs text-red-600">{avatarError}</p>
+                  <p className="mt-2 text-xs text-amber-600">{avatarError}</p>
                 ) : null}
               </div>
             </div>
@@ -548,7 +547,7 @@ export default function SettingsPage() {
           </button>
           <button
             type="button"
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[var(--surface-2)] active:bg-[var(--surface-1)]"
           >
             <LogOut className="h-4 w-4 text-[var(--ink-3)]" />
@@ -556,7 +555,7 @@ export default function SettingsPage() {
           </button>
           {redoOnboardingError ? (
             <div className="border-t border-[var(--line-soft)] px-4 py-3">
-              <p className="text-sm text-red-600">{redoOnboardingError}</p>
+              <p className="text-sm text-amber-600">{redoOnboardingError}</p>
             </div>
           ) : null}
         </Section>
@@ -678,6 +677,59 @@ export default function SettingsPage() {
                 onClick={handleSaveGoals}
               >
                 Guardar
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showLogoutConfirm ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-[rgba(13,13,13,0.72)]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowLogoutConfirm(false)
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-t-[2rem] border border-[rgba(249,115,22,0.14)] px-6 pb-6 pt-5 shadow-[0_-18px_48px_rgba(0,0,0,0.42)]"
+            style={{
+              background: 'linear-gradient(180deg, rgba(28,25,23,0.98) 0%, rgba(13,13,13,0.98) 100%)',
+              paddingBottom: 'max(1.5rem, calc(env(safe-area-inset-bottom) + 1rem))',
+            }}
+          >
+            <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-white/12" />
+            <div className="mb-5 flex items-start gap-3">
+              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-white/8">
+                <LogOut className="h-5 w-5 text-[#F97316]" />
+              </div>
+              <div>
+                <p className="text-base font-bold text-white">¿Seguro que quieres cerrar sesión?</p>
+                <p className="mt-1 text-sm leading-6 text-white/64">
+                  Volverás a la pantalla de acceso y tendrás que iniciar sesión de nuevo para seguir.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                fullWidth
+                onClick={() => setShowLogoutConfirm(false)}
+                className="border-white/14 bg-white/6 text-white hover:bg-white/10"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                fullWidth
+                onClick={async () => {
+                  setShowLogoutConfirm(false)
+                  await handleLogout()
+                }}
+                className="bg-[linear-gradient(135deg,#F97316_0%,#EA6C0A_100%)] text-white shadow-[0_14px_32px_rgba(249,115,22,0.28)]"
+              >
+                Cerrar sesión
               </Button>
             </div>
           </div>

@@ -13,7 +13,6 @@ from pathlib import Path
 
 try:
     from dotenv import dotenv_values
-    from PIL import Image
     from supabase import Client, create_client
 except ImportError as e:
     sys.exit(
@@ -27,6 +26,15 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 ENV_PATH = REPO_ROOT / ".env.local"
 BUCKET = "food-images"
 STORAGE_PREFIX = "recipes"
+OPTIONAL_RECIPE_FIELDS = (
+    "sodium_mg",
+    "saturated_fat_g",
+    "added_sugars_g",
+    "potassium_mg",
+    "phosphorus_mg",
+    "gluten_free",
+    "fodmap_profile",
+)
 
 
 def load_env() -> dict:
@@ -51,6 +59,15 @@ def load_manifest(bundle_dir: Path) -> dict:
 
 
 def image_to_webp(path: Path) -> bytes:
+    try:
+        from PIL import Image
+    except ImportError as exc:
+        sys.exit(
+            "❌  Pillow es obligatorio solo cuando el bundle usa image_file locales.\n"
+            f"   Error: {exc}\n"
+            "   Ejecuta:\n"
+            "   pip install -r scripts/requirements_images.txt\n"
+        )
     img = Image.open(path).convert("RGB").resize((768, 768), Image.LANCZOS)
     buf = io.BytesIO()
     img.save(buf, format="WEBP", quality=90, method=6)
@@ -67,7 +84,37 @@ def upload_recipe_image(sb: Client, bundle_id: str, recipe_slug: str, image_path
     return sb.storage.from_(BUCKET).get_public_url(storage_path)
 
 
-def upsert_recipe(sb: Client, bundle_id: str, bundle_dir: Path, recipe: dict) -> str:
+def extract_data(response):
+    return None if response is None else response.data
+
+
+def require_single_row(response, context: str) -> dict:
+    data = extract_data(response)
+    if not data:
+        sys.exit(f"❌  Supabase no devolvió filas para: {context}")
+    if isinstance(data, list):
+        return data[0]
+    return data
+
+
+def detect_supported_recipe_fields(sb: Client) -> set[str]:
+    supported: set[str] = set()
+    for field in OPTIONAL_RECIPE_FIELDS:
+        try:
+            sb.table("recipes").select(f"id,{field}").limit(1).execute()
+            supported.add(field)
+        except Exception:
+            continue
+    return supported
+
+
+def upsert_recipe(
+    sb: Client,
+    bundle_id: str,
+    bundle_dir: Path,
+    recipe: dict,
+    supported_recipe_fields: set[str],
+) -> str:
     external_source = f"bundle://{bundle_id}/recipe/{recipe['slug']}"
     image_url = recipe.get("image_url")
 
@@ -93,15 +140,25 @@ def upsert_recipe(sb: Client, bundle_id: str, bundle_dir: Path, recipe: dict) ->
         "source_url": external_source,
         "tags": recipe.get("tags") or [],
     }
+    for field in supported_recipe_fields:
+        payload[field] = recipe.get(field)
 
-    existing = sb.table("recipes").select("id").eq("source_url", external_source).maybeSingle().execute().data
+    existing_response = (
+        sb.table("recipes")
+        .select("id")
+        .eq("source_url", external_source)
+        .maybe_single()
+        .execute()
+    )
+    existing = extract_data(existing_response)
     if existing:
         recipe_id = existing["id"]
         sb.table("recipes").update(payload).eq("id", recipe_id).execute()
         sb.table("recipe_ingredients").delete().eq("recipe_id", recipe_id).execute()
         sb.table("recipe_steps").delete().eq("recipe_id", recipe_id).execute()
     else:
-        recipe_id = sb.table("recipes").insert(payload).execute().data[0]["id"]
+        inserted = sb.table("recipes").insert(payload).execute()
+        recipe_id = require_single_row(inserted, f"insert recipe {recipe['slug']}")["id"]
 
     ingredients = []
     for index, ingredient in enumerate(recipe.get("ingredients") or []):
@@ -132,13 +189,24 @@ def upsert_recipe(sb: Client, bundle_id: str, bundle_dir: Path, recipe: dict) ->
 
 
 def replace_plan_if_exists(sb: Client, plan: dict) -> None:
-    existing = sb.table("meal_plans").select("id").eq("title", plan["title"]).eq("goal_type", plan["goal_type"]).execute().data
+    existing = extract_data(
+        sb.table("meal_plans")
+        .select("id")
+        .eq("title", plan["title"])
+        .eq("goal_type", plan["goal_type"])
+        .execute()
+    ) or []
     for row in existing:
         sb.table("meal_plans").delete().eq("id", row["id"]).execute()
 
 
-def insert_plan(sb: Client, plan: dict, recipe_ids_by_slug: dict[str, str]) -> str:
-    plan_row = sb.table("meal_plans").insert({
+def insert_plan(
+    sb: Client,
+    plan: dict,
+    recipe_ids_by_slug: dict[str, str],
+    recipe_rows_by_slug: dict[str, dict],
+) -> str:
+    plan_row = require_single_row(sb.table("meal_plans").insert({
         "title": plan["title"],
         "description": plan.get("description"),
         "goal_type": plan["goal_type"],
@@ -146,18 +214,18 @@ def insert_plan(sb: Client, plan: dict, recipe_ids_by_slug: dict[str, str]) -> s
         "target_calories": plan["target_calories"],
         "is_premium": plan.get("is_premium", True),
         "is_sample": plan.get("is_sample", False),
-    }).execute().data[0]
+    }).execute(), f"insert plan {plan['title']}")
 
     plan_id = plan_row["id"]
 
     for day in plan["days"]:
         meals = day["meals"]
-        total_calories = sum(plan_recipe_metric(recipe_ids_by_slug, meals, "calories_kcal"))
-        total_protein = sum(plan_recipe_metric(recipe_ids_by_slug, meals, "protein_g"))
-        total_carbs = sum(plan_recipe_metric(recipe_ids_by_slug, meals, "carbs_g"))
-        total_fat = sum(plan_recipe_metric(recipe_ids_by_slug, meals, "fat_g"))
+        total_calories = sum(plan_recipe_metric(recipe_rows_by_slug, meals, "calories_kcal"))
+        total_protein = sum(plan_recipe_metric(recipe_rows_by_slug, meals, "protein_g"))
+        total_carbs = sum(plan_recipe_metric(recipe_rows_by_slug, meals, "carbs_g"))
+        total_fat = sum(plan_recipe_metric(recipe_rows_by_slug, meals, "fat_g"))
 
-        day_row = sb.table("meal_plan_days").insert({
+        day_row = require_single_row(sb.table("meal_plan_days").insert({
             "plan_id": plan_id,
             "day_number": day["day_number"],
             "day_label": day.get("day_label"),
@@ -165,7 +233,7 @@ def insert_plan(sb: Client, plan: dict, recipe_ids_by_slug: dict[str, str]) -> s
             "total_protein_g": round(total_protein, 1),
             "total_carbs_g": round(total_carbs, 1),
             "total_fat_g": round(total_fat, 1),
-        }).execute().data[0]
+        }).execute(), f"insert plan day {plan['title']} #{day['day_number']}")
 
         for index, meal in enumerate(meals):
             sb.table("meal_plan_meals").insert({
@@ -190,6 +258,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Importa un bundle editorial a Supabase")
     parser.add_argument("bundle_dir", help="Ruta de la carpeta del bundle")
     parser.add_argument("--replace-existing-plans", action="store_true", help="Borra y recrea planes con mismo title+goal_type")
+    parser.add_argument("--skip-recipes", action="store_true", help="Reutiliza recetas ya importadas y solo sincroniza planes")
+    parser.add_argument("--skip-plans", action="store_true", help="Sincroniza recetas pero no toca meal_plans")
     args = parser.parse_args()
 
     bundle_dir = Path(args.bundle_dir).resolve()
@@ -198,28 +268,54 @@ def main() -> None:
 
     env = load_env()
     sb = get_supabase(env)
+    supported_recipe_fields = detect_supported_recipe_fields(sb)
+    missing_recipe_fields = [field for field in OPTIONAL_RECIPE_FIELDS if field not in supported_recipe_fields]
 
     recipe_ids_by_slug: dict[str, str] = {}
     recipe_rows_by_slug: dict[str, dict] = {}
 
     print(f"\n📦  Importando bundle {bundle_id}\n")
+    if missing_recipe_fields:
+        print(
+            "  ⚠️  El proyecto remoto todavía no expone estas columnas en public.recipes: "
+            + ", ".join(missing_recipe_fields)
+        )
+        print("     Se importará el bundle sin esos campos hasta aplicar la migración nueva.\n")
 
     for recipe in manifest.get("recipes") or []:
-        recipe_id = upsert_recipe(sb, bundle_id, bundle_dir, recipe)
-        recipe_ids_by_slug[recipe["slug"]] = recipe_id
         recipe_rows_by_slug[recipe["slug"]] = {
             "calories_kcal": recipe.get("calories_kcal"),
             "protein_g": recipe.get("protein_g"),
             "carbs_g": recipe.get("carbs_g"),
             "fat_g": recipe.get("fat_g"),
         }
+
+        if args.skip_recipes:
+            existing = extract_data(
+                sb.table("recipes")
+                .select("id")
+                .eq("source_url", f"bundle://{bundle_id}/recipe/{recipe['slug']}")
+                .maybe_single()
+                .execute()
+            )
+            if not existing:
+                sys.exit(
+                    "❌  --skip-recipes requiere que todas las recetas del bundle ya existan en Supabase. "
+                    f"Falta: {recipe['slug']}"
+                )
+            recipe_ids_by_slug[recipe["slug"]] = existing["id"]
+            continue
+
+        recipe_id = upsert_recipe(sb, bundle_id, bundle_dir, recipe, supported_recipe_fields)
+        recipe_ids_by_slug[recipe["slug"]] = recipe_id
         print(f"  ✅ recipe: {recipe['slug']}")
 
-    for plan in manifest.get("plans") or []:
-        if args.replace_existing_plans:
-            replace_plan_if_exists(sb, plan)
-        plan_id = insert_plan(sb, plan, recipe_rows_by_slug | recipe_ids_by_slug)  # type: ignore[arg-type]
-        print(f"  ✅ plan:   {plan['title']} ({plan_id})")
+    if not args.skip_plans:
+        for plan in manifest.get("plans") or []:
+            if args.replace_existing_plans:
+                replace_plan_if_exists(sb, plan)
+            plan_id = insert_plan(sb, plan, recipe_ids_by_slug, recipe_rows_by_slug)
+            print(f"  ✅ plan:   {plan['title']} ({plan_id})")
 
     print("\n✅  Importación completada\n")
 

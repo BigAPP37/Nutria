@@ -1,0 +1,21 @@
+{
+  "bundle_id": "local-recipes-500-seed-17-v2",
+  "recipes": 500,
+  "plans": 6,
+  "sample_plans": 3,
+  "premium_plans": 3,
+  "by_meal_type": {
+    "desayuno": 120,
+    "comida": 140,
+    "cena": 140,
+    "picoteo": 100
+  },
+  "plan_titles": [
+    "Plan Ligero · 7 días · Muestra",
+    "Plan Equilibrio · 7 días · Muestra",
+    "Plan Fuerza · 7 días · Muestra",
+    "Plan Ligero · 14 días",
+    "Plan Equilibrio · 14 días",
+    "Plan Fuerza · 14 días"
+  ]
+}

@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
+import { ChevronRight, LockKeyhole } from 'lucide-react'
 
 // Hooks de datos
 import { useTdeeState } from '@/hooks/useTdeeState'
@@ -27,7 +28,7 @@ import { AppHero, AppPage, AppPanel, AppSectionHeader } from '@/components/ui/Ap
 
 // Monetización Premium
 import { usePremiumStore } from '@/stores/premiumStore'
-import { StatsPaywallOverlay } from '@/components/premium/StatsPaywallOverlay'
+import { PaywallModal } from '@/components/premium/PaywallModal'
 
 const WeightChart = dynamic(
   () => import('@/components/stats/WeightChart').then((mod) => mod.WeightChart),
@@ -43,20 +44,31 @@ export default function StatsPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lb'>('kg')
   const [showWeightModal, setShowWeightModal] = useState(false)
+  const [screenError, setScreenError] = useState<string | null>(null)
+  const [showStatsPaywall, setShowStatsPaywall] = useState(false)
 
   const { isPremium } = usePremiumStore()
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user }, error: authError }) => {
+      if (authError) {
+        setScreenError(authError.message)
+        return
+      }
       if (!user) return
       setUserId(user.id)
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('unit_weight')
         .eq('id', user.id)
         .single()
+
+      if (profileError) {
+        setScreenError(profileError.message)
+        return
+      }
 
       if (profile?.unit_weight) {
         setWeightUnit(profile.unit_weight as 'kg' | 'lb')
@@ -77,6 +89,17 @@ export default function StatsPage() {
   const daysLogged = streakData?.totalComplete ?? 0
   const streak = streakData?.streak ?? 0
   const goalKcal = tdeeState?.goal_kcal ?? 2000
+
+  if (screenError) {
+    return (
+      <AppPage>
+        <AppPanel className="p-6 text-center">
+          <p className="text-sm font-semibold text-stone-700">No pudimos cargar tus estadísticas</p>
+          <p className="mt-2 text-sm text-stone-500">{screenError}</p>
+        </AppPanel>
+      </AppPage>
+    )
+  }
 
   return (
     <AppPage>
@@ -118,61 +141,62 @@ export default function StatsPage() {
           </div>
         </section>
 
-        {/* 3. Objetivo calórico diario */}
-        <TdeeCard tdeeState={tdeeState ?? null} todayTotals={todayTotals ?? null} isLoading={tdeeLoading} />
+        {isPremium && (
+          <>
+            {/* 3. Objetivo calórico diario */}
+            <TdeeCard tdeeState={tdeeState ?? null} todayTotals={todayTotals ?? null} isLoading={tdeeLoading} />
 
-        {/* 3b. Sugerencia de ajuste de TDEE (si aplica) */}
-        {tdeeAdjustment?.shouldAdjust && userId && (
-          <TdeeAdjustmentCard adjustment={tdeeAdjustment} userId={userId} />
+            {/* 3b. Sugerencia de ajuste (si aplica) */}
+            {tdeeAdjustment?.shouldAdjust && userId && (
+              <TdeeAdjustmentCard adjustment={tdeeAdjustment} userId={userId} />
+            )}
+
+            {/* 4. Gráfico de evolución del peso */}
+            <AppPanel className="p-4">
+              <AppSectionHeader
+                title="Peso"
+                description="Observa la tendencia, no solo el número del día."
+              />
+              <WeightChart
+                data={weightHistory}
+                unit={weightUnit}
+                onAddWeight={() => setShowWeightModal(true)}
+                isLoading={weightLoading}
+              />
+            </AppPanel>
+
+            {/* 5. Gráfico de calorías semanales */}
+            <AppPanel className="p-4">
+              <AppSectionHeader
+                title="Calorías semanales"
+                description="Compara tu intake real con el objetivo para ajustar antes de desviarte."
+              />
+              <CalorieChart
+                snapshots={snapshots}
+                goalKcal={goalKcal}
+                isLoading={snapshotsLoading}
+              />
+            </AppPanel>
+
+            {/* 6. Resumen nutricional de la semana actual */}
+            <AppPanel className="p-4">
+              <AppSectionHeader
+                title="Resumen nutricional"
+                description="Una lectura simple para entender cómo va tu semana."
+              />
+              <MacroAverages
+                data={macroAverages ?? null}
+                targets={tdeeState?.macro_targets ?? null}
+                isLoading={macroLoading}
+              />
+            </AppPanel>
+          </>
         )}
-
-        {/* 4. Gráfico de evolución del peso */}
-        <AppPanel className="relative p-4">
-          <AppSectionHeader
-            title="Peso"
-            description="Observa la tendencia, no solo el número del día."
-          />
-          <WeightChart
-            data={weightHistory}
-            unit={weightUnit}
-            onAddWeight={() => setShowWeightModal(true)}
-            isLoading={weightLoading}
-          />
-          {!isPremium && <StatsPaywallOverlay />}
-        </AppPanel>
-
-        {/* 5. Gráfico de calorías semanales */}
-        <AppPanel className="relative p-4">
-          <AppSectionHeader
-            title="Calorías semanales"
-            description="Compara tu intake real con el objetivo para ajustar antes de desviarte."
-          />
-          <CalorieChart
-            snapshots={snapshots}
-            goalKcal={goalKcal}
-            isLoading={snapshotsLoading}
-          />
-          {!isPremium && <StatsPaywallOverlay />}
-        </AppPanel>
-
-        {/* 6. Macros promedio de la semana actual */}
-        <AppPanel className="relative p-4">
-          <AppSectionHeader
-            title="Macros esta semana"
-            description="Detecta desequilibrios antes de que se conviertan en hábito."
-          />
-          <MacroAverages
-            data={macroAverages ?? null}
-            targets={tdeeState?.macro_targets ?? null}
-            isLoading={macroLoading}
-          />
-          {!isPremium && <StatsPaywallOverlay />}
-        </AppPanel>
 
         {/* 7. Historial de semanas anteriores */}
         <section>
           <AppSectionHeader
-            title="Historial semanal"
+            title={isPremium ? 'Historial semanal' : 'Resumen semanal'}
             description="Semanas anteriores para entender consistencia, no perfección."
           />
           {snapshotsLoading ? (
@@ -193,6 +217,57 @@ export default function StatsPage() {
             </div>
           )}
         </section>
+
+        {!isPremium && (
+          <AppPanel className="overflow-hidden p-0">
+            <div
+              className="relative px-5 py-5 text-white"
+              style={{
+                background: 'linear-gradient(145deg, #0D0D0D 0%, #1C1917 62%, rgba(249,115,22,0.18) 100%)',
+              }}
+            >
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(249,115,22,0.2),transparent_42%)]" />
+              <div className="relative">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
+                    <LockKeyhole className="h-5 w-5 text-[var(--color-primary-500)]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">Desbloquea estadísticas avanzadas</p>
+                    <p className="mt-1 text-sm text-white/70">
+                      Tendencias, comparativas y una lectura más completa de tu progreso.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-3 rounded-[1.35rem] border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <div className="h-3 w-24 rounded-full bg-white/20" />
+                      <div className="mt-2 h-2.5 w-16 rounded-full bg-white/10" />
+                    </div>
+                    <div className="h-9 w-14 rounded-2xl bg-white/10" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 opacity-60 blur-[1px]">
+                    <div className="h-20 rounded-2xl bg-white/10" />
+                    <div className="h-20 rounded-2xl bg-white/10" />
+                    <div className="h-20 rounded-2xl bg-white/10" />
+                  </div>
+                  <div className="h-24 rounded-[1.25rem] bg-white/8 opacity-60 blur-[1px]" />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowStatsPaywall(true)}
+                  className="mt-5 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[var(--color-primary-500)] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(249,115,22,0.24)]"
+                >
+                  Ver opciones
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </AppPanel>
+        )}
       </main>
 
       {userId && (
@@ -201,6 +276,14 @@ export default function StatsPage() {
           onClose={() => setShowWeightModal(false)}
           lastWeight={currentWeight}
           userId={userId}
+        />
+      )}
+
+      {showStatsPaywall && (
+        <PaywallModal
+          isOpen={showStatsPaywall}
+          onClose={() => setShowStatsPaywall(false)}
+          trigger="stats"
         />
       )}
     </AppPage>
