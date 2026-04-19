@@ -1,0 +1,1135 @@
+{
+  "bundle_id": "local-recipes-500-seed-17-v2",
+  "generated_from": "scripts/generated_bundles/local-recipes-500-seed-17-v2",
+  "include_unused": false,
+  "count": 161,
+  "entries": [
+    {
+      "index": "001",
+      "slug": "avena-suave-con-fresas-y-toque-de-nueces-2",
+      "title": "Avena suave con fresas y toque de nueces",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Avena suave con fresas y toque de nueces. Desayuno cremoso con avena, fresas y topping crujiente."
+    },
+    {
+      "index": "002",
+      "slug": "avena-suave-con-fresas-y-toque-de-semillas-de-ch-a-2",
+      "title": "Avena suave con fresas y toque de semillas de chía",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Avena suave con fresas y toque de semillas de chía. Receta rápida de cuchara con avena y fresas, pensada para empezar con calma."
+    },
+    {
+      "index": "003",
+      "slug": "avena-suave-con-manzana-y-toque-de-almendras",
+      "title": "Avena suave con manzana y toque de almendras",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Avena suave con manzana y toque de almendras. Bol suave y saciante con avena, manzana y un remate crujiente."
+    },
+    {
+      "index": "004",
+      "slug": "avena-suave-con-pl-tano-y-toque-de-nueces",
+      "title": "Avena suave con plátano y toque de nueces",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Avena suave con plátano y toque de nueces. Receta rápida de cuchara con avena y plátano, pensada para empezar con calma."
+    },
+    {
+      "index": "005",
+      "slug": "bol-cremoso-de-avena-ar-ndanos-y-almendras",
+      "title": "Bol cremoso de avena, arándanos y almendras",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol cremoso de avena, arándanos y almendras. Desayuno cremoso con avena, arándanos y topping crujiente."
+    },
+    {
+      "index": "006",
+      "slug": "bol-cremoso-de-avena-manzana-y-almendras",
+      "title": "Bol cremoso de avena, manzana y almendras",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol cremoso de avena, manzana y almendras. Bol suave y saciante con avena, manzana y un remate crujiente."
+    },
+    {
+      "index": "007",
+      "slug": "bol-cremoso-de-avena-manzana-y-semillas-de-ch-a",
+      "title": "Bol cremoso de avena, manzana y semillas de chía",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol cremoso de avena, manzana y semillas de chía. Receta rápida de cuchara con avena y manzana, pensada para empezar con calma."
+    },
+    {
+      "index": "008",
+      "slug": "bol-cremoso-de-avena-manzana-y-semillas-de-ch-a-2",
+      "title": "Bol cremoso de avena, manzana y semillas de chía",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol cremoso de avena, manzana y semillas de chía. Receta rápida de cuchara con avena y manzana, pensada para empezar con calma."
+    },
+    {
+      "index": "009",
+      "slug": "bol-cremoso-de-avena-pl-tano-y-almendras",
+      "title": "Bol cremoso de avena, plátano y almendras",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol cremoso de avena, plátano y almendras. Bol suave y saciante con avena, plátano y un remate crujiente."
+    },
+    {
+      "index": "010",
+      "slug": "bowl-de-avena-con-ar-ndanos-y-almendras",
+      "title": "Bowl de avena con arándanos y almendras",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bowl de avena con arándanos y almendras. Desayuno cremoso con avena, arándanos y topping crujiente."
+    },
+    {
+      "index": "011",
+      "slug": "bowl-de-avena-con-fresas-y-almendras",
+      "title": "Bowl de avena con fresas y almendras",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bowl de avena con fresas y almendras. Receta rápida de cuchara con avena y fresas, pensada para empezar con calma."
+    },
+    {
+      "index": "012",
+      "slug": "bowl-de-avena-con-fresas-y-nueces",
+      "title": "Bowl de avena con fresas y nueces",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bowl de avena con fresas y nueces. Receta rápida de cuchara con avena y fresas, pensada para empezar con calma."
+    },
+    {
+      "index": "013",
+      "slug": "bowl-de-avena-con-pl-tano-y-nueces",
+      "title": "Bowl de avena con plátano y nueces",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bowl de avena con plátano y nueces. Bol suave y saciante con avena, plátano y un remate crujiente."
+    },
+    {
+      "index": "014",
+      "slug": "bowl-de-avena-con-pl-tano-y-semillas-de-ch-a",
+      "title": "Bowl de avena con plátano y semillas de chía",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bowl de avena con plátano y semillas de chía. Bol suave y saciante con avena, plátano y un remate crujiente."
+    },
+    {
+      "index": "015",
+      "slug": "desayuno-de-avena-con-ar-ndanos-y-semillas-de-ch-a-2",
+      "title": "Desayuno de avena con arándanos y semillas de chía",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Desayuno de avena con arándanos y semillas de chía. Bol suave y saciante con avena, arándanos y un remate crujiente."
+    },
+    {
+      "index": "016",
+      "slug": "desayuno-de-avena-con-fresas-y-almendras",
+      "title": "Desayuno de avena con fresas y almendras",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Desayuno de avena con fresas y almendras. Bol suave y saciante con avena, fresas y un remate crujiente."
+    },
+    {
+      "index": "017",
+      "slug": "desayuno-de-avena-con-manzana-y-nueces",
+      "title": "Desayuno de avena con manzana y nueces",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Desayuno de avena con manzana y nueces. Desayuno cremoso con avena, manzana y topping crujiente."
+    },
+    {
+      "index": "018",
+      "slug": "desayuno-de-avena-con-manzana-y-semillas-de-ch-a-2",
+      "title": "Desayuno de avena con manzana y semillas de chía",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Desayuno de avena con manzana y semillas de chía. Bol suave y saciante con avena, manzana y un remate crujiente."
+    },
+    {
+      "index": "019",
+      "slug": "desayuno-de-avena-con-pl-tano-y-semillas-de-ch-a-2",
+      "title": "Desayuno de avena con plátano y semillas de chía",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Desayuno de avena con plátano y semillas de chía. Receta rápida de cuchara con avena y plátano, pensada para empezar con calma."
+    },
+    {
+      "index": "020",
+      "slug": "desayuno-enrollado-de-claras-de-huevo-con-espinaca",
+      "title": "Desayuno enrollado de claras de huevo con espinaca",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Desayuno enrollado de claras de huevo con espinaca. Wrap caliente para desayunos con hambre real y poco tiempo."
+    },
+    {
+      "index": "021",
+      "slug": "desayuno-enrollado-de-pechuga-de-pavo-con-pimiento-rojo",
+      "title": "Desayuno enrollado de pechuga de pavo con pimiento rojo",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Desayuno enrollado de pechuga de pavo con pimiento rojo. Opción salada de desayuno con relleno jugoso y montaje sencillo."
+    },
+    {
+      "index": "022",
+      "slug": "desayuno-tostado-de-at-n-al-natural-con-aguacate-2",
+      "title": "Desayuno tostado de atún al natural con aguacate",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Desayuno tostado de atún al natural con aguacate. Receta rápida de pan tostado con contraste entre base crujiente y topping fresco."
+    },
+    {
+      "index": "023",
+      "slug": "desayuno-tostado-de-huevo-con-espinaca-2",
+      "title": "Desayuno tostado de huevo con espinaca",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Desayuno tostado de huevo con espinaca. Tostadas completas para un desayuno salado sin complicarte."
+    },
+    {
+      "index": "024",
+      "slug": "pan-tostado-con-at-n-al-natural-y-tomate",
+      "title": "Pan tostado con atún al natural y tomate",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pan tostado con atún al natural y tomate. Receta rápida de pan tostado con contraste entre base crujiente y topping fresco."
+    },
+    {
+      "index": "025",
+      "slug": "pan-tostado-con-huevo-y-tomate",
+      "title": "Pan tostado con huevo y tomate",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pan tostado con huevo y tomate. Tostadas completas para un desayuno salado sin complicarte."
+    },
+    {
+      "index": "026",
+      "slug": "pan-tostado-con-pechuga-de-pavo-y-aguacate-2",
+      "title": "Pan tostado con pechuga de pavo y aguacate",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pan tostado con pechuga de pavo y aguacate. Desayuno salado de montaje rápido con pan tostado y topping fresco."
+    },
+    {
+      "index": "027",
+      "slug": "tortilla-rellena-de-claras-de-huevo-espinaca-y-queso-de-cabra",
+      "title": "Tortilla rellena de claras de huevo, espinaca y queso de cabra",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tortilla rellena de claras de huevo, espinaca y queso de cabra. Formato enrollado, rápido y fácil de llevar si desayunas con prisas."
+    },
+    {
+      "index": "028",
+      "slug": "tortilla-rellena-de-claras-de-huevo-tomate-y-aguacate",
+      "title": "Tortilla rellena de claras de huevo, tomate y aguacate",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tortilla rellena de claras de huevo, tomate y aguacate. Wrap caliente para desayunos con hambre real y poco tiempo."
+    },
+    {
+      "index": "029",
+      "slug": "tortilla-rellena-de-huevo-espinaca-y-aguacate",
+      "title": "Tortilla rellena de huevo, espinaca y aguacate",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tortilla rellena de huevo, espinaca y aguacate. Formato enrollado, rápido y fácil de llevar si desayunas con prisas."
+    },
+    {
+      "index": "030",
+      "slug": "tortilla-rellena-de-pechuga-de-pavo-tomate-y-queso-de-cabra",
+      "title": "Tortilla rellena de pechuga de pavo, tomate y queso de cabra",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tortilla rellena de pechuga de pavo, tomate y queso de cabra. Formato enrollado, rápido y fácil de llevar si desayunas con prisas."
+    },
+    {
+      "index": "031",
+      "slug": "tostadas-de-at-n-al-natural-con-aguacate-y-queso-de-cabra",
+      "title": "Tostadas de atún al natural con aguacate y queso de cabra",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tostadas de atún al natural con aguacate y queso de cabra. Tostadas completas para un desayuno salado sin complicarte."
+    },
+    {
+      "index": "032",
+      "slug": "tostadas-de-at-n-al-natural-con-aguacate-y-queso-de-cabra-2",
+      "title": "Tostadas de atún al natural con aguacate y queso de cabra",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tostadas de atún al natural con aguacate y queso de cabra. Tostadas completas para un desayuno salado sin complicarte."
+    },
+    {
+      "index": "033",
+      "slug": "tostadas-de-at-n-al-natural-con-espinaca-y-aceite-de-oliva-virgen-extra",
+      "title": "Tostadas de atún al natural con espinaca y aceite de oliva virgen extra",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tostadas de atún al natural con espinaca y aceite de oliva virgen extra. Tostadas completas para un desayuno salado sin complicarte."
+    },
+    {
+      "index": "034",
+      "slug": "tostadas-de-pechuga-de-pavo-con-espinaca-y-aceite-de-oliva-virgen-extra-2",
+      "title": "Tostadas de pechuga de pavo con espinaca y aceite de oliva virgen extra",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tostadas de pechuga de pavo con espinaca y aceite de oliva virgen extra. Tostadas completas para un desayuno salado sin complicarte."
+    },
+    {
+      "index": "035",
+      "slug": "tostadas-de-pechuga-de-pavo-con-tomate-y-aceite-de-oliva-virgen-extra",
+      "title": "Tostadas de pechuga de pavo con tomate y aceite de oliva virgen extra",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tostadas de pechuga de pavo con tomate y aceite de oliva virgen extra. Desayuno salado de montaje rápido con pan tostado y topping fresco."
+    },
+    {
+      "index": "036",
+      "slug": "tostas-integrales-con-at-n-al-natural-espinaca-y-aceite-de-oliva-virgen-extra-2",
+      "title": "Tostas integrales con atún al natural, espinaca y aceite de oliva virgen extra",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tostas integrales con atún al natural, espinaca y aceite de oliva virgen extra. Desayuno salado de montaje rápido con pan tostado y topping fresco."
+    },
+    {
+      "index": "037",
+      "slug": "tostas-integrales-con-huevo-tomate-y-aceite-de-oliva-virgen-extra",
+      "title": "Tostas integrales con huevo, tomate y aceite de oliva virgen extra",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tostas integrales con huevo, tomate y aceite de oliva virgen extra. Desayuno salado de montaje rápido con pan tostado y topping fresco."
+    },
+    {
+      "index": "038",
+      "slug": "tostas-integrales-con-pechuga-de-pavo-espinaca-y-aceite-de-oliva-virgen-extra-2",
+      "title": "Tostas integrales con pechuga de pavo, espinaca y aceite de oliva virgen extra",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tostas integrales con pechuga de pavo, espinaca y aceite de oliva virgen extra. Tostadas completas para un desayuno salado sin complicarte."
+    },
+    {
+      "index": "039",
+      "slug": "wrap-caliente-de-claras-de-huevo-con-tomate",
+      "title": "Wrap caliente de claras de huevo con tomate",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Wrap caliente de claras de huevo con tomate. Opción salada de desayuno con relleno jugoso y montaje sencillo."
+    },
+    {
+      "index": "040",
+      "slug": "wrap-caliente-de-pechuga-de-pavo-con-pimiento-rojo",
+      "title": "Wrap caliente de pechuga de pavo con pimiento rojo",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Wrap caliente de pechuga de pavo con pimiento rojo. Wrap caliente para desayunos con hambre real y poco tiempo."
+    },
+    {
+      "index": "041",
+      "slug": "wrap-de-desayuno-con-claras-de-huevo-y-pimiento-rojo",
+      "title": "Wrap de desayuno con claras de huevo y pimiento rojo",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Wrap de desayuno con claras de huevo y pimiento rojo. Formato enrollado, rápido y fácil de llevar si desayunas con prisas."
+    },
+    {
+      "index": "042",
+      "slug": "wrap-de-desayuno-con-claras-de-huevo-y-pimiento-rojo-2",
+      "title": "Wrap de desayuno con claras de huevo y pimiento rojo",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Wrap de desayuno con claras de huevo y pimiento rojo. Wrap caliente para desayunos con hambre real y poco tiempo."
+    },
+    {
+      "index": "043",
+      "slug": "wrap-de-desayuno-con-huevo-y-tomate",
+      "title": "Wrap de desayuno con huevo y tomate",
+      "meal_type": "breakfast",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Wrap de desayuno con huevo y tomate. Opción salada de desayuno con relleno jugoso y montaje sencillo."
+    },
+    {
+      "index": "044",
+      "slug": "asado-r-pido-de-merluza-con-esp-rragos-y-br-coli",
+      "title": "Asado rápido de merluza con espárragos y brócoli",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Asado rápido de merluza con espárragos y brócoli. Cena de horno en una sola bandeja, cómoda y fácil de repetir."
+    },
+    {
+      "index": "045",
+      "slug": "asado-r-pido-de-merluza-con-pimiento-rojo-y-br-coli",
+      "title": "Asado rápido de merluza con pimiento rojo y brócoli",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Asado rápido de merluza con pimiento rojo y brócoli. Cena de horno en una sola bandeja, cómoda y fácil de repetir."
+    },
+    {
+      "index": "046",
+      "slug": "asado-r-pido-de-pechuga-de-pollo-con-cebolla-morada-y-calabac-n",
+      "title": "Asado rápido de pechuga de pollo con cebolla morada y calabacín",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Asado rápido de pechuga de pollo con cebolla morada y calabacín. Formato de bandeja único para cocinar, recoger y volver a hacer sin pensar demasiado."
+    },
+    {
+      "index": "047",
+      "slug": "asado-r-pido-de-salm-n-con-calabac-n-y-br-coli",
+      "title": "Asado rápido de salmón con calabacín y brócoli",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Asado rápido de salmón con calabacín y brócoli. Receta de horno simple con base, proteína y verduras en la misma cocción."
+    },
+    {
+      "index": "048",
+      "slug": "asado-r-pido-de-salm-n-con-calabac-n-y-br-coli-2",
+      "title": "Asado rápido de salmón con calabacín y brócoli",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Asado rápido de salmón con calabacín y brócoli. Formato de bandeja único para cocinar, recoger y volver a hacer sin pensar demasiado."
+    },
+    {
+      "index": "049",
+      "slug": "bandeja-al-horno-de-merluza-con-br-coli",
+      "title": "Bandeja al horno de merluza con brócoli",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bandeja al horno de merluza con brócoli. Cena de horno en una sola bandeja, cómoda y fácil de repetir."
+    },
+    {
+      "index": "050",
+      "slug": "bandeja-al-horno-de-merluza-con-pimiento-rojo",
+      "title": "Bandeja al horno de merluza con pimiento rojo",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bandeja al horno de merluza con pimiento rojo. Cena de horno en una sola bandeja, cómoda y fácil de repetir."
+    },
+    {
+      "index": "051",
+      "slug": "bandeja-al-horno-de-pechuga-de-pollo-con-calabac-n",
+      "title": "Bandeja al horno de pechuga de pollo con calabacín",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bandeja al horno de pechuga de pollo con calabacín. Formato de bandeja único para cocinar, recoger y volver a hacer sin pensar demasiado."
+    },
+    {
+      "index": "052",
+      "slug": "bandeja-al-horno-de-salm-n-con-pimiento-rojo",
+      "title": "Bandeja al horno de salmón con pimiento rojo",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bandeja al horno de salmón con pimiento rojo. Cena de horno en una sola bandeja, cómoda y fácil de repetir."
+    },
+    {
+      "index": "053",
+      "slug": "bol-completo-de-lentejas-cocidas-arroz-cocido-y-calabac-n",
+      "title": "Bol completo de lentejas cocidas, arroz cocido y calabacín",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol completo de lentejas cocidas, arroz cocido y calabacín. Bol templado pensado para dejarte saciado sin hacerse pesado."
+    },
+    {
+      "index": "054",
+      "slug": "bol-completo-de-lentejas-cocidas-patata-cocida-y-calabac-n-2",
+      "title": "Bol completo de lentejas cocidas, patata cocida y calabacín",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol completo de lentejas cocidas, patata cocida y calabacín. Receta equilibrada de diario con una estructura clara: base, proteína y verdura."
+    },
+    {
+      "index": "055",
+      "slug": "bol-completo-de-salm-n-arroz-cocido-y-br-coli",
+      "title": "Bol completo de salmón, arroz cocido y brócoli",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol completo de salmón, arroz cocido y brócoli. Receta equilibrada de diario con una estructura clara: base, proteína y verdura."
+    },
+    {
+      "index": "056",
+      "slug": "bol-completo-de-salm-n-arroz-cocido-y-espinaca",
+      "title": "Bol completo de salmón, arroz cocido y espinaca",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol completo de salmón, arroz cocido y espinaca. Bol templado pensado para dejarte saciado sin hacerse pesado."
+    },
+    {
+      "index": "057",
+      "slug": "bowl-de-lentejas-cocidas-con-cusc-s-cocido-y-br-coli",
+      "title": "Bowl de lentejas cocidas con cuscús cocido y brócoli",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bowl de lentejas cocidas con cuscús cocido y brócoli. Bol templado pensado para dejarte saciado sin hacerse pesado."
+    },
+    {
+      "index": "058",
+      "slug": "bowl-de-pechuga-de-pavo-con-patata-cocida-y-espinaca",
+      "title": "Bowl de pechuga de pavo con patata cocida y espinaca",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bowl de pechuga de pavo con patata cocida y espinaca. Receta equilibrada de diario con una estructura clara: base, proteína y verdura."
+    },
+    {
+      "index": "059",
+      "slug": "bowl-de-pechuga-de-pollo-con-cusc-s-cocido-y-br-coli",
+      "title": "Bowl de pechuga de pollo con cuscús cocido y brócoli",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bowl de pechuga de pollo con cuscús cocido y brócoli. Bol templado pensado para dejarte saciado sin hacerse pesado."
+    },
+    {
+      "index": "060",
+      "slug": "bowl-de-pechuga-de-pollo-con-quinoa-cocida-y-cebolla-morada",
+      "title": "Bowl de pechuga de pollo con quinoa cocida y cebolla morada",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bowl de pechuga de pollo con quinoa cocida y cebolla morada. Receta equilibrada de diario con una estructura clara: base, proteína y verdura."
+    },
+    {
+      "index": "061",
+      "slug": "bowl-templado-de-garbanzos-cocidos-con-br-coli-y-pimiento-rojo",
+      "title": "Bowl templado de garbanzos cocidos con brócoli y pimiento rojo",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bowl templado de garbanzos cocidos con brócoli y pimiento rojo. Receta equilibrada de diario con una estructura clara: base, proteína y verdura."
+    },
+    {
+      "index": "062",
+      "slug": "bowl-templado-de-pechuga-de-pollo-con-zanahoria-y-cebolla-morada",
+      "title": "Bowl templado de pechuga de pollo con zanahoria y cebolla morada",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bowl templado de pechuga de pollo con zanahoria y cebolla morada. Receta equilibrada de diario con una estructura clara: base, proteína y verdura."
+    },
+    {
+      "index": "063",
+      "slug": "bowl-templado-de-pechuga-de-pollo-con-zanahoria-y-pimiento-rojo",
+      "title": "Bowl templado de pechuga de pollo con zanahoria y pimiento rojo",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bowl templado de pechuga de pollo con zanahoria y pimiento rojo. Receta equilibrada de diario con una estructura clara: base, proteína y verdura."
+    },
+    {
+      "index": "064",
+      "slug": "cena-al-horno-de-merluza-con-br-coli",
+      "title": "Cena al horno de merluza con brócoli",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Cena al horno de merluza con brócoli. Formato de bandeja único para cocinar, recoger y volver a hacer sin pensar demasiado."
+    },
+    {
+      "index": "065",
+      "slug": "cena-al-horno-de-merluza-con-cebolla-morada",
+      "title": "Cena al horno de merluza con cebolla morada",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Cena al horno de merluza con cebolla morada. Receta de horno simple con base, proteína y verduras en la misma cocción."
+    },
+    {
+      "index": "066",
+      "slug": "cena-al-horno-de-merluza-con-pimiento-rojo",
+      "title": "Cena al horno de merluza con pimiento rojo",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Cena al horno de merluza con pimiento rojo. Receta de horno simple con base, proteína y verduras en la misma cocción."
+    },
+    {
+      "index": "067",
+      "slug": "cena-al-horno-de-tofu-firme-con-br-coli",
+      "title": "Cena al horno de tofu firme con brócoli",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Cena al horno de tofu firme con brócoli. Formato de bandeja único para cocinar, recoger y volver a hacer sin pensar demasiado."
+    },
+    {
+      "index": "068",
+      "slug": "garbanzos-cocidos-con-arroz-integral-cocido-y-espinaca",
+      "title": "Garbanzos cocidos con arroz integral cocido y espinaca",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Garbanzos cocidos con arroz integral cocido y espinaca. Plato completo por bloques con base saciante, proteína y verduras."
+    },
+    {
+      "index": "069",
+      "slug": "huevos-revueltos-con-pimiento-verde-y-guarnici-n-de-patata-cocida-2",
+      "title": "Huevos revueltos con pimiento verde y guarnición de patata cocida",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Huevos revueltos con pimiento verde y guarnición de patata cocida. Receta de última hora con sartén única y pocos pasos."
+    },
+    {
+      "index": "070",
+      "slug": "pechuga-de-pavo-con-boniato-asado-y-cebolla-morada",
+      "title": "Pechuga de pavo con boniato asado y cebolla morada",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pechuga de pavo con boniato asado y cebolla morada. Receta equilibrada de diario con una estructura clara: base, proteína y verdura."
+    },
+    {
+      "index": "071",
+      "slug": "plato-de-garbanzos-cocidos-con-cusc-s-cocido-y-salteado-de-pimiento-rojo",
+      "title": "Plato de garbanzos cocidos con cuscús cocido y salteado de pimiento rojo",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Plato de garbanzos cocidos con cuscús cocido y salteado de pimiento rojo. Bol templado pensado para dejarte saciado sin hacerse pesado."
+    },
+    {
+      "index": "072",
+      "slug": "plato-de-garbanzos-cocidos-con-patata-cocida-y-salteado-de-pimiento-verde",
+      "title": "Plato de garbanzos cocidos con patata cocida y salteado de pimiento verde",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Plato de garbanzos cocidos con patata cocida y salteado de pimiento verde. Plato completo por bloques con base saciante, proteína y verduras."
+    },
+    {
+      "index": "073",
+      "slug": "plato-de-garbanzos-cocidos-con-quinoa-cocida-y-salteado-de-pimiento-rojo",
+      "title": "Plato de garbanzos cocidos con quinoa cocida y salteado de pimiento rojo",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Plato de garbanzos cocidos con quinoa cocida y salteado de pimiento rojo. Plato completo por bloques con base saciante, proteína y verduras."
+    },
+    {
+      "index": "074",
+      "slug": "plato-de-lentejas-cocidas-con-cusc-s-cocido-y-salteado-de-cebolla-morada",
+      "title": "Plato de lentejas cocidas con cuscús cocido y salteado de cebolla morada",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Plato de lentejas cocidas con cuscús cocido y salteado de cebolla morada. Receta equilibrada de diario con una estructura clara: base, proteína y verdura."
+    },
+    {
+      "index": "075",
+      "slug": "plato-de-tofu-firme-con-arroz-cocido-y-salteado-de-br-coli",
+      "title": "Plato de tofu firme con arroz cocido y salteado de brócoli",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Plato de tofu firme con arroz cocido y salteado de brócoli. Bol templado pensado para dejarte saciado sin hacerse pesado."
+    },
+    {
+      "index": "076",
+      "slug": "plato-de-tofu-firme-con-arroz-integral-cocido-y-salteado-de-calabac-n",
+      "title": "Plato de tofu firme con arroz integral cocido y salteado de calabacín",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Plato de tofu firme con arroz integral cocido y salteado de calabacín. Receta equilibrada de diario con una estructura clara: base, proteína y verdura."
+    },
+    {
+      "index": "077",
+      "slug": "revuelto-caliente-con-cebolla-morada-espinaca-y-pan-integral",
+      "title": "Revuelto caliente con cebolla morada, espinaca y pan integral",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Revuelto caliente con cebolla morada, espinaca y pan integral. Plato rápido y caliente para cenar sin liarte."
+    },
+    {
+      "index": "078",
+      "slug": "revuelto-caliente-con-pimiento-verde-cebolla-morada-y-pan-integral",
+      "title": "Revuelto caliente con pimiento verde, cebolla morada y pan integral",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Revuelto caliente con pimiento verde, cebolla morada y pan integral. Plato rápido y caliente para cenar sin liarte."
+    },
+    {
+      "index": "079",
+      "slug": "revuelto-de-pimiento-verde-y-espinaca-con-pan-integral",
+      "title": "Revuelto de pimiento verde y espinaca con pan integral",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Revuelto de pimiento verde y espinaca con pan integral. Cena rápida de sartén con huevo y guarnición sencilla."
+    },
+    {
+      "index": "080",
+      "slug": "sart-n-r-pida-de-huevo-con-champinones-y-cebolla-morada",
+      "title": "Sartén rápida de huevo con champiñones y cebolla morada",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Sartén rápida de huevo con champiñones y cebolla morada. Cena rápida de sartén con huevo y guarnición sencilla."
+    },
+    {
+      "index": "081",
+      "slug": "sart-n-r-pida-de-huevo-con-champinones-y-pimiento-verde",
+      "title": "Sartén rápida de huevo con champiñones y pimiento verde",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Sartén rápida de huevo con champiñones y pimiento verde. Cena rápida de sartén con huevo y guarnición sencilla."
+    },
+    {
+      "index": "082",
+      "slug": "sart-n-r-pida-de-huevo-con-espinaca-y-champinones",
+      "title": "Sartén rápida de huevo con espinaca y champiñones",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Sartén rápida de huevo con espinaca y champiñones. Plato rápido y caliente para cenar sin liarte."
+    },
+    {
+      "index": "083",
+      "slug": "sart-n-r-pida-de-huevo-con-tomate-y-cebolla-morada",
+      "title": "Sartén rápida de huevo con tomate y cebolla morada",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Sartén rápida de huevo con tomate y cebolla morada. Cena rápida de sartén con huevo y guarnición sencilla."
+    },
+    {
+      "index": "084",
+      "slug": "tofu-firme-al-horno-con-verduras",
+      "title": "Tofu firme al horno con verduras",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tofu firme al horno con verduras. Receta de horno simple con base, proteína y verduras en la misma cocción."
+    },
+    {
+      "index": "085",
+      "slug": "tofu-firme-al-horno-con-verduras-2",
+      "title": "Tofu firme al horno con verduras",
+      "meal_type": "dinner",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tofu firme al horno con verduras. Formato de bandeja único para cocinar, recoger y volver a hacer sin pensar demasiado."
+    },
+    {
+      "index": "086",
+      "slug": "bol-completo-de-garbanzos-cocidos-quinoa-cocida-y-espinaca-2",
+      "title": "Bol completo de garbanzos cocidos, quinoa cocida y espinaca",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol completo de garbanzos cocidos, quinoa cocida y espinaca. Plato completo por bloques con base saciante, proteína y verduras."
+    },
+    {
+      "index": "087",
+      "slug": "bol-completo-de-pechuga-de-pollo-arroz-cocido-y-espinaca",
+      "title": "Bol completo de pechuga de pollo, arroz cocido y espinaca",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol completo de pechuga de pollo, arroz cocido y espinaca. Bol templado pensado para dejarte saciado sin hacerse pesado."
+    },
+    {
+      "index": "088",
+      "slug": "bol-completo-de-salm-n-arroz-cocido-y-calabac-n",
+      "title": "Bol completo de salmón, arroz cocido y calabacín",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol completo de salmón, arroz cocido y calabacín. Bol templado pensado para dejarte saciado sin hacerse pesado."
+    },
+    {
+      "index": "089",
+      "slug": "bol-completo-de-salm-n-arroz-cocido-y-pimiento-rojo",
+      "title": "Bol completo de salmón, arroz cocido y pimiento rojo",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol completo de salmón, arroz cocido y pimiento rojo. Plato completo por bloques con base saciante, proteína y verduras."
+    },
+    {
+      "index": "090",
+      "slug": "bol-completo-de-salm-n-cusc-s-cocido-y-espinaca",
+      "title": "Bol completo de salmón, cuscús cocido y espinaca",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol completo de salmón, cuscús cocido y espinaca. Receta equilibrada de diario con una estructura clara: base, proteína y verdura."
+    },
+    {
+      "index": "091",
+      "slug": "bol-fresco-de-at-n-al-natural-con-tomate-y-espinaca",
+      "title": "Bol fresco de atún al natural con tomate y espinaca",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol fresco de atún al natural con tomate y espinaca. Receta fría o templada con buena mezcla de base, proteína y crujiente."
+    },
+    {
+      "index": "092",
+      "slug": "bol-fresco-de-garbanzos-cocidos-con-r-cula-y-pepino",
+      "title": "Bol fresco de garbanzos cocidos con rúcula y pepino",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol fresco de garbanzos cocidos con rúcula y pepino. Ensalada completa con base saciante y textura fresca."
+    },
+    {
+      "index": "093",
+      "slug": "bol-fresco-de-tofu-firme-con-cebolla-morada-y-espinaca-2",
+      "title": "Bol fresco de tofu firme con cebolla morada y espinaca",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol fresco de tofu firme con cebolla morada y espinaca. Bol fresco pensado para comer ligero sin quedarte corto."
+    },
+    {
+      "index": "094",
+      "slug": "bol-fresco-de-tofu-firme-con-r-cula-y-cebolla-morada",
+      "title": "Bol fresco de tofu firme con rúcula y cebolla morada",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol fresco de tofu firme con rúcula y cebolla morada. Receta fría o templada con buena mezcla de base, proteína y crujiente."
+    },
+    {
+      "index": "095",
+      "slug": "bowl-templado-de-pechuga-de-pavo-con-cebolla-morada-y-calabac-n",
+      "title": "Bowl templado de pechuga de pavo con cebolla morada y calabacín",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bowl templado de pechuga de pavo con cebolla morada y calabacín. Bol templado pensado para dejarte saciado sin hacerse pesado."
+    },
+    {
+      "index": "096",
+      "slug": "ensalada-completa-de-at-n-al-natural-con-espinaca-y-pepino",
+      "title": "Ensalada completa de atún al natural con espinaca y pepino",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Ensalada completa de atún al natural con espinaca y pepino. Receta fría o templada con buena mezcla de base, proteína y crujiente."
+    },
+    {
+      "index": "097",
+      "slug": "ensalada-completa-de-pechuga-de-pollo-con-espinaca-y-cebolla-morada-2",
+      "title": "Ensalada completa de pechuga de pollo con espinaca y cebolla morada",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Ensalada completa de pechuga de pollo con espinaca y cebolla morada. Ensalada completa con base saciante y textura fresca."
+    },
+    {
+      "index": "098",
+      "slug": "ensalada-completa-de-salm-n-con-cebolla-morada-y-zanahoria",
+      "title": "Ensalada completa de salmón con cebolla morada y zanahoria",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Ensalada completa de salmón con cebolla morada y zanahoria. Ensalada completa con base saciante y textura fresca."
+    },
+    {
+      "index": "099",
+      "slug": "ensalada-completa-de-salm-n-con-zanahoria-y-r-cula",
+      "title": "Ensalada completa de salmón con zanahoria y rúcula",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Ensalada completa de salmón con zanahoria y rúcula. Receta fría o templada con buena mezcla de base, proteína y crujiente."
+    },
+    {
+      "index": "100",
+      "slug": "ensalada-saciante-de-pechuga-de-pollo-con-tomate-y-cebolla-morada",
+      "title": "Ensalada saciante de pechuga de pollo con tomate y cebolla morada",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Ensalada saciante de pechuga de pollo con tomate y cebolla morada. Bol fresco pensado para comer ligero sin quedarte corto."
+    },
+    {
+      "index": "101",
+      "slug": "ensalada-templada-de-garbanzos-cocidos-con-base-y-vegetales-crujientes",
+      "title": "Ensalada templada de garbanzos cocidos con base y vegetales crujientes",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Ensalada templada de garbanzos cocidos con base y vegetales crujientes. Receta fría o templada con buena mezcla de base, proteína y crujiente."
+    },
+    {
+      "index": "102",
+      "slug": "ensalada-templada-de-tofu-firme-con-base-y-vegetales-crujientes",
+      "title": "Ensalada templada de tofu firme con base y vegetales crujientes",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Ensalada templada de tofu firme con base y vegetales crujientes. Ensalada completa con base saciante y textura fresca."
+    },
+    {
+      "index": "103",
+      "slug": "pasta-integral-con-garbanzos-cocidos-champinones-y-pimiento-rojo",
+      "title": "Pasta integral con garbanzos cocidos, champiñones y pimiento rojo",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pasta integral con garbanzos cocidos, champiñones y pimiento rojo. Plato completo de pasta para comer bien sin alargar la cocina."
+    },
+    {
+      "index": "104",
+      "slug": "pasta-integral-con-pechuga-de-pollo-champinones-y-espinaca",
+      "title": "Pasta integral con pechuga de pollo, champiñones y espinaca",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pasta integral con pechuga de pollo, champiñones y espinaca. Pasta rápida de diario con verduras y una proteína clara."
+    },
+    {
+      "index": "105",
+      "slug": "pasta-integral-con-pechuga-de-pollo-espinaca-y-tomate",
+      "title": "Pasta integral con pechuga de pollo, espinaca y tomate",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pasta integral con pechuga de pollo, espinaca y tomate. Receta de sartén y olla con sabor reconocible y montaje fácil."
+    },
+    {
+      "index": "106",
+      "slug": "pasta-integral-con-pechuga-de-pollo-pimiento-rojo-y-tomate",
+      "title": "Pasta integral con pechuga de pollo, pimiento rojo y tomate",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pasta integral con pechuga de pollo, pimiento rojo y tomate. Pasta rápida de diario con verduras y una proteína clara."
+    },
+    {
+      "index": "107",
+      "slug": "pasta-integral-con-tofu-firme-espinaca-y-calabac-n",
+      "title": "Pasta integral con tofu firme, espinaca y calabacín",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pasta integral con tofu firme, espinaca y calabacín. Receta de sartén y olla con sabor reconocible y montaje fácil."
+    },
+    {
+      "index": "108",
+      "slug": "pasta-integral-con-tofu-firme-espinaca-y-pimiento-rojo",
+      "title": "Pasta integral con tofu firme, espinaca y pimiento rojo",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pasta integral con tofu firme, espinaca y pimiento rojo. Pasta rápida de diario con verduras y una proteína clara."
+    },
+    {
+      "index": "109",
+      "slug": "pasta-r-pida-de-garbanzos-cocidos-con-champinones-y-tomate",
+      "title": "Pasta rápida de garbanzos cocidos con champiñones y tomate",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pasta rápida de garbanzos cocidos con champiñones y tomate. Pasta rápida de diario con verduras y una proteína clara."
+    },
+    {
+      "index": "110",
+      "slug": "pasta-salteada-con-at-n-al-natural-y-verduras-2",
+      "title": "Pasta salteada con atún al natural y verduras",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pasta salteada con atún al natural y verduras. Receta de sartén y olla con sabor reconocible y montaje fácil."
+    },
+    {
+      "index": "111",
+      "slug": "pechuga-de-pavo-con-arroz-integral-cocido-y-zanahoria",
+      "title": "Pechuga de pavo con arroz integral cocido y zanahoria",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pechuga de pavo con arroz integral cocido y zanahoria. Plato completo por bloques con base saciante, proteína y verduras."
+    },
+    {
+      "index": "112",
+      "slug": "pechuga-de-pollo-con-quinoa-cocida-y-zanahoria",
+      "title": "Pechuga de pollo con quinoa cocida y zanahoria",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Pechuga de pollo con quinoa cocida y zanahoria. Receta equilibrada de diario con una estructura clara: base, proteína y verdura."
+    },
+    {
+      "index": "113",
+      "slug": "plato-de-garbanzos-cocidos-con-quinoa-cocida-y-salteado-de-zanahoria",
+      "title": "Plato de garbanzos cocidos con quinoa cocida y salteado de zanahoria",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Plato de garbanzos cocidos con quinoa cocida y salteado de zanahoria. Bol templado pensado para dejarte saciado sin hacerse pesado."
+    },
+    {
+      "index": "114",
+      "slug": "plato-de-pasta-integral-con-at-n-al-natural-y-pimiento-rojo",
+      "title": "Plato de pasta integral con atún al natural y pimiento rojo",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Plato de pasta integral con atún al natural y pimiento rojo. Receta de sartén y olla con sabor reconocible y montaje fácil."
+    },
+    {
+      "index": "115",
+      "slug": "plato-de-pasta-integral-con-at-n-al-natural-y-pimiento-rojo-2",
+      "title": "Plato de pasta integral con atún al natural y pimiento rojo",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Plato de pasta integral con atún al natural y pimiento rojo. Pasta rápida de diario con verduras y una proteína clara."
+    },
+    {
+      "index": "116",
+      "slug": "plato-de-salm-n-con-cusc-s-cocido-y-salteado-de-zanahoria",
+      "title": "Plato de salmón con cuscús cocido y salteado de zanahoria",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Plato de salmón con cuscús cocido y salteado de zanahoria. Receta equilibrada de diario con una estructura clara: base, proteína y verdura."
+    },
+    {
+      "index": "117",
+      "slug": "tofu-firme-con-boniato-asado-y-pimiento-verde-2",
+      "title": "Tofu firme con boniato asado y pimiento verde",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tofu firme con boniato asado y pimiento verde. Plato completo por bloques con base saciante, proteína y verduras."
+    },
+    {
+      "index": "118",
+      "slug": "tofu-firme-con-quinoa-cocida-y-br-coli",
+      "title": "Tofu firme con quinoa cocida y brócoli",
+      "meal_type": "lunch",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Tofu firme con quinoa cocida y brócoli. Plato completo por bloques con base saciante, proteína y verduras."
+    },
+    {
+      "index": "119",
+      "slug": "bol-de-hummus-con-tomate-y-zanahoria-2",
+      "title": "Bol de hummus con tomate y zanahoria",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol de hummus con tomate y zanahoria. Receta fría de picoteo limpio con hummus y acompañamiento fresco."
+    },
+    {
+      "index": "120",
+      "slug": "bol-fr-o-de-queso-fresco-batido-con-ar-ndanos-y-topping-crujiente",
+      "title": "Bol frío de queso fresco batido con arándanos y topping crujiente",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol frío de queso fresco batido con arándanos y topping crujiente. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "121",
+      "slug": "bol-fr-o-de-queso-fresco-batido-con-ar-ndanos-y-topping-crujiente-2",
+      "title": "Bol frío de queso fresco batido con arándanos y topping crujiente",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol frío de queso fresco batido con arándanos y topping crujiente. Receta fría de montaje exprés con fruta y contraste de texturas."
+    },
+    {
+      "index": "122",
+      "slug": "bol-fr-o-de-queso-fresco-batido-con-fresas-y-topping-crujiente-2",
+      "title": "Bol frío de queso fresco batido con fresas y topping crujiente",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol frío de queso fresco batido con fresas y topping crujiente. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "123",
+      "slug": "bol-fr-o-de-queso-fresco-batido-con-pl-tano-y-topping-crujiente-2",
+      "title": "Bol frío de queso fresco batido con plátano y topping crujiente",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol frío de queso fresco batido con plátano y topping crujiente. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "124",
+      "slug": "bol-fr-o-de-skyr-natural-con-ar-ndanos-y-topping-crujiente-2",
+      "title": "Bol frío de skyr natural con arándanos y topping crujiente",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol frío de skyr natural con arándanos y topping crujiente. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "125",
+      "slug": "bol-fr-o-de-skyr-natural-con-fresas-y-topping-crujiente-2",
+      "title": "Bol frío de skyr natural con fresas y topping crujiente",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol frío de skyr natural con fresas y topping crujiente. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "126",
+      "slug": "bol-fr-o-de-skyr-natural-con-pl-tano-y-topping-crujiente",
+      "title": "Bol frío de skyr natural con plátano y topping crujiente",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol frío de skyr natural con plátano y topping crujiente. Receta fría de montaje exprés con fruta y contraste de texturas."
+    },
+    {
+      "index": "127",
+      "slug": "bol-fr-o-de-skyr-natural-con-pl-tano-y-topping-crujiente-2",
+      "title": "Bol frío de skyr natural con plátano y topping crujiente",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol frío de skyr natural con plátano y topping crujiente. Receta fría de montaje exprés con fruta y contraste de texturas."
+    },
+    {
+      "index": "128",
+      "slug": "bol-fr-o-de-yogur-griego-natural-con-ar-ndanos-y-topping-crujiente",
+      "title": "Bol frío de yogur griego natural con arándanos y topping crujiente",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol frío de yogur griego natural con arándanos y topping crujiente. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "129",
+      "slug": "bol-fr-o-de-yogur-griego-natural-con-pl-tano-y-topping-crujiente",
+      "title": "Bol frío de yogur griego natural con plátano y topping crujiente",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Bol frío de yogur griego natural con plátano y topping crujiente. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "130",
+      "slug": "copa-r-pida-de-queso-fresco-batido-con-ar-ndanos",
+      "title": "Copa rápida de queso fresco batido con arándanos",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Copa rápida de queso fresco batido con arándanos. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "131",
+      "slug": "copa-r-pida-de-queso-fresco-batido-con-ar-ndanos-2",
+      "title": "Copa rápida de queso fresco batido con arándanos",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Copa rápida de queso fresco batido con arándanos. Receta fría de montaje exprés con fruta y contraste de texturas."
+    },
+    {
+      "index": "132",
+      "slug": "copa-r-pida-de-queso-fresco-batido-con-fresas",
+      "title": "Copa rápida de queso fresco batido con fresas",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Copa rápida de queso fresco batido con fresas. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "133",
+      "slug": "copa-r-pida-de-skyr-natural-con-fresas",
+      "title": "Copa rápida de skyr natural con fresas",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Copa rápida de skyr natural con fresas. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "134",
+      "slug": "copa-r-pida-de-skyr-natural-con-fresas-2",
+      "title": "Copa rápida de skyr natural con fresas",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Copa rápida de skyr natural con fresas. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "135",
+      "slug": "copa-r-pida-de-skyr-natural-con-manzana",
+      "title": "Copa rápida de skyr natural con manzana",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Copa rápida de skyr natural con manzana. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "136",
+      "slug": "copa-r-pida-de-skyr-natural-con-pl-tano",
+      "title": "Copa rápida de skyr natural con plátano",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Copa rápida de skyr natural con plátano. Receta fría de montaje exprés con fruta y contraste de texturas."
+    },
+    {
+      "index": "137",
+      "slug": "hummus-con-crudit-s-de-tomate-y-pepino-2",
+      "title": "Hummus con crudités de tomate y pepino",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Hummus con crudités de tomate y pepino. Snack salado de montaje inmediato con base cremosa y crudités."
+    },
+    {
+      "index": "138",
+      "slug": "plato-r-pido-de-hummus-con-pimiento-rojo-y-zanahoria",
+      "title": "Plato rápido de hummus con pimiento rojo y zanahoria",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Plato rápido de hummus con pimiento rojo y zanahoria. Pausa salada, rápida y fácil de preparar con verduras para mojar."
+    },
+    {
+      "index": "139",
+      "slug": "snack-cremoso-de-skyr-natural-con-almendras-y-ar-ndanos",
+      "title": "Snack cremoso de skyr natural con almendras y arándanos",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Snack cremoso de skyr natural con almendras y arándanos. Receta fría de montaje exprés con fruta y contraste de texturas."
+    },
+    {
+      "index": "140",
+      "slug": "snack-cremoso-de-skyr-natural-con-cacahuete-tostado-y-pl-tano-2",
+      "title": "Snack cremoso de skyr natural con cacahuete tostado y plátano",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Snack cremoso de skyr natural con cacahuete tostado y plátano. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "141",
+      "slug": "snack-cremoso-de-skyr-natural-con-nueces-y-ar-ndanos-2",
+      "title": "Snack cremoso de skyr natural con nueces y arándanos",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Snack cremoso de skyr natural con nueces y arándanos. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "142",
+      "slug": "snack-cremoso-de-skyr-natural-con-nueces-y-fresas",
+      "title": "Snack cremoso de skyr natural con nueces y fresas",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Snack cremoso de skyr natural con nueces y fresas. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "143",
+      "slug": "snack-cremoso-de-yogur-griego-natural-con-almendras-y-pl-tano",
+      "title": "Snack cremoso de yogur griego natural con almendras y plátano",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Snack cremoso de yogur griego natural con almendras y plátano. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "144",
+      "slug": "snack-cremoso-de-yogur-griego-natural-con-almendras-y-pl-tano-2",
+      "title": "Snack cremoso de yogur griego natural con almendras y plátano",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Snack cremoso de yogur griego natural con almendras y plátano. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "145",
+      "slug": "snack-cremoso-de-yogur-griego-natural-con-cacahuete-tostado-y-manzana",
+      "title": "Snack cremoso de yogur griego natural con cacahuete tostado y manzana",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Snack cremoso de yogur griego natural con cacahuete tostado y manzana. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "146",
+      "slug": "snack-cremoso-de-yogur-griego-natural-con-semillas-de-ch-a-y-pl-tano",
+      "title": "Snack cremoso de yogur griego natural con semillas de chía y plátano",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Snack cremoso de yogur griego natural con semillas de chía y plátano. Receta fría de montaje exprés con fruta y contraste de texturas."
+    },
+    {
+      "index": "147",
+      "slug": "snack-salado-de-hummus-con-zanahoria-y-toque-de-pan-integral",
+      "title": "Snack salado de hummus con zanahoria y toque de pan integral",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Snack salado de hummus con zanahoria y toque de pan integral. Snack salado de montaje inmediato con base cremosa y crudités."
+    },
+    {
+      "index": "148",
+      "slug": "vaso-de-queso-fresco-batido-con-ar-ndanos-y-cacahuete-tostado",
+      "title": "Vaso de queso fresco batido con arándanos y cacahuete tostado",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de queso fresco batido con arándanos y cacahuete tostado. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "149",
+      "slug": "vaso-de-queso-fresco-batido-con-ar-ndanos-y-semillas-de-ch-a",
+      "title": "Vaso de queso fresco batido con arándanos y semillas de chía",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de queso fresco batido con arándanos y semillas de chía. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "150",
+      "slug": "vaso-de-queso-fresco-batido-con-fresas-y-nueces-2",
+      "title": "Vaso de queso fresco batido con fresas y nueces",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de queso fresco batido con fresas y nueces. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "151",
+      "slug": "vaso-de-queso-fresco-batido-con-manzana-y-nueces",
+      "title": "Vaso de queso fresco batido con manzana y nueces",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de queso fresco batido con manzana y nueces. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "152",
+      "slug": "vaso-de-queso-fresco-batido-con-manzana-y-semillas-de-ch-a",
+      "title": "Vaso de queso fresco batido con manzana y semillas de chía",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de queso fresco batido con manzana y semillas de chía. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "153",
+      "slug": "vaso-de-queso-fresco-batido-con-pl-tano-y-almendras",
+      "title": "Vaso de queso fresco batido con plátano y almendras",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de queso fresco batido con plátano y almendras. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "154",
+      "slug": "vaso-de-skyr-natural-con-fresas-y-almendras",
+      "title": "Vaso de skyr natural con fresas y almendras",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de skyr natural con fresas y almendras. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "155",
+      "slug": "vaso-de-skyr-natural-con-fresas-y-semillas-de-ch-a",
+      "title": "Vaso de skyr natural con fresas y semillas de chía",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de skyr natural con fresas y semillas de chía. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "156",
+      "slug": "vaso-de-skyr-natural-con-manzana-y-semillas-de-ch-a",
+      "title": "Vaso de skyr natural con manzana y semillas de chía",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de skyr natural con manzana y semillas de chía. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "157",
+      "slug": "vaso-de-yogur-griego-natural-con-ar-ndanos-y-nueces-2",
+      "title": "Vaso de yogur griego natural con arándanos y nueces",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de yogur griego natural con arándanos y nueces. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "158",
+      "slug": "vaso-de-yogur-griego-natural-con-fresas-y-semillas-de-ch-a",
+      "title": "Vaso de yogur griego natural con fresas y semillas de chía",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de yogur griego natural con fresas y semillas de chía. Formato de cuchara sencillo para una pausa corta entre horas."
+    },
+    {
+      "index": "159",
+      "slug": "vaso-de-yogur-griego-natural-con-manzana-y-cacahuete-tostado-2",
+      "title": "Vaso de yogur griego natural con manzana y cacahuete tostado",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de yogur griego natural con manzana y cacahuete tostado. Receta fría de montaje exprés con fruta y contraste de texturas."
+    },
+    {
+      "index": "160",
+      "slug": "vaso-de-yogur-griego-natural-con-manzana-y-nueces-2",
+      "title": "Vaso de yogur griego natural con manzana y nueces",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de yogur griego natural con manzana y nueces. Snack frío, rápido y con textura crujiente al final."
+    },
+    {
+      "index": "161",
+      "slug": "vaso-de-yogur-griego-natural-con-manzana-y-semillas-de-ch-a",
+      "title": "Vaso de yogur griego natural con manzana y semillas de chía",
+      "meal_type": "snack",
+      "prompt": "Food photography of a plated dish, professional, soft natural light, top-down view, appetizing, realistic. No text, no labels, no watermarks. Dish: Vaso de yogur griego natural con manzana y semillas de chía. Snack frío, rápido y con textura crujiente al final."
+    }
+  ]
+}

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { getTodayDateKey } from '@/lib/date'
-import { ChevronLeft, ChevronRight, Lock, Clock, Flame, Beef, Wheat, Droplets, CheckCircle2, Sparkles, Target, Dumbbell, Scale } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Lock, Clock, Flame, Beef, Wheat, Droplets, CheckCircle2, Sparkles, Target, Dumbbell, Scale, ShoppingCart } from 'lucide-react'
 import { AppHero, AppPage, AppPanel, AppSectionHeader } from '@/components/ui/AppPage'
 import { FULL_ACCESS_ENABLED } from '@/lib/fullAccess'
 
@@ -258,6 +258,15 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
               <CheckCircle2 className="h-3.5 w-3.5" />
               Plan activo
             </span>
+          )}
+          {!locked && (
+            <button
+              onClick={() => router.push(`/plans/${planId}/shopping-list`)}
+              className="glass-pill inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-white/86 transition-transform active:scale-[0.98]"
+            >
+              <ShoppingCart className="h-3.5 w-3.5" />
+              Lista de compra
+            </button>
           )}
         </div>
       </AppHero>

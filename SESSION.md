@@ -893,3 +893,131 @@ Use this structure for each daily update:
   - `/Users/alex/Documents/GitHub/Nutria/supabase/migrations/20260421_align_user_tdee_state_with_web.sql`
   - `/Users/alex/Documents/GitHub/Nutria/scripts/import_recipe_bundle.py`
   - `/Users/alex/Documents/GitHub/Nutria/scripts/generated_bundles/local-recipes-500-seed-17-v2/manifest.json`
+
+### 2026-04-19 07:19 Europe/Madrid
+- Workspace Used: `/Users/alex/Documents/GitHub/Nutria`
+- Current Goal: Resolver por qué el acceso completo no se veía en la web pública y dejar el estado desplegado en producción.
+- Completed Today:
+  - **Diagnóstico del problema de acceso completo:**
+    - confirmado que no existe un sistema real de `admin` o `role` para abrir toda la app a un usuario concreto
+    - confirmado que el acceso completo implementado era un bypass global mediante `src/lib/fullAccess.ts`
+    - validado que `FULL_ACCESS_ENABLED` seguía en `true`
+    - revisado que el bypass ya estaba cableado en:
+      - `src/proxy.ts`
+      - `src/app/(app)/layout.tsx`
+      - `src/app/page.tsx`
+      - `src/components/auth/AuthForm.tsx`
+      - `src/hooks/usePremiumStatus.ts`
+      - `src/stores/premiumStore.ts`
+      - `src/app/api/ai-log/route.ts`
+      - `src/app/(app)/plans/page.tsx`
+      - `src/app/(app)/plans/[planId]/page.tsx`
+  - **Causa real encontrada:**
+    - `alex-dev` sí contenía el acceso completo
+    - `main` iba `17` commits por detrás y seguía en `ef2a353`
+    - por tanto, el dominio público no estaba fallando por permisos del usuario, sino porque producción seguía desplegando una rama sin el bypass
+  - **Sincronización de ramas y despliegue:**
+    - hecho `checkout main`
+    - aplicado `merge --ff-only alex-dev`
+    - `main` quedó alineada con `1137224` (`feat: enable full app access for internal testing`)
+    - ejecutado `npm run lint` en `main` sin errores
+    - ejecutado `npm run build` en `main` sin errores
+    - empujado `main` a GitHub:
+      - `ef2a353..1137224  main -> main`
+  - **Conclusión operativa:**
+    - si Vercel despliega `main`, la web pública ya debería coger el acceso completo en cuanto termine el deploy
+    - si tras eso sigue sin verse, el siguiente sospechoso ya no es el código sino la configuración de Vercel apuntando a otra rama o un problema de sesión/cookies antiguas
+- Decisions:
+  - Mantener el bypass global activo temporalmente con `FULL_ACCESS_ENABLED = true` para pruebas internas.
+  - Tratar los problemas de acceso público primero como problemas de rama/despliegue antes de inventar roles de admin que aún no existen en la app.
+- Open Issues:
+  - Confirmar que Vercel realmente está desplegando `main`.
+  - Confirmar desde navegador limpio o tras relogin que el usuario ya entra en `/dashboard` y ve toda la app.
+  - Definir más adelante si el acceso interno debe seguir siendo global o pasar a un bypass por email/usuario concreto.
+- Next Session:
+  - verificar el deploy de Vercel resultante de `main`
+  - comprobar login real y navegación completa en producción
+  - si hiciera falta, sustituir el bypass global por allowlist de usuarios internos
+- Refs:
+  - `/Users/alex/Documents/GitHub/Nutria/src/lib/fullAccess.ts`
+  - `/Users/alex/Documents/GitHub/Nutria/src/proxy.ts`
+  - `/Users/alex/Documents/GitHub/Nutria/src/app/(app)/layout.tsx`
+  - `/Users/alex/Documents/GitHub/Nutria/src/components/auth/AuthForm.tsx`
+  - `/Users/alex/Documents/GitHub/Nutria/SESSION.md`
+
+### 2026-04-19 (tarde) Europe/Madrid
+- Workspace Used: `/Users/alex/Documents/GitHub/Nutria` — rama `alex-dev`
+- Current Goal: Validar el onboarding en producción e importar el bundle v2 de recetas. Empezar a poblar imágenes de recetas usando una Gem de Gemini (la API no está disponible).
+- Completed Today:
+  - **OAuth Google validado en Vercel:** login con Google funciona correctamente desde `https://nutria-tau.vercel.app/onboarding`. El problema anterior era exclusivamente de redirect desde Codespaces.
+  - **Bundle v2 importado en Supabase prod:**
+    - comando: `npm run recipes:pipeline -- import-bundle scripts/generated_bundles/local-recipes-500-seed-17-v2 --replace-existing-plans`
+    - 500 recetas upserted por `source_url = bundle://local-recipes-500-seed-17-v2/recipe/<slug>`
+    - 6 planes recreados (Ligero/Equilibrio/Fuerza × 7d muestra y 14d): IDs nuevos, por ejemplo `Plan Ligero · 7 días · Muestra = 3af210f2-15ed-4f6e-babe-b1c885b362ab`
+    - importación sin imágenes (recetas con `image_url = null`)
+  - **Pipeline de imágenes de recetas nuevo (vía Gem, no API):**
+    - `scripts/build_recipe_image_queue.py`: genera cola solo con las recetas que aparecen en planes. Output: `scripts/recipe-images/queue.json` + `queue.md`.
+    - `scripts/recipe-images/queue.md` generado con **161 recetas** numeradas por meal_type, con prompt listo para copiar al Gem.
+    - `scripts/upload_recipe_images.py`: sube desde `scripts/recipe-images/` al bucket `food-images/recipes/<bundle_id>/<slug>.webp`, actualiza `recipes.image_url`, idempotente. Flags: `--pending`, `--dry-run`, `--refill`, `--only NNN`, `--auto-index START`.
+    - `--auto-index`: ordena por mtime los archivos sin índice en el nombre y les asigna índices consecutivos. Después del upload los renombra a `NNN.ext` para que no se reprocesen.
+  - **Prompt adaptado para la Gem:** se entregó al usuario un prompt revisado que respeta el índice (`NNN`) que viene en cada entrada del queue (en vez de autoincrementar por batch) y usa prefijo neutro `nutria-NNN-<nombre-simplificado>.png`. Nota: Gemini web ignora el filename sugerido; descarga siempre `Gemini_Generated_Image_xxx.png` y deja que Chrome añada `(1)`, `(2)`…
+- Decisions:
+  - Generación de imágenes: vía Gem en web (la API no está disponible). 161 recetas (solo las usadas en planes) son la primera tanda; las 339 restantes pueden esperar o llevar placeholder más adelante.
+  - Filename en disco no tiene por qué incluir el índice: `--auto-index` resuelve el mapping por orden de descarga. Requisito: descargar en orden.
+  - Los scripts de imágenes requieren deps instaladas en `scripts/.venv` (Pillow no está en el python del sistema). Ejecutar con `scripts/.venv/bin/python3`.
+- Open Issues:
+  - Tanda 1 de imágenes: el usuario bajó 6 archivos pero reporta que el último descarga una imagen anterior duplicada. Hay que identificar el duplicado, borrarlo, re-descargar el que falte y volver a correr el dry-run antes de subir.
+  - Mapping tentativo tras primera tanda (si 6 fueran válidas): 001–006 en orden breakfast del queue (avena y bol cremoso).
+  - Quedan 155 recetas del queue por generar después de resolver la tanda 1.
+  - Placeholder visual para las 339 recetas no-plan sigue sin definir.
+- Next Session:
+  - limpiar duplicado en `scripts/recipe-images/` y completar la tanda 1 (001–006 o 001–005 según lo que realmente generó el Gem)
+  - `scripts/.venv/bin/python3 scripts/upload_recipe_images.py --auto-index 001 --dry-run` para verificar mapping
+  - si cuadra, lanzar real sin `--dry-run`
+  - continuar con batches de 10-20 recetas hasta cubrir las 161
+- Refs:
+  - `/Users/alex/Documents/GitHub/Nutria/scripts/build_recipe_image_queue.py`
+  - `/Users/alex/Documents/GitHub/Nutria/scripts/upload_recipe_images.py`
+  - `/Users/alex/Documents/GitHub/Nutria/scripts/recipe-images/queue.md`
+  - `/Users/alex/Documents/GitHub/Nutria/scripts/recipe-images/queue.json`
+  - `/Users/alex/Documents/GitHub/Nutria/scripts/import_recipe_bundle.py`
+  - `/Users/alex/Documents/GitHub/Nutria/scripts/generated_bundles/local-recipes-500-seed-17-v2/manifest.json`
+
+### 2026-04-19 (noche) Europe/Madrid
+- Workspace Used: `/Users/alex/Documents/GitHub/Nutria` — rama `alex-dev`
+- Current Goal: Generar las 161 imágenes de recetas de los planes vía API Gemini y construir el apartado de lista de compra.
+- Completed Today:
+  - **Imágenes de recetas — API Gemini:**
+    - cargada `GEMINI_API_KEY` en `.env.local` (10€ de crédito)
+    - creado `scripts/generate_recipe_images.py`: itera `recipes` con `image_url = null` del bundle, genera con `gemini-2.5-flash-image`, sube a `food-images/recipes/<bundle_id>/<slug>.webp`, actualiza `recipes.image_url`. Idempotente. Flags: `--limit`, `--refill`, `--all-recipes`.
+    - generadas y subidas **161/161 recetas** de los planes. Coste: ~€6.
+    - imágenes visibles en la app en producción.
+  - **Lista de compra — nueva feature:**
+    - `src/lib/shopping.ts`: lógica de agregación de ingredientes (normalización de nombre, suma en gramos), categorización por keywords (carnes, pescado, verduras, frutas, lácteos, cereales, legumbres, condimentos), precios orientativos €/100g referencia Mercadona España 2025.
+    - `src/app/(app)/plans/[planId]/shopping-list/page.tsx`: página completa con:
+      - filtro Semana 1 / Semana 2 / Todo para planes de 14 días
+      - ingredientes agrupados por categoría, colapsables
+      - checkboxes persistidos en `localStorage` por `planId + filtro`
+      - cantidad en gramos (auto-convertida a kg si ≥1000g)
+      - precio estimado por ingrediente + total
+      - botón "Compartir" que copia la lista como texto al portapapeles
+    - botón "Lista de compra" añadido en el hero de `plans/[planId]/page.tsx` (solo visible si el plan no está bloqueado)
+    - `npm run build` OK — `/plans/[planId]/shopping-list` desplegado en bundle.
+- Decisions:
+  - Precios son orientativos (referencia Mercadona ES 2025) — no se cruzan con APIs de supermercados en tiempo real (no hay APIs públicas oficiales en España para Mercadona/Carrefour/Lidl). Se puede mejorar con scraping o dataset estático más completo en el futuro.
+  - Los ingredientes del bundle son todos en gramos (`unit = 'g'`), lo que simplifica la suma directa.
+  - Checkboxes persisten en localStorage (no en BD) — no es crítico sincronizarlos entre dispositivos por ahora.
+- Open Issues:
+  - Las 339 recetas del bundle que no están en planes siguen sin imagen (€ pendiente para siguiente tanda cuando el usuario recargue la API).
+  - La lista de compra no cruza datos de supermercado en tiempo real — precios son estimaciones estáticas.
+  - Pendiente: probar la lista de compra en producción en Vercel (falta commit + push a main).
+- Next Session:
+  - Commit del bloque de shopping list y push a `main` para Vercel
+  - Probar lista de compra en producción con un plan real
+  - Decidir si se extiende la generación de imágenes a las 339 recetas restantes
+  - Posible mejora: añadir precio por supermercado (Mercadona vs Lidl vs Carrefour) como comparativa
+- Refs:
+  - `/Users/alex/Documents/GitHub/Nutria/src/lib/shopping.ts`
+  - `/Users/alex/Documents/GitHub/Nutria/src/app/(app)/plans/[planId]/shopping-list/page.tsx`
+  - `/Users/alex/Documents/GitHub/Nutria/src/app/(app)/plans/[planId]/page.tsx`
+  - `/Users/alex/Documents/GitHub/Nutria/scripts/generate_recipe_images.py`
