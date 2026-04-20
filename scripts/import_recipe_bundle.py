@@ -145,7 +145,7 @@ def upsert_recipe(
 
     existing_response = (
         sb.table("recipes")
-        .select("id")
+        .select("id, image_url")
         .eq("source_url", external_source)
         .maybe_single()
         .execute()
@@ -153,6 +153,9 @@ def upsert_recipe(
     existing = extract_data(existing_response)
     if existing:
         recipe_id = existing["id"]
+        # Preserve image_url already set in DB (e.g. by generate_recipe_images.py)
+        if image_url is None and existing.get("image_url"):
+            payload["image_url"] = existing["image_url"]
         sb.table("recipes").update(payload).eq("id", recipe_id).execute()
         sb.table("recipe_ingredients").delete().eq("recipe_id", recipe_id).execute()
         sb.table("recipe_steps").delete().eq("recipe_id", recipe_id).execute()
