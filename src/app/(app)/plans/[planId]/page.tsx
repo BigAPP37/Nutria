@@ -259,19 +259,27 @@ export default function PlanDetailPage({ params }: { params: Promise<{ planId: s
               Plan activo
             </span>
           )}
-          {!locked && (
-            <button
-              onClick={() => router.push(`/plans/${planId}/shopping-list`)}
-              className="glass-pill inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-white/86 transition-transform active:scale-[0.98]"
-            >
-              <ShoppingCart className="h-3.5 w-3.5" />
-              Lista de compra
-            </button>
-          )}
         </div>
       </AppHero>
 
       <div className="space-y-6">
+        {!locked && (
+          <section>
+            <button
+              onClick={() => router.push(`/plans/${planId}/shopping-list`)}
+              className="flex w-full items-center justify-between rounded-[1.5rem] px-4 py-3.5 transition-all active:scale-[0.99]"
+              style={{ background: 'white', border: '1px solid #F0EDE9' }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-2xl" style={{ background: 'rgba(249,115,22,0.08)' }}>
+                  <ShoppingCart className="h-4 w-4" style={{ color: '#F97316' }} />
+                </div>
+                <span className="text-sm font-semibold text-stone-800">Lista de la compra</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-stone-300" />
+            </button>
+          </section>
+        )}
         {!isActivePlan && !locked && (
           <section>
             <AppPanel className="p-4">
